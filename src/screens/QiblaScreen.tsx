@@ -9,7 +9,7 @@ import { bearingToCompassDirection, calculateQiblaDirection } from '../services/
 
 type Location = { latitude: number; longitude: number; name: string };
 
-export function QiblaScreen({ location }: { location: Location }) {
+export function QiblaScreen({ location, bottomInset = 0 }: { location: Location; bottomInset?: number }) {
   const [rotation, setRotation] = useState(0);
 
   const qiblaDir = calculateQiblaDirection(location.latitude, location.longitude);
@@ -38,7 +38,12 @@ export function QiblaScreen({ location }: { location: Location }) {
   }, [qiblaDir]);
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.screen}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.screenPadding, { paddingBottom: 108 + bottomInset }]}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.header}>
         <Text style={styles.eyebrow}>Qibla direction</Text>
         <Text style={styles.title}>Face Makkah</Text>

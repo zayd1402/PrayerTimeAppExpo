@@ -1,28 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { PrayerActionSheet } from '../components/PrayerActionSheet';
-import { C, AppSettings, PrayerId, PrayerTime } from '../types';
+import { C, AppSettings, CalendarEventSummary, PrayerId, PrayerTime } from '../types';
 import { getDateKey } from '../utils/date';
 import { gregorianToHijri, HijriService } from '../services/HijriService';
 import { getPrayerTimesObject } from '../services/PrayerService';
-import { loadPrayerLog, markPrayer } from '../services/StorageService';
+import { getDeviceCalendarEventsForDay, hasDeviceCalendarPermission } from '../services/CalendarIntegrationService';
+import { loadPrayerLog } from '../services/StorageService';
 
 type Location = { latitude: number; longitude: number; name: string };
 
 export function CalendarScreen({
   settings,
   location,
+  prayerLogVersion = 0,
+  onMarkPrayer,
+  bottomInset = 0,
 }: {
   settings: AppSettings;
   location: Location;
+  prayerLogVersion?: number;
+  onMarkPrayer: (dateKey: string, id: PrayerId, status: 'prayed' | 'qaza') => Promise<void>;
+  bottomInset?: number;
 }) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [prayerLog, setPrayerLog] = useState<Record<string, Record<string, string>>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedPrayer, setSelectedPrayer] = useState<PrayerTime | null>(null);
   const [actionDateKey, setActionDateKey] = useState<string | null>(null);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEventSummary[]>([]);
+  const [calendarState, setCalendarState] = useState<'off' | 'loading' | 'ready' | 'denied'>('off');
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -30,7 +39,7 @@ export function CalendarScreen({
 
   useEffect(() => {
     loadPrayerLog().then(setPrayerLog);
-  }, []);
+  }, [prayerLogVersion]);
 
   const grid = HijriService.getMonthGrid(year, month);
   const hijriCurrent = HijriService.gregorianToHijri(new Date(year, month, 15));
@@ -42,6 +51,65 @@ export function CalendarScreen({
     return Object.entries(dayLog).filter(([id, s]) => id !== 'sunrise' && s === 'prayed').length >= 5;
   }).length;
   const defaultSelectedDate = selectedDate || todayKey;
+  const selectedDateObject = useMemo(() => new Date(defaultSelectedDate + 'T12:00:00'), [defaultSelectedDate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadEvents = async () => {
+      if (!settings.calendarIntegrationEnabled) {
+        setCalendarState('off');
+        setCalendarEvents([]);
+        return;
+      }
+
+      setCalendarState('loading');
+      const granted = await hasDeviceCalendarPermission();
+      if (!granted) {
+        if (!cancelled) {
+          setCalendarState('denied');
+          setCalendarEvents([]);
+        }
+        return;
+      }
+
+      const events = await getDeviceCalendarEventsForDay(selectedDateObject, settings.visibleCalendarIds);
+      if (!cancelled) {
+        setCalendarEvents(events);
+        setCalendarState('ready');
+      }
+    };
+
+    loadEvents();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedDateObject, settings.calendarIntegrationEnabled, settings.visibleCalendarIds]);
+
+  const selectedDayLog = prayerLog[defaultSelectedDate] || {};
+  const selectedPrayerTimes = useMemo(() => getPrayerTimesObject(
+    selectedDateObject,
+    location.latitude,
+    location.longitude,
+    settings.calculationMethod,
+    settings.madhab,
+    0
+  ), [location.latitude, location.longitude, selectedDateObject, settings.calculationMethod, settings.madhab]);
+
+  const selectedComplete = selectedPrayerTimes.filter((t: PrayerTime) => t.id !== 'sunrise' && selectedDayLog[t.id] === 'prayed').length;
+  const selectedQaza = selectedPrayerTimes.filter((t: PrayerTime) => t.id !== 'sunrise' && selectedDayLog[t.id] === 'qaza').length;
+  const weekActivity = useMemo(() => {
+    return Array.from({ length: 7 }, (_, index) => {
+      const day = new Date(selectedDateObject);
+      day.setDate(day.getDate() - (6 - index));
+      const dateKey = getDateKey(day);
+      const log = prayerLog[dateKey] || {};
+      return {
+        key: dateKey,
+        label: day.toLocaleDateString('en-AU', { weekday: 'short' }).slice(0, 1),
+        count: Object.entries(log).filter(([id, status]) => id !== 'sunrise' && status === 'prayed').length,
+      };
+    });
+  }, [prayerLog, selectedDateObject]);
 
   const openPrayerActions = (dateKey: string, prayer: PrayerTime) => {
     setActionDateKey(dateKey);
@@ -50,15 +118,49 @@ export function CalendarScreen({
 
   const updatePrayerStatus = async (status: 'prayed' | 'qaza') => {
     if (!selectedPrayer || !actionDateKey) return;
-    await markPrayer(actionDateKey, selectedPrayer.id as PrayerId, status);
+    await onMarkPrayer(actionDateKey, selectedPrayer.id as PrayerId, status);
     setPrayerLog(await loadPrayerLog());
     setSelectedPrayer(null);
     setActionDateKey(null);
   };
 
+  const formatEventTime = (event: CalendarEventSummary) => {
+    if (event.isAllDay) return 'All day';
+    const start = new Date(event.startDate);
+    const end = new Date(event.endDate);
+    const format = (date: Date) => date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' });
+    return `${format(start)} - ${format(end)}`;
+  };
+
+  const plannerItems = useMemo(() => {
+    const prayers = selectedPrayerTimes
+      .filter((prayer: PrayerTime) => prayer.id !== 'sunrise')
+      .map((prayer: PrayerTime) => ({
+        type: 'prayer' as const,
+        key: `prayer-${prayer.id}`,
+        sortMinutes: prayer.minutes,
+        prayer,
+      }));
+    const events = calendarEvents.map(event => {
+      const start = new Date(event.startDate);
+      return {
+        type: 'event' as const,
+        key: `event-${event.id}`,
+        sortMinutes: event.isAllDay ? -1 : start.getHours() * 60 + start.getMinutes(),
+        event,
+      };
+    });
+    return [...events, ...prayers].sort((a, b) => a.sortMinutes - b.sortMinutes);
+  }, [calendarEvents, selectedPrayerTimes]);
+
   return (
     <>
-    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.screen}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.screenPadding, { paddingBottom: 108 + bottomInset }]}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.calendarHero}>
         <View style={styles.calendarHeroWash} />
         <View style={styles.calendarHeroContent}>
@@ -79,6 +181,36 @@ export function CalendarScreen({
           <TouchableOpacity style={styles.calNavBtn} onPress={() => setCurrentDate(new Date(year, month + 1, 1))} activeOpacity={0.72}>
             <Ionicons name="chevron-forward" size={16} color={C.navy} />
           </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.activitySummaryCard}>
+        <View style={styles.dayRing}>
+          <Text style={styles.dayRingValue}>{selectedComplete}/5</Text>
+          <Text style={styles.dayRingLabel}>done</Text>
+        </View>
+        <View style={styles.daySummaryCopy}>
+          <View style={styles.daySummaryTop}>
+            <Text style={styles.daySummaryTitle}>Selected day activity</Text>
+            <Text style={styles.daySummaryMeta}>{selectedQaza ? `${selectedQaza} qaza` : 'On track'}</Text>
+          </View>
+          <View style={styles.weekStrip}>
+            {weekActivity.map(day => (
+              <View key={day.key} style={styles.weekCell}>
+                <View
+                  style={[
+                    styles.weekHeat,
+                    day.count === 1 && styles.weekHeat1,
+                    day.count === 2 && styles.weekHeat2,
+                    day.count === 3 && styles.weekHeat3,
+                    day.count === 4 && styles.weekHeat4,
+                    day.count >= 5 && styles.weekHeat5,
+                  ]}
+                />
+                <Text style={styles.weekLabel}>{day.label}</Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
 
@@ -157,16 +289,6 @@ export function CalendarScreen({
           {(() => {
             const selected = new Date(defaultSelectedDate + 'T12:00:00');
             const hijri = gregorianToHijri(selected);
-            const dayLog = prayerLog[defaultSelectedDate] || {};
-            const times = getPrayerTimesObject(
-              selected,
-              location.latitude,
-              location.longitude,
-              settings.calculationMethod,
-              settings.madhab,
-              0
-            );
-            const complete = times.filter((t: PrayerTime) => t.id !== 'sunrise' && dayLog[t.id] === 'prayed').length;
             return (
               <>
                 <View style={styles.calDetailHeader}>
@@ -179,18 +301,45 @@ export function CalendarScreen({
                     </Text>
                   </View>
                   <View style={styles.calDetailScore}>
-                    <Text style={styles.calDetailScoreText}>{complete}/5</Text>
+                    <Text style={styles.calDetailScoreText}>{selectedComplete}/5</Text>
                   </View>
                 </View>
-                {times.filter((t: PrayerTime) => t.id !== 'sunrise').map((p: PrayerTime) => (
-                  <TouchableOpacity key={p.id} style={styles.calDetailRow} onPress={() => openPrayerActions(defaultSelectedDate, p)} activeOpacity={0.72}>
-                    <Text style={styles.calDetailPrayer}>{p.name}</Text>
-                    <Text style={styles.calDetailTime}>{p.time}</Text>
-                    {dayLog[p.id] === 'prayed' && <Ionicons name="checkmark-circle" size={16} color={C.emerald} />}
-                    {dayLog[p.id] === 'qaza' && <Text style={styles.calDetailQaza}>Q</Text>}
-                    {!dayLog[p.id] && <Ionicons name="add-circle-outline" size={16} color={C.textMuted} />}
-                  </TouchableOpacity>
-                ))}
+                <View style={styles.calendarStatusRow}>
+                  <Ionicons
+                    name={calendarState === 'ready' ? 'calendar' : calendarState === 'denied' ? 'lock-closed-outline' : 'calendar-outline'}
+                    size={14}
+                    color={calendarState === 'ready' ? C.emerald : C.textMuted}
+                  />
+                  <Text style={styles.calendarStatusText}>
+                    {calendarState === 'off' && 'Device calendar is off in Settings.'}
+                    {calendarState === 'loading' && 'Loading device calendar events...'}
+                    {calendarState === 'denied' && 'Calendar permission is not enabled.'}
+                    {calendarState === 'ready' && (calendarEvents.length ? `${calendarEvents.length} event${calendarEvents.length === 1 ? '' : 's'} synced for this day.` : 'No calendar events for this day.')}
+                  </Text>
+                </View>
+                {plannerItems.map(item => {
+                  if (item.type === 'event') {
+                    return (
+                      <View key={item.key} style={styles.eventRow}>
+                        <View style={[styles.eventColor, { backgroundColor: item.event.calendarColor || C.gold }]} />
+                        <View style={styles.eventCopy}>
+                          <Text style={styles.eventTitle}>{item.event.title || 'Calendar event'}</Text>
+                          <Text style={styles.eventMeta}>{formatEventTime(item.event)} · {item.event.calendarTitle}</Text>
+                        </View>
+                      </View>
+                    );
+                  }
+                  const p = item.prayer;
+                  return (
+                    <TouchableOpacity key={item.key} style={styles.calDetailRow} onPress={() => openPrayerActions(defaultSelectedDate, p)} activeOpacity={0.72}>
+                      <Text style={styles.calDetailPrayer}>{p.name}</Text>
+                      <Text style={styles.calDetailTime}>{p.time}</Text>
+                      {selectedDayLog[p.id] === 'prayed' && <Ionicons name="checkmark-circle" size={16} color={C.emerald} />}
+                      {selectedDayLog[p.id] === 'qaza' && <Text style={styles.calDetailQaza}>Qaza</Text>}
+                      {!selectedDayLog[p.id] && <Ionicons name="add-circle-outline" size={16} color={C.textMuted} />}
+                    </TouchableOpacity>
+                  );
+                })}
               </>
             );
           })()}
@@ -226,6 +375,23 @@ const styles = StyleSheet.create({
   monthScoreLabel: { fontSize: 10, fontWeight: '700', color: C.textMuted, marginTop: 2 },
   calNav: { flexDirection: 'row', gap: 8, marginTop: 16 },
   calNavBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 }, android: { elevation: 2 } }) },
+  activitySummaryCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 20, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, padding: 14, marginBottom: 12, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.07, shadowRadius: 12 }, android: { elevation: 3 } }) },
+  dayRing: { width: 68, height: 68, borderRadius: 34, alignItems: 'center', justifyContent: 'center', backgroundColor: C.emeraldPale, borderWidth: 7, borderColor: C.emerald },
+  dayRingValue: { fontSize: 15, fontWeight: '900', color: C.emerald },
+  dayRingLabel: { fontSize: 9, fontWeight: '800', color: C.textMuted, marginTop: 1 },
+  daySummaryCopy: { flex: 1 },
+  daySummaryTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 10 },
+  daySummaryTitle: { fontSize: 14, fontWeight: '900', color: C.navy },
+  daySummaryMeta: { fontSize: 11, fontWeight: '800', color: C.gold },
+  weekStrip: { flexDirection: 'row', gap: 7 },
+  weekCell: { alignItems: 'center', gap: 4 },
+  weekHeat: { width: 18, height: 18, borderRadius: 5, backgroundColor: 'rgba(7,26,53,0.05)', borderWidth: 1, borderColor: C.border },
+  weekHeat1: { backgroundColor: 'rgba(11,122,83,0.10)' },
+  weekHeat2: { backgroundColor: 'rgba(11,122,83,0.16)' },
+  weekHeat3: { backgroundColor: 'rgba(11,122,83,0.24)' },
+  weekHeat4: { backgroundColor: 'rgba(11,122,83,0.34)' },
+  weekHeat5: { backgroundColor: C.emerald },
+  weekLabel: { fontSize: 9, fontWeight: '800', color: C.textMuted },
   calendarCard: { borderRadius: 22, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, padding: 12, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.08, shadowRadius: 18 }, android: { elevation: 4 } }) },
   heatLegend: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10 },
   heatLegendText: { fontSize: 10, fontWeight: '800', color: C.textMuted },
@@ -254,8 +420,15 @@ const styles = StyleSheet.create({
   calDetailHijri: { fontSize: 13, color: C.gold, marginTop: 2, marginBottom: 12 },
   calDetailScore: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', backgroundColor: C.emeraldPale },
   calDetailScoreText: { fontSize: 13, fontWeight: '900', color: C.emerald },
+  calendarStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 14, backgroundColor: 'rgba(7,26,53,0.04)', paddingHorizontal: 10, paddingVertical: 8, marginBottom: 8 },
+  calendarStatusText: { flex: 1, fontSize: 11, fontWeight: '700', color: C.textSecondary },
   calDetailRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: C.border },
   calDetailPrayer: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 15, color: C.navy, flex: 1, fontWeight: '700' },
   calDetailTime: { fontSize: 13, color: C.textMuted, marginRight: 8 },
-  calDetailQaza: { fontSize: 12, color: C.textMuted, fontWeight: '600' },
+  calDetailQaza: { overflow: 'hidden', borderRadius: 11, backgroundColor: C.goldPale, paddingHorizontal: 8, paddingVertical: 3, fontSize: 10, color: C.gold, fontWeight: '900' },
+  eventRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: 1, borderTopColor: C.border },
+  eventColor: { width: 4, alignSelf: 'stretch', borderRadius: 2 },
+  eventCopy: { flex: 1 },
+  eventTitle: { fontSize: 14, fontWeight: '800', color: C.navy },
+  eventMeta: { fontSize: 11, fontWeight: '700', color: C.textMuted, marginTop: 3 },
 });

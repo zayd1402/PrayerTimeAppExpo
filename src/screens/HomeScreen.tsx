@@ -33,6 +33,7 @@ export function HomeScreen({
   prayerLogVersion,
   currentMinutes,
   onMarkPrayer,
+  bottomInset = 0,
 }: {
   prayerTimes: PrayerTime[];
   nextPrayer: PrayerTime | null;
@@ -41,13 +42,16 @@ export function HomeScreen({
   prayerLogVersion: number;
   currentMinutes: number;
   onMarkPrayer: (id: PrayerId, status: 'prayed' | 'qaza') => void;
+  bottomInset?: number;
 }) {
   const [prayerLog, setPrayerLog] = useState<Record<string, string>>({});
+  const [prayerLogByDate, setPrayerLogByDate] = useState<Record<string, Record<string, string>>>({});
   const [selectedPrayer, setSelectedPrayer] = useState<PrayerTime | null>(null);
   const todayKey = getDateKey(new Date());
 
   useEffect(() => {
     loadPrayerLog().then(log => {
+      setPrayerLogByDate(log);
       setPrayerLog((log[todayKey] as Record<string, string>) || {});
     });
   }, [todayKey, prayerLogVersion]);
@@ -81,6 +85,21 @@ export function HomeScreen({
     };
   }, [location.latitude, location.longitude, nextPrayer, prayerLog, prayerTimes]);
 
+  const weeklyActivity = useMemo(() => {
+    return Array.from({ length: 7 }, (_, index) => {
+      const day = new Date();
+      day.setDate(day.getDate() - (6 - index));
+      const dateKey = getDateKey(day);
+      const dayLog = prayerLogByDate[dateKey] || {};
+      const count = Object.entries(dayLog).filter(([id, status]) => id !== 'sunrise' && status === 'prayed').length;
+      return {
+        key: dateKey,
+        label: day.toLocaleDateString('en-AU', { weekday: 'short' }).slice(0, 1),
+        count,
+      };
+    });
+  }, [prayerLogByDate]);
+
   if (!prayerTimes.length) {
     return (
       <View style={styles.centered}>
@@ -112,7 +131,12 @@ export function HomeScreen({
 
   return (
     <>
-    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.screen}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.screenPadding, { paddingBottom: 108 + bottomInset }]}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.todayHeader}>
         <View style={styles.todayHeaderCopy}>
           <Text style={styles.todayTitle}>Today</Text>
@@ -242,6 +266,56 @@ export function HomeScreen({
         </View>
       </View>
 
+      <View style={styles.activityCard}>
+        <View style={styles.activityRing}>
+          <View style={styles.activityRingInner}>
+            <Text style={styles.activityRingValue}>{model.completedPrayers}</Text>
+            <Text style={styles.activityRingLabel}>of 5</Text>
+          </View>
+          {model.trackablePrayers.map((prayer, index) => {
+            const done = prayerLog[prayer.id] === 'prayed';
+            const positions = [
+              styles.activityDotTop,
+              styles.activityDotRight,
+              styles.activityDotBottomRight,
+              styles.activityDotBottomLeft,
+              styles.activityDotLeft,
+            ];
+            return (
+              <View key={prayer.id} style={[styles.activityDot, positions[index], done && styles.activityDotDone]}>
+                {done ? <Ionicons name="checkmark" size={9} color={C.bgSurface} /> : null}
+              </View>
+            );
+          })}
+        </View>
+        <View style={styles.activityCopy}>
+          <View style={styles.activityHeaderRow}>
+            <Text style={styles.activityTitle}>Activity</Text>
+            <Text style={styles.activityPct}>{model.completionPct}%</Text>
+          </View>
+          <View style={styles.weekStrip}>
+            {weeklyActivity.map(day => (
+              <View key={day.key} style={styles.weekDay}>
+                <View
+                  style={[
+                    styles.weekHeat,
+                    day.count === 1 && styles.weekHeat1,
+                    day.count === 2 && styles.weekHeat2,
+                    day.count === 3 && styles.weekHeat3,
+                    day.count === 4 && styles.weekHeat4,
+                    day.count >= 5 && styles.weekHeat5,
+                  ]}
+                />
+                <Text style={styles.weekDayLabel}>{day.label}</Text>
+              </View>
+            ))}
+          </View>
+          <Text style={styles.activitySubcopy}>
+            {model.completedPrayers >= 5 ? 'Full prayer day completed.' : `${5 - model.completedPrayers} prayers left for today.`}
+          </Text>
+        </View>
+      </View>
+
       <View style={styles.reflectionCard}>
         <View style={styles.reflectionImage}>
           <View style={styles.reflectionSun} />
@@ -331,33 +405,33 @@ const styles = StyleSheet.create({
   todayTitle: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 24, fontWeight: '600', color: C.navy, lineHeight: 29 },
   todayHijri: { fontSize: 13, fontWeight: '600', color: C.gold, marginTop: 4 },
   todayDate: { fontSize: 13, fontWeight: '500', color: C.textSecondary, marginTop: 3 },
-  headerActions: { alignItems: 'flex-end', gap: 8 },
+  headerActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 7, maxWidth: 208 },
   methodPill: { maxWidth: 154, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 18, backgroundColor: 'rgba(255,253,249,0.88)', borderWidth: 1, borderColor: C.border },
   methodPillText: { fontSize: 10, fontWeight: '700', color: C.textSecondary },
   headerIconButton: { width: 38, height: 38, borderRadius: 19, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 10 }, android: { elevation: 3 } }) },
   locationLine: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 12 },
   locationText: { fontSize: 13, fontWeight: '600', color: C.navySoft },
 
-  premiumHero: { minHeight: 312, borderRadius: 28, overflow: 'hidden', backgroundColor: C.bgSurface, borderWidth: 1, borderColor: 'rgba(255,255,255,0.72)', marginBottom: 12, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.13, shadowRadius: 28 }, android: { elevation: 7 } }) },
+  premiumHero: { minHeight: 258, borderRadius: 28, overflow: 'hidden', backgroundColor: C.bgSurface, borderWidth: 1, borderColor: 'rgba(255,255,255,0.72)', marginBottom: 12, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.13, shadowRadius: 28 }, android: { elevation: 7 } }) },
   heroSkyWash: { position: 'absolute', top: -42, left: -40, right: -40, bottom: -20, backgroundColor: '#FFF5DE', opacity: 0.88 },
-  heroSun: { position: 'absolute', right: 22, bottom: 44, width: 96, height: 96, borderRadius: 48, backgroundColor: 'rgba(215,180,106,0.30)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)' },
-  heroMosqueDome: { position: 'absolute', left: 26, bottom: 0, width: 176, height: 96, borderTopLeftRadius: 88, borderTopRightRadius: 88, backgroundColor: 'rgba(7,26,53,0.08)' },
-  heroMinaret: { position: 'absolute', left: 30, bottom: 0, width: 18, height: 154, borderTopLeftRadius: 9, borderTopRightRadius: 9, backgroundColor: 'rgba(7,26,53,0.08)' },
-  heroContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 30 },
-  heroBadge: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,253,249,0.82)', borderWidth: 1, borderColor: 'rgba(184,132,32,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 14 },
-  heroKicker: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 23, fontWeight: '600', color: C.navy, textAlign: 'center' },
+  heroSun: { position: 'absolute', right: 24, bottom: 36, width: 84, height: 84, borderRadius: 42, backgroundColor: 'rgba(215,180,106,0.28)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.85)' },
+  heroMosqueDome: { position: 'absolute', left: 30, bottom: 0, width: 158, height: 82, borderTopLeftRadius: 79, borderTopRightRadius: 79, backgroundColor: 'rgba(7,26,53,0.07)' },
+  heroMinaret: { position: 'absolute', left: 32, bottom: 0, width: 16, height: 124, borderTopLeftRadius: 8, borderTopRightRadius: 8, backgroundColor: 'rgba(7,26,53,0.07)' },
+  heroContent: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20, paddingVertical: 22 },
+  heroBadge: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,253,249,0.82)', borderWidth: 1, borderColor: 'rgba(184,132,32,0.18)', alignItems: 'center', justifyContent: 'center', marginBottom: 11 },
+  heroKicker: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 22, fontWeight: '600', color: C.navy, textAlign: 'center' },
   heroDisplayRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', marginTop: 4 },
-  heroDisplayTime: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 66, fontWeight: '500', color: C.navy, lineHeight: 76 },
-  heroDisplayAmPm: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 21, fontWeight: '500', color: C.navy, marginLeft: 5, marginBottom: 12 },
-  heroDivider: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.gold, marginTop: 4, marginBottom: 11 },
+  heroDisplayTime: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 58, fontWeight: '500', color: C.navy, lineHeight: 66 },
+  heroDisplayAmPm: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 19, fontWeight: '500', color: C.navy, marginLeft: 5, marginBottom: 10 },
+  heroDivider: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.gold, marginTop: 2, marginBottom: 9 },
   heroRemaining: { fontSize: 15, fontWeight: '700', color: C.emerald },
-  heroMetaRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
+  heroMetaRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
   heroMetaPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 18, backgroundColor: 'rgba(255,253,249,0.70)', borderWidth: 1, borderColor: 'rgba(7,26,53,0.07)' },
   heroMetaText: { fontSize: 11, fontWeight: '700', color: C.navySoft },
 
   quickGrid: { flexDirection: 'row', gap: 9, marginBottom: 12 },
-  quickCard: { flex: 1, minHeight: 74, borderRadius: 16, padding: 12, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.08, shadowRadius: 12 }, android: { elevation: 3 } }) },
-  quickIcon: { width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(184,132,32,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 7 },
+  quickCard: { flex: 1, minHeight: 68, borderRadius: 16, padding: 10, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.08, shadowRadius: 12 }, android: { elevation: 3 } }) },
+  quickIcon: { width: 27, height: 27, borderRadius: 14, backgroundColor: 'rgba(184,132,32,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
   quickIconDone: { backgroundColor: C.emerald },
   quickCopy: { minHeight: 30 },
   quickValue: { fontSize: 13, fontWeight: '800', color: C.navy, marginBottom: 2 },
@@ -382,6 +456,33 @@ const styles = StyleSheet.create({
   dailyProgressPct: { fontSize: 13, fontWeight: '800', color: C.emerald },
   dailyProgressTrack: { height: 8, borderRadius: 4, backgroundColor: 'rgba(7,26,53,0.08)', overflow: 'hidden' },
   dailyProgressFill: { height: 8, borderRadius: 4, backgroundColor: C.emerald },
+
+  activityCard: { flexDirection: 'row', alignItems: 'center', gap: 14, borderRadius: 18, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, padding: 14, marginTop: 8, marginBottom: 4 },
+  activityRing: { width: 80, height: 80, borderRadius: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(11,122,83,0.08)', borderWidth: 1, borderColor: 'rgba(11,122,83,0.12)' },
+  activityRingInner: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border },
+  activityRingValue: { fontSize: 20, fontWeight: '900', color: C.emerald, lineHeight: 22 },
+  activityRingLabel: { fontSize: 9, fontWeight: '800', color: C.textMuted },
+  activityDot: { position: 'absolute', width: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border },
+  activityDotDone: { backgroundColor: C.emerald, borderColor: C.emerald },
+  activityDotTop: { top: 2, left: 31 },
+  activityDotRight: { top: 22, right: 2 },
+  activityDotBottomRight: { bottom: 5, right: 13 },
+  activityDotBottomLeft: { bottom: 5, left: 13 },
+  activityDotLeft: { top: 22, left: 2 },
+  activityCopy: { flex: 1 },
+  activityHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
+  activityTitle: { fontSize: 14, fontWeight: '900', color: C.navy },
+  activityPct: { fontSize: 13, fontWeight: '900', color: C.emerald },
+  weekStrip: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  weekDay: { alignItems: 'center', gap: 4 },
+  weekHeat: { width: 18, height: 18, borderRadius: 5, backgroundColor: 'rgba(7,26,53,0.05)', borderWidth: 1, borderColor: C.border },
+  weekHeat1: { backgroundColor: 'rgba(11,122,83,0.10)' },
+  weekHeat2: { backgroundColor: 'rgba(11,122,83,0.16)' },
+  weekHeat3: { backgroundColor: 'rgba(11,122,83,0.24)' },
+  weekHeat4: { backgroundColor: 'rgba(11,122,83,0.34)' },
+  weekHeat5: { backgroundColor: C.emerald },
+  weekDayLabel: { fontSize: 9, fontWeight: '800', color: C.textMuted },
+  activitySubcopy: { fontSize: 11, fontWeight: '700', color: C.textSecondary, marginTop: 9 },
 
   reflectionCard: { minHeight: 86, borderRadius: 18, overflow: 'hidden', backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, flexDirection: 'row', alignItems: 'stretch', marginTop: 8, marginBottom: 2 },
   reflectionImage: { width: 104, backgroundColor: '#FFF3D8', overflow: 'hidden' },

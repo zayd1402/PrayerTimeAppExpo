@@ -51,6 +51,8 @@ export interface AppSettings {
   fajrAlarmEnabled: boolean;
   fajrAlarmMinutes: number;   // minutes before
   iqamaCountdownEnabled: boolean;
+  calendarIntegrationEnabled: boolean;
+  visibleCalendarIds?: string[];
   location: {
     latitude: number;
     longitude: number;
@@ -65,8 +67,20 @@ export const DEFAULT_SETTINGS: AppSettings = {
   fajrAlarmEnabled: false,
   fajrAlarmMinutes: 15,
   iqamaCountdownEnabled: false,
+  calendarIntegrationEnabled: false,
+  visibleCalendarIds: [],
   location: null,
 };
+
+export interface CalendarEventSummary {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  calendarTitle: string;
+  calendarColor: string;
+  isAllDay: boolean;
+}
 
 // ─── Navigation ─────────────────────────────────────────────
 export const NAV_TABS = [

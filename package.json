@@ -22,6 +22,7 @@
     "adhan": "^4.4.3",
     "expo": "^55.0.24",
     "expo-asset": "~55.0.17",
+    "expo-calendar": "~55.0.14",
     "expo-constants": "~55.0.16",
     "expo-font": "~55.0.7",
     "expo-linking": "~55.0.15",

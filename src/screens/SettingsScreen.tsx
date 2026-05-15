@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { Card } from '../components/Card';
-import { C, AppSettings } from '../types';
+import { OptionActionSheet } from '../components/OptionActionSheet';
+import { C, AppSettings, CalculationMethod, Madhab } from '../types';
+import { requestDeviceCalendarPermission } from '../services/CalendarIntegrationService';
 import { requestNotificationPermission } from '../services/NotificationService';
 
 const METHOD_LABELS: Record<string, string> = {
@@ -14,15 +16,34 @@ const METHOD_LABELS: Record<string, string> = {
   karachi: 'Karachi (University)',
 };
 
+const METHOD_OPTIONS: { label: string; value: CalculationMethod; description: string }[] = [
+  { label: 'Muslim World League', value: 'muslim_world_league', description: 'Balanced default for many regions.' },
+  { label: 'ISNA', value: 'isna', description: 'Common in North America.' },
+  { label: 'Egyptian', value: 'egyptian', description: 'Egyptian General Authority.' },
+  { label: 'Umm Al-Qura', value: 'umm_al_qura', description: 'Commonly used in Saudi Arabia.' },
+  { label: 'Karachi', value: 'karachi', description: 'University of Islamic Sciences.' },
+];
+
+const MADHAB_OPTIONS: { label: string; value: Madhab; description: string }[] = [
+  { label: 'Shafi', value: 'shafi', description: 'Standard Asr shadow calculation.' },
+  { label: 'Hanafi', value: 'hanafi', description: 'Later Asr calculation used by Hanafi schools.' },
+];
+
+const FAJR_PRESETS = [5, 10, 15, 20, 30, 45, 60];
+
 export function SettingsScreen({
   settings,
   onUpdate,
   onResetData,
+  bottomInset = 0,
 }: {
   settings: AppSettings;
   onUpdate: (partial: Partial<AppSettings>) => void;
   onResetData: () => void;
+  bottomInset?: number;
 }) {
+  const [optionSheet, setOptionSheet] = useState<'method' | 'madhab' | null>(null);
+
   const handleToggle = async (key: keyof AppSettings, value: boolean) => {
     if (key === 'notificationsEnabled' && value) {
       const granted = await requestNotificationPermission();
@@ -32,6 +53,19 @@ export function SettingsScreen({
       }
     }
     onUpdate({ [key]: value });
+  };
+
+  const handleCalendarToggle = async (value: boolean) => {
+    if (!value) {
+      onUpdate({ calendarIntegrationEnabled: false });
+      return;
+    }
+    const granted = await requestDeviceCalendarPermission();
+    if (!granted) {
+      Alert.alert('Calendar Access Needed', 'Allow calendar access in device settings to show events beside prayer times.');
+      return;
+    }
+    onUpdate({ calendarIntegrationEnabled: true });
   };
 
   const handleFajrAlarmToggle = async (value: boolean) => {
@@ -51,7 +85,13 @@ export function SettingsScreen({
   };
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
+    <>
+    <ScrollView
+      style={styles.screen}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={[styles.screenPadding, { paddingBottom: 108 + bottomInset }]}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.settingsHero}>
         <View>
           <Text style={styles.settingsEyebrow}>Preferences</Text>
@@ -105,16 +145,50 @@ export function SettingsScreen({
           />
         </View>
         <View style={[styles.alarmAdjustRow, styles.srowBorder]}>
-          <TouchableOpacity style={styles.stepperButton} onPress={() => updateFajrAlarmMinutes(-5)} activeOpacity={0.72}>
-            <Ionicons name="remove" size={18} color={C.navy} />
-          </TouchableOpacity>
-          <View style={styles.alarmValueCard}>
-            <Text style={styles.alarmValue}>{settings.fajrAlarmMinutes}</Text>
-            <Text style={styles.alarmValueLabel}>minutes before Fajr</Text>
+          <View style={styles.alarmPresetHeader}>
+            <Text style={styles.alarmPresetTitle}>Alarm lead time</Text>
+            <View style={styles.alarmStepper}>
+              <TouchableOpacity style={styles.stepperButton} onPress={() => updateFajrAlarmMinutes(-5)} activeOpacity={0.72}>
+                <Ionicons name="remove" size={15} color={C.navy} />
+              </TouchableOpacity>
+              <Text style={styles.alarmStepperValue}>{settings.fajrAlarmMinutes}m</Text>
+              <TouchableOpacity style={styles.stepperButton} onPress={() => updateFajrAlarmMinutes(5)} activeOpacity={0.72}>
+                <Ionicons name="add" size={15} color={C.navy} />
+              </TouchableOpacity>
+            </View>
           </View>
-          <TouchableOpacity style={styles.stepperButton} onPress={() => updateFajrAlarmMinutes(5)} activeOpacity={0.72}>
-            <Ionicons name="add" size={18} color={C.navy} />
-          </TouchableOpacity>
+          <View style={styles.presetGrid}>
+            {FAJR_PRESETS.map(minutes => (
+              <TouchableOpacity
+                key={minutes}
+                style={[styles.presetChip, settings.fajrAlarmMinutes === minutes && styles.presetChipActive]}
+                onPress={() => onUpdate({ fajrAlarmMinutes: minutes, fajrAlarmEnabled: true })}
+                activeOpacity={0.72}
+              >
+                <Text style={[styles.presetChipText, settings.fajrAlarmMinutes === minutes && styles.presetChipTextActive]}>{minutes}m</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Card>
+
+      <Text style={styles.settingsSectionTitle}>PLANNER</Text>
+      <Card>
+        <View style={styles.srow}>
+          <View style={[styles.srowIcon, { backgroundColor: C.emeraldPale }]}>
+            <Ionicons name="calendar-outline" size={16} color={C.emerald} />
+          </View>
+          <View style={styles.srowLeftStack}>
+            <Text style={styles.srowLabel}>Device Calendar</Text>
+            <Text style={styles.srowSub}>Show phone calendar events beside prayers</Text>
+          </View>
+          <Text style={styles.srowValue}>{settings.calendarIntegrationEnabled ? 'On' : 'Off'}</Text>
+          <Switch
+            value={settings.calendarIntegrationEnabled}
+            onValueChange={handleCalendarToggle}
+            trackColor={{ false: 'rgba(7,26,53,0.12)', true: C.emeraldPale }}
+            thumbColor={settings.calendarIntegrationEnabled ? C.emerald : '#fff'}
+          />
         </View>
       </Card>
 
@@ -122,18 +196,7 @@ export function SettingsScreen({
       <Card>
         <TouchableOpacity
           style={[styles.srow, styles.srowBorder]}
-          onPress={() => {
-            const methods = Object.keys(METHOD_LABELS);
-            const current = methods.indexOf(settings.calculationMethod);
-            Alert.alert(
-              'Calculation Method',
-              'Select your preferred calculation method',
-              methods.map((m, i) => ({
-                text: i === current ? `✓ ${METHOD_LABELS[m]}` : METHOD_LABELS[m],
-                onPress: () => onUpdate({ calculationMethod: m as any }),
-              }))
-            );
-          }}
+          onPress={() => setOptionSheet('method')}
         >
           <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
             <Ionicons name="globe-outline" size={16} color={C.navy} />
@@ -144,12 +207,7 @@ export function SettingsScreen({
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.srow, styles.srowBorder]}
-          onPress={() => {
-            Alert.alert('Madhab', 'Select your school of jurisprudence', [
-              { text: 'Shafi ✓', onPress: () => onUpdate({ madhab: 'shafi' }) },
-              { text: 'Hanafi', onPress: () => onUpdate({ madhab: 'hanafi' }) },
-            ]);
-          }}
+          onPress={() => setOptionSheet('madhab')}
         >
           <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
             <Ionicons name="book-outline" size={16} color={C.navy} />
@@ -184,29 +242,61 @@ export function SettingsScreen({
         </TouchableOpacity>
       </Card>
     </ScrollView>
+    <OptionActionSheet<CalculationMethod>
+      visible={optionSheet === 'method'}
+      title="Calculation Method"
+      subtitle="Choose the prayer-time convention used for your region."
+      options={METHOD_OPTIONS}
+      selectedValue={settings.calculationMethod}
+      onClose={() => setOptionSheet(null)}
+      onSelect={value => {
+        onUpdate({ calculationMethod: value });
+        setOptionSheet(null);
+      }}
+    />
+    <OptionActionSheet<Madhab>
+      visible={optionSheet === 'madhab'}
+      title="Madhab"
+      subtitle="This primarily affects the Asr calculation."
+      options={MADHAB_OPTIONS}
+      selectedValue={settings.madhab}
+      onClose={() => setOptionSheet(null)}
+      onSelect={value => {
+        onUpdate({ madhab: value });
+        setOptionSheet(null);
+      }}
+    />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bgBase },
   screenPadding: { paddingHorizontal: 20, paddingBottom: 128 },
-  settingsHero: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 24, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, padding: 18, marginTop: 8, marginBottom: 4, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.10, shadowRadius: 22 }, android: { elevation: 5 } }) },
+  settingsHero: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 24, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, padding: 16, marginTop: 8, marginBottom: 2, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.10, shadowRadius: 22 }, android: { elevation: 5 } }) },
   settingsEyebrow: { fontSize: 11, fontWeight: '900', color: C.gold, letterSpacing: 1, textTransform: 'uppercase' },
   settingsTitle: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 29, fontWeight: '900', color: C.navy, marginTop: 4 },
   settingsSubtitle: { maxWidth: 230, fontSize: 13, lineHeight: 18, fontWeight: '600', color: C.textSecondary, marginTop: 5 },
-  settingsHeroIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF8E9', borderWidth: 1, borderColor: 'rgba(184,132,32,0.18)' },
-  settingsSectionTitle: { fontSize: 10, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', color: C.textMuted, paddingVertical: 12 },
-  srow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 18 },
+  settingsHeroIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF8E9', borderWidth: 1, borderColor: 'rgba(184,132,32,0.18)' },
+  settingsSectionTitle: { fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', color: C.textMuted, paddingTop: 12, paddingBottom: 8 },
+  srow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 14, gap: 10 },
   srowBorder: { borderTopWidth: 1, borderTopColor: C.border },
   srowLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  srowLeftStack: { flex: 1 },
   srowIcon: { width: 34, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   srowLabel: { fontSize: 15, fontWeight: '500', color: C.textPrimary },
   srowSub: { fontSize: 12, color: C.textMuted, marginTop: 2 },
   srowValue: { fontSize: 13, color: C.textMuted, marginRight: 8, fontWeight: '700' },
   brandMark: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.navy, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  alarmAdjustRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingVertical: 14 },
-  stepperButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: C.goldPale, borderWidth: 1, borderColor: 'rgba(184,132,32,0.18)' },
-  alarmValueCard: { flex: 1, minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(7,26,53,0.04)', borderWidth: 1, borderColor: C.border },
-  alarmValue: { fontSize: 20, fontWeight: '900', color: C.navy },
-  alarmValueLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted, marginTop: 2 },
+  alarmAdjustRow: { paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
+  alarmPresetHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  alarmPresetTitle: { fontSize: 13, fontWeight: '800', color: C.navy },
+  alarmStepper: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 18, padding: 4, backgroundColor: 'rgba(7,26,53,0.04)' },
+  stepperButton: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border },
+  alarmStepperValue: { minWidth: 38, textAlign: 'center', fontSize: 12, fontWeight: '900', color: C.navy },
+  presetGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 7 },
+  presetChip: { minWidth: 44, height: 31, borderRadius: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, backgroundColor: 'rgba(7,26,53,0.04)', borderWidth: 1, borderColor: C.border },
+  presetChipActive: { backgroundColor: C.emerald, borderColor: C.emerald },
+  presetChipText: { fontSize: 12, fontWeight: '800', color: C.textSecondary },
+  presetChipTextActive: { color: C.bgSurface },
 });

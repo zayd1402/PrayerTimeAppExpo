@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as NavigationBar from 'expo-navigation-bar';
+import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // ─── Types & Config ──────────────────────────────────────────
 import { C, NAV_TABS, PrayerId, PrayerTime, AppSettings, DEFAULT_SETTINGS } from './src/types';
@@ -24,8 +25,16 @@ import { QiblaScreen } from './src/screens/QiblaScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { getDateKey, getHourMinute } from './src/utils/date';
 
-// ─── Main App ────────────────────────────────────────────────
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <PrayerApp />
+    </SafeAreaProvider>
+  );
+}
+
+// ─── Main App ────────────────────────────────────────────────
+function PrayerApp() {
   const [activeTab, setActiveTab] = useState<string>('home');
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [prayerTimes, setPrayerTimes] = useState<PrayerTime[]>([]);
@@ -35,6 +44,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [prayerLogVersion, setPrayerLogVersion] = useState(0);
   const notificationScheduleKey = useRef<string | null>(null);
+  const insets = useSafeAreaInsets();
+  const bottomInset = Math.max(insets.bottom, Platform.OS === 'ios' ? 10 : 0);
 
   // Initialize
   useEffect(() => {
@@ -126,6 +137,11 @@ export default function App() {
     setPrayerLogVersion(version => version + 1);
   }, []);
 
+  const handleMarkPrayerForDate = useCallback(async (dateKey: string, prayerId: PrayerId, status: 'prayed' | 'qaza') => {
+    await markPrayer(dateKey, prayerId, status);
+    setPrayerLogVersion(version => version + 1);
+  }, []);
+
   const handleSettingsUpdate = useCallback(async (partial: Partial<AppSettings>) => {
     const updated = { ...settings, ...partial };
     setSettings(updated);
@@ -169,33 +185,30 @@ export default function App() {
     return (
       <View style={styles.root}>
         <StatusBar barStyle="dark-content" backgroundColor={C.bgBase} />
-        <View style={{ height: 47 }} />
-        <View style={[styles.screen, styles.centered]}>
+        <View style={[styles.screen, styles.centered, { paddingTop: insets.top }]}>
           <Ionicons name="moon-outline" size={48} color={C.gold} />
           <Text style={styles.loadingText}>Nur Minimal</Text>
           <Text style={styles.loadingSubText}>Loading...</Text>
         </View>
-        <View style={styles.tabBar} />
       </View>
     );
   }
 
   const renderScreen = () => {
     switch (activeTab) {
-      case 'home':      return <HomeScreen prayerTimes={prayerTimes} nextPrayer={nextPrayer} settings={settings} location={location} prayerLogVersion={prayerLogVersion} currentMinutes={currentMinutes} onMarkPrayer={handleMarkPrayer} />;
-      case 'calendar':  return <CalendarScreen settings={settings} location={location} />;
-      case 'qibla':     return <QiblaScreen location={location} />;
-      case 'settings':  return <SettingsScreen settings={settings} onUpdate={handleSettingsUpdate} onResetData={handleResetData} />;
-      default:          return <HomeScreen prayerTimes={prayerTimes} nextPrayer={nextPrayer} settings={settings} location={location} prayerLogVersion={prayerLogVersion} currentMinutes={currentMinutes} onMarkPrayer={handleMarkPrayer} />;
+      case 'home':      return <HomeScreen prayerTimes={prayerTimes} nextPrayer={nextPrayer} settings={settings} location={location} prayerLogVersion={prayerLogVersion} currentMinutes={currentMinutes} onMarkPrayer={handleMarkPrayer} bottomInset={bottomInset} />;
+      case 'calendar':  return <CalendarScreen settings={settings} location={location} prayerLogVersion={prayerLogVersion} onMarkPrayer={handleMarkPrayerForDate} bottomInset={bottomInset} />;
+      case 'qibla':     return <QiblaScreen location={location} bottomInset={bottomInset} />;
+      case 'settings':  return <SettingsScreen settings={settings} onUpdate={handleSettingsUpdate} onResetData={handleResetData} bottomInset={bottomInset} />;
+      default:          return <HomeScreen prayerTimes={prayerTimes} nextPrayer={nextPrayer} settings={settings} location={location} prayerLogVersion={prayerLogVersion} currentMinutes={currentMinutes} onMarkPrayer={handleMarkPrayer} bottomInset={bottomInset} />;
     }
   };
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bgBase} />
-      <View style={{ height: 47, backgroundColor: C.bgBase }} />
-      <View style={styles.screenWrapper}>{renderScreen()}</View>
-      <View style={styles.tabBarWrap}>
+      <View style={[styles.screenWrapper, { paddingTop: insets.top }]}>{renderScreen()}</View>
+      <View style={[styles.tabBarWrap, { paddingBottom: bottomInset }]}>
         <View style={styles.tabBar}>
           {NAV_TABS.map(tab => {
             const isActive = activeTab === tab.id;
