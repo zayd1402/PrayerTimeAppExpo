@@ -44,6 +44,19 @@ describe('PrayerService', () => {
     expect(minutesToTimeString(next?.minutes ?? 0)).toMatch(/AM$/);
   });
 
+  it('chooses the nearest upcoming prayer by adjusted minutes', () => {
+    const next = getNextPrayer([
+      { id: 'fajr', name: 'Fajr', arabic: '', icon: '', iconActive: '', time: '5:12 AM', minutes: 312, status: 'passed' },
+      { id: 'sunrise', name: 'Sunrise', arabic: '', icon: '', iconActive: '', time: '6:38 AM', minutes: 398, status: 'passed' },
+      { id: 'dhuhr', name: 'Dhuhr', arabic: '', icon: '', iconActive: '', time: '12:48 PM', minutes: 768, status: 'passed' },
+      { id: 'asr', name: 'Asr', arabic: '', icon: '', iconActive: '', time: '3:42 PM', minutes: 942, status: 'passed' },
+      { id: 'maghrib', name: 'Maghrib', arabic: '', icon: '', iconActive: '', time: '5:58 PM', minutes: 1078, status: 'upcoming' },
+      { id: 'isha', name: 'Isha', arabic: '', icon: '', iconActive: '', time: '7:19 PM', minutes: 1159, status: 'upcoming' },
+    ], 18 * 60);
+
+    expect(next?.id).toBe('isha');
+  });
+
   it('reads current minutes in the location timezone rather than device UTC', () => {
     const minutes = getCurrentMinutesForCoordinates(
       -33.8688,

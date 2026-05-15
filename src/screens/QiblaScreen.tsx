@@ -104,7 +104,7 @@ export function QiblaScreen({ location }: { location: Location }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bgBase },
-  screenPadding: { paddingHorizontal: 20, paddingBottom: 16 },
+  screenPadding: { paddingHorizontal: 20, paddingBottom: 128 },
   header: { paddingTop: 10, paddingBottom: 10 },
   eyebrow: { fontSize: 11, fontWeight: '900', color: C.gold, letterSpacing: 1, textTransform: 'uppercase' },
   title: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 30, fontWeight: '900', color: C.navy, marginTop: 4 },

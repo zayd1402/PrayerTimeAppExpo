@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { PrayerActionSheet } from '../components/PrayerActionSheet';
 import { SectionHeader } from '../components/SectionHeader';
 import { C, PrayerId, PrayerTime, AppSettings, PRAYER_ICONS } from '../types';
 import { getDateKey } from '../utils/date';
@@ -42,6 +43,7 @@ export function HomeScreen({
   onMarkPrayer: (id: PrayerId, status: 'prayed' | 'qaza') => void;
 }) {
   const [prayerLog, setPrayerLog] = useState<Record<string, string>>({});
+  const [selectedPrayer, setSelectedPrayer] = useState<PrayerTime | null>(null);
   const todayKey = getDateKey(new Date());
 
   useEffect(() => {
@@ -89,15 +91,14 @@ export function HomeScreen({
 
   const openPrayerActions = (prayer: PrayerTime) => {
     if (prayer.id === 'sunrise') return;
-    Alert.alert(
-      `Mark ${prayer.name}`,
-      'Update today\'s prayer status.',
-      [
-        { text: 'Done', onPress: () => onMarkPrayer(prayer.id, 'prayed') },
-        { text: 'Qaza', onPress: () => onMarkPrayer(prayer.id, 'qaza') },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    setSelectedPrayer(prayer);
+  };
+
+  const markSelectedPrayer = async (status: 'prayed' | 'qaza') => {
+    if (!selectedPrayer) return;
+    await onMarkPrayer(selectedPrayer.id, status);
+    setPrayerLog(current => ({ ...current, [selectedPrayer.id]: status }));
+    setSelectedPrayer(null);
   };
 
   const getStatus = (prayer: PrayerTime) => {
@@ -110,6 +111,7 @@ export function HomeScreen({
   };
 
   return (
+    <>
     <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
       <View style={styles.todayHeader}>
         <View style={styles.todayHeaderCopy}>
@@ -306,12 +308,21 @@ export function HomeScreen({
         })}
       </View>
     </ScrollView>
+    <PrayerActionSheet
+      prayer={selectedPrayer}
+      visible={Boolean(selectedPrayer)}
+      context="Update today's prayer tracker."
+      onClose={() => setSelectedPrayer(null)}
+      onDone={() => markSelectedPrayer('prayed')}
+      onQaza={() => markSelectedPrayer('qaza')}
+    />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bgBase },
-  screenPadding: { paddingHorizontal: 20, paddingBottom: 16 },
+  screenPadding: { paddingHorizontal: 20, paddingBottom: 128 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgBase },
   loadingText: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 24, fontWeight: '600', color: C.navy, marginTop: 16 },
 

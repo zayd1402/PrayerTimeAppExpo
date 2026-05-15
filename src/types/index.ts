@@ -82,8 +82,8 @@ export type TabId = typeof NAV_TABS[number]['id'];
 export const PRAYER_ICONS: Record<PrayerId, { icon: string; iconActive: string }> = {
   fajr:    { icon: 'sunny-outline',        iconActive: 'sunny'        },
   sunrise: { icon: 'partly-sunny-outline', iconActive: 'partly-sunny' },
-  dhuhr:  { icon: 'sun-outline',           iconActive: 'sun'          },
+  dhuhr:  { icon: 'sunny-outline',         iconActive: 'sunny'        },
   asr:    { icon: 'cloud-outline',         iconActive: 'cloud'         },
-  maghrib:{ icon: 'sunset-outline',        iconActive: 'sunset'        },
+  maghrib:{ icon: 'partly-sunny-outline',  iconActive: 'partly-sunny' },
   isha:   { icon: 'moon-outline',          iconActive: 'moon'          },
 };

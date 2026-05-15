@@ -188,11 +188,21 @@ export function getNextPrayer(
   times: PrayerTime[],
   currentMinutes: number
 ): PrayerTime | null {
-  const upcoming = times.find(p => p.minutes > currentMinutes && p.id !== 'sunrise');
-  if (upcoming) return upcoming;
+  const candidates = times
+    .filter(p => p.id !== 'sunrise')
+    .map(prayer => {
+      const adjustedMinutes = prayer.minutes > currentMinutes
+        ? prayer.minutes
+        : prayer.minutes + 1440;
+      return {
+        ...prayer,
+        minutes: adjustedMinutes,
+        status: 'upcoming' as const,
+      };
+    })
+    .sort((a, b) => a.minutes - b.minutes);
 
-  const tomorrowFajr = times.find(p => p.id === 'fajr');
-  return tomorrowFajr ? { ...tomorrowFajr, minutes: tomorrowFajr.minutes + 1440, status: 'upcoming' } : null;
+  return candidates[0] ?? null;
 }
 
 export function getTimeUntilNext(nextPrayer: PrayerTime, currentMinutes: number): string {

@@ -45,6 +45,11 @@ export function SettingsScreen({
     onUpdate({ fajrAlarmEnabled: value });
   };
 
+  const updateFajrAlarmMinutes = (delta: number) => {
+    const nextValue = Math.min(60, Math.max(5, settings.fajrAlarmMinutes + delta));
+    onUpdate({ fajrAlarmMinutes: nextValue, fajrAlarmEnabled: true });
+  };
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
       <View style={styles.settingsHero}>
@@ -98,6 +103,18 @@ export function SettingsScreen({
             trackColor={{ false: 'rgba(7,26,53,0.12)', true: C.emeraldPale }}
             thumbColor={settings.fajrAlarmEnabled ? C.emerald : '#fff'}
           />
+        </View>
+        <View style={[styles.alarmAdjustRow, styles.srowBorder]}>
+          <TouchableOpacity style={styles.stepperButton} onPress={() => updateFajrAlarmMinutes(-5)} activeOpacity={0.72}>
+            <Ionicons name="remove" size={18} color={C.navy} />
+          </TouchableOpacity>
+          <View style={styles.alarmValueCard}>
+            <Text style={styles.alarmValue}>{settings.fajrAlarmMinutes}</Text>
+            <Text style={styles.alarmValueLabel}>minutes before Fajr</Text>
+          </View>
+          <TouchableOpacity style={styles.stepperButton} onPress={() => updateFajrAlarmMinutes(5)} activeOpacity={0.72}>
+            <Ionicons name="add" size={18} color={C.navy} />
+          </TouchableOpacity>
         </View>
       </Card>
 
@@ -172,7 +189,7 @@ export function SettingsScreen({
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bgBase },
-  screenPadding: { paddingHorizontal: 20, paddingBottom: 16 },
+  screenPadding: { paddingHorizontal: 20, paddingBottom: 128 },
   settingsHero: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 24, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, padding: 18, marginTop: 8, marginBottom: 4, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.10, shadowRadius: 22 }, android: { elevation: 5 } }) },
   settingsEyebrow: { fontSize: 11, fontWeight: '900', color: C.gold, letterSpacing: 1, textTransform: 'uppercase' },
   settingsTitle: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 29, fontWeight: '900', color: C.navy, marginTop: 4 },
@@ -187,4 +204,9 @@ const styles = StyleSheet.create({
   srowSub: { fontSize: 12, color: C.textMuted, marginTop: 2 },
   srowValue: { fontSize: 13, color: C.textMuted, marginRight: 8, fontWeight: '700' },
   brandMark: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.navy, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  alarmAdjustRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 18, paddingVertical: 14 },
+  stepperButton: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: C.goldPale, borderWidth: 1, borderColor: 'rgba(184,132,32,0.18)' },
+  alarmValueCard: { flex: 1, minHeight: 54, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(7,26,53,0.04)', borderWidth: 1, borderColor: C.border },
+  alarmValue: { fontSize: 20, fontWeight: '900', color: C.navy },
+  alarmValueLabel: { fontSize: 11, fontWeight: '700', color: C.textMuted, marginTop: 2 },
 });
