@@ -49,9 +49,9 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
       if (status !== 'granted') return;
 
       const subscription = await Location.watchHeadingAsync((heading) => {
-        setDeviceHeading(heading.magneticHeading);
+        setDeviceHeading(heading.magHeading);
         // Calculate relative direction
-        const relative = qiblaDirection - heading.magneticHeading;
+        const relative = qiblaDirection - heading.magHeading;
         setRotation((relative + 360) % 360);
       });
 
