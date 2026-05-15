@@ -75,7 +75,6 @@ export function hijriToGregorian(hijriYear: number, hijriMonth: number, hijriDay
   const l = jd + 68569;
   const n = Math.floor(4 * l / 146097);
   const i = Math.floor(l / 4) - Math.floor((146097 * n + 3) / 4);
-  const j = l - Math.floor((146097 * n) / 4);
   const k = Math.floor(4000 * (i + 1) / 1461001);
   const d = i - Math.floor(1461 * k / 4) + 31;
   const m = Math.floor(80 * d / 2447);
@@ -117,13 +116,13 @@ export function formatHijriDateArabic(hijri: HijriDate): string {
 export function getMonthGrid(
   year: number,
   month: number // 0-indexed
-): Array<{ gregorian: Date; hijri: HijriDate; isCurrentMonth: boolean }> {
+): { gregorian: Date; hijri: HijriDate; isCurrentMonth: boolean }[] {
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   const daysInMonth = lastDay.getDate();
   const firstDayOfWeek = firstDay.getDay(); // 0 = Sunday
 
-  const grid: Array<{ gregorian: Date; hijri: HijriDate; isCurrentMonth: boolean }> = [];
+  const grid: { gregorian: Date; hijri: HijriDate; isCurrentMonth: boolean }[] = [];
 
   // Previous month fill
   const prevMonth = new Date(year, month, 0);

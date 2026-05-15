@@ -1,22 +1,22 @@
 {
   "expo": {
     "name": "PrayerTimeApp",
-    "slug": "PrayerTimeApp",
+    "slug": "prayer-time-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "scheme": "prayertime",
     "splash": {
       "backgroundColor": "#FAF6EF"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.prayertime.app",
+      "buildNumber": "1",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Used to calculate prayer times for your current location and find nearby mosques.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to calculate prayer times and provide timely prayer notifications.",
-        "UIBackgroundModes": ["location", "fetch"]
+        "NSLocationWhenInUseUsageDescription": "PrayerTimeApp uses your location only to calculate accurate prayer times and Qibla direction for your current area.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -25,10 +25,11 @@
         "backgroundColor": "#014836"
       },
       "package": "com.prayertime.app",
+      "versionCode": 1,
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "FOREGROUND_SERVICE"
+        "POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -38,14 +39,12 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow PrayerTimeApp to use your location to calculate prayer times and notify you when it's prayer time."
+          "locationWhenInUsePermission": "Allow PrayerTimeApp to use your location to calculate accurate prayer times."
         }
-      ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "prayertime-local"
-      }
-    }
+      ],
+      "expo-asset",
+      "expo-font",
+      "expo-notifications"
+    ]
   }
 }

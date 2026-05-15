@@ -1,17 +1,19 @@
 // ─── Design Tokens ───────────────────────────────────────────
 export const C = {
-  bgBase:       '#FAF6EF',
-  bgSurface:    '#FFFFFF',
+  bgBase:       '#FBF5EC',
+  bgSurface:    '#FFFDF9',
+  bgWarm:       '#F4E8D6',
   navy:         '#071A35',
-  navySoft:     '#1A3560',
-  gold:         '#B8892F',
-  goldLight:    '#D4AF6A',
-  goldPale:     '#F0E4C8',
-  emerald:      '#0F7A4F',
-  emeraldPale:  '#D4EDE1',
+  navySoft:     '#1B3558',
+  gold:         '#B88420',
+  goldLight:    '#D7B46A',
+  goldPale:     '#F2E4C6',
+  emerald:      '#0B7A53',
+  emeraldPale:  '#DDEEE4',
+  sand:         '#E9D7B8',
   textPrimary:  '#071A35',
-  textSecondary:'#6B7280',
-  textMuted:    '#9CA3AF',
+  textSecondary:'#5F6572',
+  textMuted:    '#9A938A',
   border:       'rgba(7,26,53,0.08)',
   borderStrong: 'rgba(7,26,53,0.15)',
 };
@@ -69,10 +71,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
 // ─── Navigation ─────────────────────────────────────────────
 export const NAV_TABS = [
   { id: 'home',      label: 'Home',      icon: 'home-outline',      iconActive: 'home'      },
-  { id: 'countdown', label: 'Countdown', icon: 'time-outline',      iconActive: 'time'      },
-  { id: 'calendar',  label: 'Calendar',  icon: 'calendar-outline',  iconActive: 'calendar'  },
-  { id: 'journey',   label: 'Journey',   icon: 'analytics-outline',  iconActive: 'analytics' },
   { id: 'qibla',     label: 'Qibla',     icon: 'compass-outline',   iconActive: 'compass'   },
+  { id: 'calendar',  label: 'Calendar',  icon: 'calendar-outline',  iconActive: 'calendar'  },
   { id: 'settings',  label: 'Settings',  icon: 'settings-outline',  iconActive: 'settings'  },
 ] as const;
 

@@ -1,215 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Animated } from 'react-native';
-import * as Location from 'expo-location';
+import React, { useEffect, useState } from 'react';
+import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Magnetometer } from 'expo-sensors';
 
-interface Coordinate {
-  latitude: number;
-  longitude: number;
-}
+import { Card } from '../components/Card';
+import { C } from '../types';
+import { bearingToCompassDirection, calculateQiblaDirection } from '../services/PrayerService';
 
-interface QiblaScreenProps {
-  coordinate: Coordinate;
-}
+type Location = { latitude: number; longitude: number; name: string };
 
-const MAKKAH_LAT = 21.4225;
-const MAKKAH_LON = 39.8262;
-
-export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
-  const [qiblaDirection, setQiblaDirection] = useState(0);
-  const [deviceHeading, setDeviceHeading] = useState(0);
+export function QiblaScreen({ location }: { location: Location }) {
   const [rotation, setRotation] = useState(0);
 
+  const qiblaDir = calculateQiblaDirection(location.latitude, location.longitude);
+  const bearingStr = bearingToCompassDirection(qiblaDir);
+  const distance = Math.round(
+    6371 * 2 * Math.atan2(
+      Math.sqrt(Math.abs(Math.sin((location.latitude - 21.4225) * Math.PI / 360) ** 2 +
+        Math.cos(location.latitude * Math.PI / 180) * Math.cos(21.4225 * Math.PI / 180) *
+        Math.sin((location.longitude - 39.8264) * Math.PI / 360) ** 2)),
+      Math.sqrt(1 - (Math.abs(Math.sin((location.latitude - 21.4225) * Math.PI / 360) ** 2 +
+        Math.cos(location.latitude * Math.PI / 180) * Math.cos(21.4225 * Math.PI / 180) *
+        Math.sin((location.longitude - 39.8264) * Math.PI / 360) ** 2))
+      )
+    )
+  );
+
   useEffect(() => {
-    calculateQibla();
-    getDeviceHeading();
-  }, []);
-
-  function calculateQibla() {
-    const { latitude, longitude } = coordinate;
-    
-    const lat1 = toRadians(latitude);
-    const lon1 = toRadians(longitude);
-    const lat2 = toRadians(MAKKAH_LAT);
-    const lon2 = toRadians(MAKKAH_LON);
-
-    const dLon = lon2 - lon1;
-    const y = Math.sin(dLon) * Math.cos(lat2);
-    const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-    
-    let qibla = Math.atan2(y, x);
-    qibla = toDegrees(qibla);
-    qibla = (qibla + 360) % 360;
-    
-    setQiblaDirection(qibla);
-  }
-
-  async function getDeviceHeading() {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-
-      const subscription = await Location.watchHeadingAsync((heading) => {
-        setDeviceHeading(heading.magHeading);
-        // Calculate relative direction
-        const relative = qiblaDirection - heading.magHeading;
-        setRotation((relative + 360) % 360);
-      });
-
-      return () => subscription.remove();
-    } catch (error) {
-      console.log('Heading not available');
-    }
-  }
-
-  function toRadians(deg: number): number {
-    return deg * (Math.PI / 180);
-  }
-
-  function toDegrees(rad: number): number {
-    return rad * (180 / Math.PI);
-  }
+    const subscription = Magnetometer.addListener((data: { x: number; y: number; z: number }) => {
+      const { x, y } = data;
+      const angle = Math.atan2(y, x) * (180 / Math.PI);
+      const corrected = (angle + 360) % 360;
+      const relative = (qiblaDir - corrected + 360) % 360;
+      setRotation(relative);
+    });
+    return () => subscription.remove();
+  }, [qiblaDir]);
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
-        <Text style={styles.title}>Qibla Direction</Text>
-        <Text style={styles.subtitle}>
-          {Math.round(qiblaDirection)}° from North
-        </Text>
+        <Text style={styles.eyebrow}>Qibla direction</Text>
+        <Text style={styles.title}>Face Makkah</Text>
+        <Text style={styles.subtitle}>{location.name}</Text>
       </View>
 
-      <View style={styles.compassContainer}>
-        <View style={styles.compass}>
-          {/* Compass rings */}
-          <View style={[styles.compassRing, styles.ring1]} />
-          <View style={[styles.compassRing, styles.ring2]} />
-          <View style={[styles.compassRing, styles.ring3]} />
-          
-          {/* Direction markers */}
-          <Text style={[styles.directionMarker, styles.north]}>N</Text>
-          <Text style={[styles.directionMarker, styles.east]}>E</Text>
-          <Text style={[styles.directionMarker, styles.south]}>S</Text>
-          <Text style={[styles.directionMarker, styles.west]}>W</Text>
-          
-          {/* Compass needle pointing to Qibla */}
-          <View style={[styles.needleContainer, { transform: [{ rotate: `${rotation}deg` }] }]}>
-            <Text style={styles.needle}>🕌</Text>
+      <View style={styles.qiblaWrap}>
+        <View style={styles.compassGlow}>
+          <View style={styles.compassOrbit} />
+          <View style={[styles.compassRing, { transform: [{ rotate: `${rotation}deg` }] }]}>
+            {['N', 'E', 'S', 'W'].map(d => {
+              const angles: Record<string, number> = { N: 0, E: 90, S: 180, W: 270 };
+              const angle = angles[d];
+              const offset = (angle - rotation + 360) % 360;
+              return (
+                <View
+                  key={d}
+                  style={[
+                    styles.compassMarker,
+                    { transform: [{ rotate: `${angle}deg` }, { translateY: -85 }], opacity: offset < 45 || offset > 315 ? 1 : 0.3 },
+                  ]}
+                >
+                  <Text style={styles.compassMarkerText}>{d}</Text>
+                </View>
+              );
+            })}
+            <View style={styles.compassInner}>
+              <Ionicons name="location" size={24} color={C.gold} />
+              <Text style={styles.compassDeg}>{Math.round(qiblaDir)}°</Text>
+              <Text style={styles.compassBearing}>{bearingStr}</Text>
+            </View>
           </View>
         </View>
       </View>
 
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>How to use</Text>
-        <Text style={styles.infoText}>
-          Hold your phone flat and point the 🕌 icon towards the direction shown. 
-          The compass needle will point towards Makkah.
-        </Text>
+      <View style={styles.qiblaStats}>
+        <View style={styles.qiblaStat}>
+          <Text style={styles.qiblaStatValue}>{Math.round(qiblaDir)}°</Text>
+          <Text style={styles.qiblaStatLabel}>Bearing</Text>
+        </View>
+        <View style={[styles.qiblaStat, styles.qiblaStatFeatured]}>
+          <Ionicons name="business-outline" size={18} color={C.gold} />
+          <Text style={styles.qiblaStatValueSmall}>Makkah</Text>
+          <Text style={styles.qiblaStatLabel}>Destination</Text>
+        </View>
+        <View style={styles.qiblaStat}>
+          <Text style={styles.qiblaStatValue}>{distance.toLocaleString()}</Text>
+          <Text style={styles.qiblaStatLabel}>km away</Text>
+        </View>
       </View>
 
-      <View style={styles.locationInfo}>
-        <Text style={styles.locationLabel}>Your location</Text>
-        <Text style={styles.locationValue}>
-          {coordinate.latitude.toFixed(4)}°, {coordinate.longitude.toFixed(4)}°
-        </Text>
-      </View>
-    </View>
+      <Card style={styles.qiblaInfoCard}>
+        <View style={styles.qiblaInfoRow}>
+          <Ionicons name="navigate" size={18} color={C.gold} />
+          <Text style={styles.qiblaInfoText}>
+            Point your device in the direction of the arrow. The compass shows the relative direction to Makkah.
+          </Text>
+        </View>
+      </Card>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F0',
-  },
-  header: {
-    padding: 18,
-    paddingTop: 60,
-    backgroundColor: '#014836',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 4,
-  },
-  compassContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  compass: {
-    width: 280,
-    height: 280,
-    borderRadius: 140,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  compassRing: {
-    position: 'absolute',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(0,100,80,0.1)',
-  },
-  ring1: { width: 220, height: 220 },
-  ring2: { width: 180, height: 180 },
-  ring3: { width: 140, height: 140 },
-  directionMarker: {
-    position: 'absolute',
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#014836',
-  },
-  north: { top: 12, color: '#E53935' },
-  east: { right: 12 },
-  south: { bottom: 12 },
-  west: { left: 12 },
-  needleContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  needle: {
-    fontSize: 48,
-  },
-  infoCard: {
-    backgroundColor: '#FFFFFF',
-    margin: 18,
-    marginTop: 0,
-    borderRadius: 16,
-    padding: 16,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  locationInfo: {
-    alignItems: 'center',
-    paddingBottom: 40,
-  },
-  locationLabel: {
-    fontSize: 12,
-    color: '#888',
-  },
-  locationValue: {
-    fontSize: 14,
-    color: '#014836',
-    fontWeight: '600',
-  },
+  screen: { flex: 1, backgroundColor: C.bgBase },
+  screenPadding: { paddingHorizontal: 20, paddingBottom: 16 },
+  header: { paddingTop: 10, paddingBottom: 10 },
+  eyebrow: { fontSize: 11, fontWeight: '900', color: C.gold, letterSpacing: 1, textTransform: 'uppercase' },
+  title: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 30, fontWeight: '900', color: C.navy, marginTop: 4 },
+  subtitle: { fontSize: 13, fontWeight: '600', color: C.textSecondary, marginTop: 4 },
+  qiblaWrap: { alignItems: 'center', paddingVertical: 24 },
+  compassGlow: { width: 286, height: 286, borderRadius: 143, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(184,132,32,0.08)', borderWidth: 1, borderColor: 'rgba(184,132,32,0.12)' },
+  compassOrbit: { position: 'absolute', width: 246, height: 246, borderRadius: 123, borderWidth: 1, borderColor: 'rgba(184,132,32,0.22)' },
+  compassRing: { width: 224, height: 224, borderRadius: 112, borderWidth: 2, borderColor: C.border, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgSurface, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.11, shadowRadius: 24 }, android: { elevation: 5 } }) },
+  compassMarker: { position: 'absolute', alignItems: 'center' },
+  compassMarkerText: { fontSize: 12, fontWeight: '700', color: C.textMuted },
+  compassInner: { width: 160, height: 160, borderRadius: 80, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgSurface },
+  compassDeg: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 34, fontWeight: '900', color: C.navy, lineHeight: 38 },
+  compassBearing: { fontSize: 11, fontWeight: '600', color: C.textMuted, letterSpacing: 1, marginTop: 4 },
+  qiblaStats: { flexDirection: 'row', gap: 9, marginBottom: 12 },
+  qiblaStat: { flex: 1, minHeight: 78, borderRadius: 18, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', padding: 10 },
+  qiblaStatFeatured: { backgroundColor: '#FFF8E9', borderColor: 'rgba(184,132,32,0.18)' },
+  qiblaStatValue: { fontSize: 20, fontWeight: '900', color: C.navy },
+  qiblaStatValueSmall: { fontSize: 14, fontWeight: '900', color: C.navy, marginTop: 4 },
+  qiblaStatLabel: { fontSize: 10, fontWeight: '700', color: C.textMuted, marginTop: 4, textAlign: 'center' },
+  qiblaInfoCard: { padding: 16 },
+  qiblaInfoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  qiblaInfoText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 },
 });

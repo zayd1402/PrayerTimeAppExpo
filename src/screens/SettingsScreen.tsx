@@ -1,289 +1,190 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-type CalculationMethod = 
-  | 'muslimWorldLeague' | 'egyptian' | 'karachi' 
-  | 'ummAlQura' | 'dubai' | 'qatar' | 'kuwait'
-  | 'moonsightingCommittee' | 'singapore' | 'tehran'
-  | 'northAmerica' | 'custom';
+import { Card } from '../components/Card';
+import { C, AppSettings } from '../types';
+import { requestNotificationPermission } from '../services/NotificationService';
 
-type Madhhab = 'shafi' | 'hanafi';
+const METHOD_LABELS: Record<string, string> = {
+  muslim_world_league: 'Islamic Society (MWL)',
+  isna: 'ISNA',
+  egyptian: 'Egyptian',
+  umm_al_qura: 'Umm Al-Qura',
+  karachi: 'Karachi (University)',
+};
 
-interface Settings {
-  method: CalculationMethod;
-  madhhab: Madhhab;
-  coordinate: { latitude: number; longitude: number };
-  locationName: string;
-}
+export function SettingsScreen({
+  settings,
+  onUpdate,
+  onResetData,
+}: {
+  settings: AppSettings;
+  onUpdate: (partial: Partial<AppSettings>) => void;
+  onResetData: () => void;
+}) {
+  const handleToggle = async (key: keyof AppSettings, value: boolean) => {
+    if (key === 'notificationsEnabled' && value) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        Alert.alert('Permission Required', 'Enable notifications in your device settings.');
+        return;
+      }
+    }
+    onUpdate({ [key]: value });
+  };
 
-interface SettingsScreenProps {
-  settings: Settings;
-  updateSettings: (updates: Partial<Settings>) => void;
-}
-
-const METHODS: { value: CalculationMethod; label: string }[] = [
-  { value: 'muslimWorldLeague', label: 'Muslim World League' },
-  { value: 'egyptian', label: 'Egyptian' },
-  { value: 'karachi', label: 'Karachi' },
-  { value: 'ummAlQura', label: 'Umm Al-Qura' },
-  { value: 'dubai', label: 'Dubai' },
-  { value: 'qatar', label: 'Qatar' },
-  { value: 'kuwait', label: 'Kuwait' },
-  { value: 'moonsightingCommittee', label: 'Moonsighting Committee' },
-  { value: 'singapore', label: 'Singapore' },
-  { value: 'tehran', label: 'Tehran' },
-  { value: 'northAmerica', label: 'North America' },
-  { value: 'custom', label: 'Custom' },
-];
-
-export default function SettingsScreen({ settings, updateSettings }: SettingsScreenProps) {
-  const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-  const [autoLocation, setAutoLocation] = React.useState(true);
+  const handleFajrAlarmToggle = async (value: boolean) => {
+    if (value) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        Alert.alert('Permission Required', 'Enable notifications to use Fajr alarm.');
+        return;
+      }
+    }
+    onUpdate({ fajrAlarmEnabled: value });
+  };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
+      <View style={styles.settingsHero}>
+        <View>
+          <Text style={styles.settingsEyebrow}>Preferences</Text>
+          <Text style={styles.settingsTitle}>Settings</Text>
+          <Text style={styles.settingsSubtitle}>Keep calculation, alerts, and local data under control.</Text>
+        </View>
+        <View style={styles.settingsHeroIcon}>
+          <Ionicons name="settings-outline" size={24} color={C.gold} />
+        </View>
       </View>
 
-      {/* Location Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Location</Text>
-        
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <View>
-              <Text style={styles.rowLabel}>Auto-detect location</Text>
-              <Text style={styles.rowSubtitle}>{settings.locationName}</Text>
-            </View>
-            <Switch
-              value={autoLocation}
-              onValueChange={setAutoLocation}
-              trackColor={{ true: '#01806A' }}
-            />
+      <Text style={styles.settingsSectionTitle}>LOCATION</Text>
+      <Card>
+        <View style={styles.srow}>
+          <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
+            <Ionicons name="location-outline" size={16} color={C.navy} />
           </View>
-          
-          {!autoLocation && (
-            <View style={styles.manualLocation}>
-              <TouchableOpacity style={styles.locationButton}>
-                <Text style={styles.locationButtonText}>📍 Use Current Location</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.locationButton}>
-                <Text style={styles.locationButtonText}>🔍 Enter Manually</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Calculation Method */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Calculation Method</Text>
-        
-        <View style={styles.card}>
-          {METHODS.map(method => (
-            <TouchableOpacity
-              key={method.value}
-              style={styles.optionRow}
-              onPress={() => updateSettings({ method: method.value })}
-            >
-              <Text style={styles.optionLabel}>{method.label}</Text>
-              {settings.method === method.value && (
-                <Text style={styles.checkmark}>✓</Text>
-              )}
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      {/* Madhhab Selection */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Madhhab (School of Thought)</Text>
-        
-        <View style={styles.card}>
-          <TouchableOpacity
-            style={styles.optionRow}
-            onPress={() => updateSettings({ madhhab: 'shafi' })}
-          >
-            <View>
-              <Text style={styles.optionLabel}>Shafi</Text>
-              <Text style={styles.optionSubtitle}>Standard Asr time</Text>
-            </View>
-            {settings.madhhab === 'shafi' && <Text style={styles.checkmark}>✓</Text>}
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.optionRow}
-            onPress={() => updateSettings({ madhhab: 'hanafi' })}
-          >
-            <View>
-              <Text style={styles.optionLabel}>Hanafi</Text>
-              <Text style={styles.optionSubtitle}>Later Asr time</Text>
-            </View>
-            {settings.madhhab === 'hanafi' && <Text style={styles.checkmark}>✓</Text>}
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Notifications */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
-        
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Prayer alerts</Text>
-            <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
-              trackColor={{ true: '#01806A' }}
-            />
+          <View style={styles.srowLeft}>
+            <Text style={styles.srowLabel}>Current Location</Text>
+            <Text style={styles.srowSub}>{settings.location?.name || 'Not set'}</Text>
           </View>
-          
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Pre-azan reminder</Text>
-            <Text style={styles.rowValue}>15 min before</Text>
-          </View>
-          
-          <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowLabel}>Custom azan sound</Text>
-            <Text style={styles.rowValue}>▶ Default</Text>
-          </TouchableOpacity>
         </View>
-      </View>
+      </Card>
 
-      {/* About */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
-        
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.rowLabel}>Version</Text>
-            <Text style={styles.rowValue}>1.0.0</Text>
+      <Text style={styles.settingsSectionTitle}>NOTIFICATIONS</Text>
+      <Card>
+        <View style={styles.srow}>
+          <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
+            <Ionicons name="notifications-outline" size={16} color={C.navy} />
           </View>
-          
-          <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowLabel}>Privacy Policy</Text>
-            <Text style={styles.rowValue}>→</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowLabel}>Rate App</Text>
-            <Text style={styles.rowValue}>⭐⭐⭐⭐⭐</Text>
-          </TouchableOpacity>
+          <Text style={styles.srowLabel}>Prayer Alerts</Text>
+          <Text style={styles.srowValue}>{settings.notificationsEnabled ? 'On' : 'Off'}</Text>
+          <Switch
+            value={settings.notificationsEnabled}
+            onValueChange={v => handleToggle('notificationsEnabled', v)}
+            trackColor={{ false: 'rgba(7,26,53,0.12)', true: C.emeraldPale }}
+            thumbColor={settings.notificationsEnabled ? C.emerald : '#fff'}
+          />
         </View>
-      </View>
+        <View style={[styles.srow, styles.srowBorder]}>
+          <View style={[styles.srowIcon, { backgroundColor: C.goldPale }]}>
+            <Ionicons name="alarm-outline" size={16} color={C.gold} />
+          </View>
+          <Text style={styles.srowLabel}>Fajr Auto-Alarm</Text>
+          <Text style={styles.srowValue}>{settings.fajrAlarmEnabled ? `${settings.fajrAlarmMinutes}m` : 'Off'}</Text>
+          <Switch
+            value={settings.fajrAlarmEnabled}
+            onValueChange={handleFajrAlarmToggle}
+            trackColor={{ false: 'rgba(7,26,53,0.12)', true: C.emeraldPale }}
+            thumbColor={settings.fajrAlarmEnabled ? C.emerald : '#fff'}
+          />
+        </View>
+      </Card>
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>PrayerTimeApp © 2024</Text>
-      </View>
+      <Text style={styles.settingsSectionTitle}>CALCULATION</Text>
+      <Card>
+        <TouchableOpacity
+          style={[styles.srow, styles.srowBorder]}
+          onPress={() => {
+            const methods = Object.keys(METHOD_LABELS);
+            const current = methods.indexOf(settings.calculationMethod);
+            Alert.alert(
+              'Calculation Method',
+              'Select your preferred calculation method',
+              methods.map((m, i) => ({
+                text: i === current ? `✓ ${METHOD_LABELS[m]}` : METHOD_LABELS[m],
+                onPress: () => onUpdate({ calculationMethod: m as any }),
+              }))
+            );
+          }}
+        >
+          <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
+            <Ionicons name="globe-outline" size={16} color={C.navy} />
+          </View>
+          <Text style={styles.srowLabel}>Method</Text>
+          <Text style={styles.srowValue}>{METHOD_LABELS[settings.calculationMethod]}</Text>
+          <Ionicons name="chevron-forward" size={14} color={C.textMuted} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.srow, styles.srowBorder]}
+          onPress={() => {
+            Alert.alert('Madhab', 'Select your school of jurisprudence', [
+              { text: 'Shafi ✓', onPress: () => onUpdate({ madhab: 'shafi' }) },
+              { text: 'Hanafi', onPress: () => onUpdate({ madhab: 'hanafi' }) },
+            ]);
+          }}
+        >
+          <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
+            <Ionicons name="book-outline" size={16} color={C.navy} />
+          </View>
+          <Text style={styles.srowLabel}>Madhab</Text>
+          <Text style={styles.srowValue}>{settings.madhab === 'shafi' ? 'Shafi' : 'Hanafi'}</Text>
+          <Ionicons name="chevron-forward" size={14} color={C.textMuted} />
+        </TouchableOpacity>
+      </Card>
+
+      <Text style={styles.settingsSectionTitle}>ABOUT</Text>
+      <Card>
+        <View style={styles.srow}>
+          <View style={styles.brandMark}>
+            <Ionicons name="moon" size={15} color={C.bgSurface} />
+          </View>
+          <Text style={styles.srowLabel}>Nur Minimal</Text>
+          <Text style={styles.srowValue}>v1.0.0</Text>
+        </View>
+      </Card>
+
+      <Text style={styles.settingsSectionTitle}>DATA</Text>
+      <Card>
+        <TouchableOpacity style={styles.srow} onPress={onResetData}>
+          <View style={[styles.srowIcon, { backgroundColor: 'rgba(107,114,128,0.1)' }]}>
+            <Ionicons name="trash-outline" size={16} color={C.textSecondary} />
+          </View>
+          <View style={styles.srowLeft}>
+            <Text style={styles.srowLabel}>Reset Local Data</Text>
+            <Text style={styles.srowSub}>Clear settings and prayer tracking from this device</Text>
+          </View>
+        </TouchableOpacity>
+      </Card>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F5F5F0',
-  },
-  content: {
-    paddingBottom: 100,
-  },
-  header: {
-    padding: 18,
-    paddingTop: 60,
-    backgroundColor: '#014836',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  section: {
-    padding: 18,
-    paddingBottom: 0,
-  },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#888',
-    marginBottom: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  rowLabel: {
-    fontSize: 16,
-    color: '#333',
-  },
-  rowSubtitle: {
-    fontSize: 13,
-    color: '#888',
-    marginTop: 2,
-  },
-  rowValue: {
-    fontSize: 14,
-    color: '#888',
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  optionLabel: {
-    fontSize: 16,
-    color: '#333',
-  },
-  optionSubtitle: {
-    fontSize: 13,
-    color: '#888',
-    marginTop: 2,
-  },
-  checkmark: {
-    fontSize: 18,
-    color: '#01806A',
-    fontWeight: 'bold',
-  },
-  manualLocation: {
-    padding: 16,
-    gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  locationButton: {
-    backgroundColor: '#E8F5F0',
-    padding: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  locationButtonText: {
-    fontSize: 15,
-    color: '#014836',
-    fontWeight: '600',
-  },
-  footer: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 12,
-    color: '#AAA',
-  },
+  screen: { flex: 1, backgroundColor: C.bgBase },
+  screenPadding: { paddingHorizontal: 20, paddingBottom: 16 },
+  settingsHero: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 24, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, padding: 18, marginTop: 8, marginBottom: 4, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.10, shadowRadius: 22 }, android: { elevation: 5 } }) },
+  settingsEyebrow: { fontSize: 11, fontWeight: '900', color: C.gold, letterSpacing: 1, textTransform: 'uppercase' },
+  settingsTitle: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 29, fontWeight: '900', color: C.navy, marginTop: 4 },
+  settingsSubtitle: { maxWidth: 230, fontSize: 13, lineHeight: 18, fontWeight: '600', color: C.textSecondary, marginTop: 5 },
+  settingsHeroIcon: { width: 52, height: 52, borderRadius: 26, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF8E9', borderWidth: 1, borderColor: 'rgba(184,132,32,0.18)' },
+  settingsSectionTitle: { fontSize: 10, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', color: C.textMuted, paddingVertical: 12 },
+  srow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 18 },
+  srowBorder: { borderTopWidth: 1, borderTopColor: C.border },
+  srowLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  srowIcon: { width: 34, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  srowLabel: { fontSize: 15, fontWeight: '500', color: C.textPrimary },
+  srowSub: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  srowValue: { fontSize: 13, color: C.textMuted, marginRight: 8, fontWeight: '700' },
+  brandMark: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.navy, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
 });

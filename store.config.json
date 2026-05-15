@@ -1,0 +1,49 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "copyright": "2026 PrayerTimeApp",
+    "categories": ["LIFESTYLE", "REFERENCE"],
+    "info": {
+      "en-US": {
+        "title": "PrayerTimeApp",
+        "subtitle": "Prayer Times & Qibla",
+        "description": "PrayerTimeApp helps Muslims keep prayer at the center of the day with accurate local prayer times, Qibla direction, reminders, Hijri calendar views, and private on-device prayer tracking.\n\nKey features:\n\n- Accurate prayer times based on your location\n- Multiple calculation methods and madhab support\n- Next-prayer countdown and daily prayer schedule\n- Qibla direction with compass support\n- Hijri calendar with prayer activity history\n- Local prayer tracking, qaza status, streaks, and activity heatmap\n- Optional local prayer notifications and Fajr alarm settings\n- Private by design: no account required and no prayer activity uploaded\n\nPrayerTimeApp is built for a calm, focused daily worship routine. Your settings and prayer activity stay on your device.",
+        "keywords": ["prayer,qibla,adhan,salah,namaz,islam,hijri,calendar,mosque,ramadan,fajr,isha"],
+        "releaseNotes": "Initial release with prayer times, Qibla direction, Hijri calendar, local prayer tracking, and prayer reminders.",
+        "privacyPolicyUrl": "https://example.com/privacy",
+        "supportUrl": "https://example.com/support"
+      }
+    },
+    "advisory": {
+      "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+      "gamblingSimulated": "NONE",
+      "medicalOrTreatmentInformation": "NONE",
+      "profanityOrCrudeHumor": "NONE",
+      "sexualContentGraphicAndNudity": "NONE",
+      "sexualContentOrNudity": "NONE",
+      "horrorOrFearThemes": "NONE",
+      "matureOrSuggestiveThemes": "NONE",
+      "violenceCartoonOrFantasy": "NONE",
+      "violenceRealistic": "NONE",
+      "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+      "contests": "NONE",
+      "gambling": false,
+      "unrestrictedWebAccess": false,
+      "seventeenPlus": false,
+      "kidsAgeBand": null,
+      "ageRatingOverride": "NONE",
+      "koreaAgeRatingOverride": "NONE"
+    },
+    "release": {
+      "automaticRelease": false,
+      "phasedRelease": true
+    },
+    "review": {
+      "firstName": "PrayerTimeApp",
+      "lastName": "Review",
+      "email": "support@prayertime.app",
+      "phone": "+10000000000",
+      "notes": "No account is required. Location permission is optional and used only to calculate prayer times and Qibla direction."
+    }
+  }
+}

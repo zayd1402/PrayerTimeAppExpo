@@ -13,13 +13,32 @@ Notifications.setNotificationHandler({
   }),
 });
 
+const PRAYER_CHANNEL_ID = 'prayer-alerts';
+
+function isPermissionGranted(permissions: unknown): boolean {
+  const result = permissions as { granted?: boolean; status?: string };
+  return result.granted === true || result.status === 'granted';
+}
+
+export async function configureNotificationChannels(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+
+  await Notifications.setNotificationChannelAsync(PRAYER_CHANNEL_ID, {
+    name: 'Prayer alerts',
+    importance: Notifications.AndroidImportance.HIGH,
+    sound: 'default',
+    vibrationPattern: [0, 250, 250, 250],
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+  });
+}
+
 // ─── Request Permissions ──────────────────────────────────────
 export async function requestNotificationPermission(): Promise<boolean> {
-  const { status: existing } = await Notifications.getPermissionsAsync();
-  if (existing === 'granted') return true;
+  const existing = await Notifications.getPermissionsAsync();
+  if (isPermissionGranted(existing)) return true;
 
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === 'granted';
+  const requested = await Notifications.requestPermissionsAsync();
+  return isPermissionGranted(requested);
 }
 
 // ─── Schedule Prayer Notification ─────────────────────────────
@@ -35,6 +54,8 @@ export async function schedulePrayerNotification(
   if (!hasPermission) return null;
 
   try {
+    await configureNotificationChannels();
+
     // Cancel existing notification for this prayer
     await cancelPrayerNotification(prayerId);
 
@@ -57,6 +78,7 @@ export async function schedulePrayerNotification(
         title,
         body,
         sound: true,
+        ...(Platform.OS === 'android' ? { channelId: PRAYER_CHANNEL_ID } : {}),
         priority: Notifications.AndroidNotificationPriority.HIGH,
         data: { prayerId, isFajrAlarm },
       },
@@ -93,8 +115,8 @@ export async function scheduleFajrAlarm(hour: number, minute: number): Promise<s
 
 // ─── Check Permission ─────────────────────────────────────────
 export async function hasNotificationPermission(): Promise<boolean> {
-  const { status } = await Notifications.getPermissionsAsync();
-  return status === 'granted';
+  const permissions = await Notifications.getPermissionsAsync();
+  return isPermissionGranted(permissions);
 }
 
 // ─── Get Scheduled Notifications ─────────────────────────────
