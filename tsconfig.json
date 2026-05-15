@@ -5,7 +5,8 @@
     "jsx": "react-native",
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noEmit": true
   },
   "include": [
     "**/*.ts",

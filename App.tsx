@@ -1,95 +1,168 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Platform, StatusBar
+  Platform, StatusBar, Alert, RefreshControl, Switch
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as NavigationBar from 'expo-navigation-bar';
 
-// ─── Design Tokens ───────────────────────────────────────────
-const C = {
-  bgBase:       '#FAF6EF',
-  bgSurface:    '#FFFFFF',
-  navy:         '#071A35',
-  navySoft:     '#1A3560',
-  gold:         '#B8892F',
-  goldLight:    '#D4AF6A',
-  goldPale:     '#F0E4C8',
-  emerald:      '#0F7A4F',
-  emeraldPale:  '#D4EDE1',
-  textPrimary:  '#071A35',
-  textSecondary:'#6B7280',
-  textMuted:    '#9CA3AF',
-  border:       'rgba(7,26,53,0.08)',
-  borderStrong: 'rgba(7,26,53,0.15)',
-};
+// ─── Types & Config ──────────────────────────────────────────
+import { C, NAV_TABS, PrayerId, PrayerTime, AppSettings, DEFAULT_SETTINGS, PRAYER_ICONS } from './src/types';
+import {
+  calculatePrayerTimes, getPrayerTimesObject, getNextPrayer, getTimeUntilNext,
+  minutesToTimeString, calculateQiblaDirection, bearingToCompassDirection
+} from './src/services/PrayerService';
+import {
+  gregorianToHijri, getMonthGrid, HijriService
+} from './src/services/HijriService';
+import {
+  loadSettings, saveSettings, markPrayer, loadPrayerLog,
+  getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData
+} from './src/services/StorageService';
+import { getCurrentLocation, DEFAULT_LOCATION } from './src/services/LocationService';
+import {
+  schedulePrayerNotification, hasNotificationPermission
+} from './src/services/NotificationService';
 
-// ─── Data ────────────────────────────────────────────────────
-const PRAYERS = [
-  { id: 'fajr',    name: 'Fajr',    arabic: 'الفجر',    time: '5:17 AM',  icon: 'sunny-outline',        status: 'ontime',  qaza: false },
-  { id: 'sunrise', name: 'Sunrise', arabic: 'الشروق',   time: '6:42 AM',  icon: 'partly-sunny-outline', status: 'done',    qaza: false },
-  { id: 'dhuhr',  name: 'Dhuhr',   arabic: 'الظهر',     time: '12:04 PM', icon: 'sun-outline',         status: 'qaza',    qaza: true  },
-  { id: 'asr',    name: 'Asr',      arabic: 'العصر',     time: '3:48 PM',  icon: 'cloud-outline',       status: 'qaza',    qaza: true  },
-  { id: 'maghrib',name: 'Maghrib',  arabic: 'المغرب',   time: '6:19 PM',  icon: 'sunset-outline',     status: 'qaza',    qaza: true  },
-  { id: 'isha',   name: 'Isha',     arabic: 'العشاء',   time: '7:39 PM',  icon: 'moon-outline',        status: 'qaza',    qaza: true  },
-];
+// ─── Utility ─────────────────────────────────────────────────
+function getDateKey(date: Date): string {
+  return date.toISOString().split('T')[0];
+}
 
-const NAV_TABS = [
-  { id: 'home',      label: 'Home',      icon: 'home-outline',         iconActive: 'home'         },
-  { id: 'countdown', label: 'Countdown', icon: 'time-outline',          iconActive: 'time'         },
-  { id: 'calendar',  label: 'Calendar',  icon: 'calendar-outline',      iconActive: 'calendar'     },
-  { id: 'journey',   label: 'Journey',   icon: 'analytics-outline',     iconActive: 'analytics'   },
-  { id: 'qibla',     label: 'Qibla',     icon: 'compass-outline',       iconActive: 'compass'      },
-  { id: 'settings',  label: 'Settings',  icon: 'settings-outline',       iconActive: 'settings'     },
-];
+function minutesFromMidnight(): number {
+  const now = new Date();
+  return now.getHours() * 60 + now.getMinutes();
+}
+
+function formatCountdown(diffMinutes: number): string {
+  if (diffMinutes <= 0) return '0:00';
+  const h = Math.floor(diffMinutes / 60);
+  const m = diffMinutes % 60;
+  return `${h}:${m.toString().padStart(2, '0')}`;
+}
+
+function getHourMinute(minutes: number): { hour: number; minute: number } {
+  return {
+    hour: Math.floor((minutes % 1440) / 60),
+    minute: minutes % 60,
+  };
+}
+
+// ─── Shared UI Components ───────────────────────────────────
+function SectionHeader({ title, action }: { title: string; action?: string }) {
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {action && <Text style={styles.sectionLink}>{action}</Text>}
+    </View>
+  );
+}
+
+function Card({ children, style }: { children: React.ReactNode; style?: any }) {
+  return (
+    <View style={[styles.card, style]}>
+      {children}
+    </View>
+  );
+}
 
 // ─── Home Screen ─────────────────────────────────────────────
-function HomeScreen() {
-  const [activePrayer] = useState('sunrise');
+function HomeScreen({
+  prayerTimes,
+  nextPrayer,
+  settings,
+  onMarkPrayer,
+}: {
+  prayerTimes: PrayerTime[];
+  nextPrayer: PrayerTime | null;
+  settings: AppSettings;
+  onMarkPrayer: (id: PrayerId, status: 'prayed' | 'qaza') => void;
+}) {
+  const [prayerLog, setPrayerLog] = useState<Record<string, string>>({});
+  const todayKey = getDateKey(new Date());
+
+  useEffect(() => {
+    loadPrayerLog().then(log => {
+      if (log[todayKey]) setPrayerLog(log[todayKey] as Record<string, string>);
+    });
+  }, [todayKey]);
+
+  if (!prayerTimes.length) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.loadingText}>Getting your location...</Text>
+      </View>
+    );
+  }
+
+  const dayProgress = Math.round((minutesFromMidnight() / 1440) * 100);
+  const activePrayer = prayerTimes.find(p => p.status === 'active') || nextPrayer;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
       {/* Hero Card */}
-      <View style={styles.heroCard}>
+      <Card style={styles.heroCard}>
         <View style={styles.heroLeft}>
           <Text style={styles.heroLabel}>Next Prayer</Text>
-          <View style={styles.heroTimeRow}>
-            <Text style={styles.heroTime}>5:17</Text>
-            <Text style={styles.heroAmPm}>AM</Text>
-          </View>
-          <View style={styles.heroNextRow}>
-            <View style={styles.heroDot} />
-            <Text style={styles.heroNextText}>Fajr in 4h 23m</Text>
-          </View>
+          {nextPrayer && (
+            <>
+              <View style={styles.heroTimeRow}>
+                <Text style={styles.heroTime}>
+                  {minutesToTimeString(nextPrayer.minutes).split(' ')[0]}
+                </Text>
+                <Text style={styles.heroAmPm}>
+                  {minutesToTimeString(nextPrayer.minutes).split(' ')[1]}
+                </Text>
+              </View>
+              <View style={styles.heroNextRow}>
+                <View style={styles.heroDot} />
+                <Text style={styles.heroNextText}>
+                  {nextPrayer.name} in {getTimeUntilNext(nextPrayer, minutesFromMidnight())}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
         <View style={styles.heroRight}>
           <View style={styles.progressRing}>
-            <Text style={styles.progressPct}>70%</Text>
+            <Text style={styles.progressPct}>{dayProgress}%</Text>
             <Text style={styles.progressDay}>of day</Text>
           </View>
         </View>
-      </View>
-
-      {/* Section Header */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>TODAY'S PRAYERS</Text>
-        <Text style={styles.sectionLink}>View Calendar</Text>
-      </View>
+      </Card>
 
       {/* Prayer Rows */}
-      {PRAYERS.map((prayer, i) => {
-        const isActive = prayer.id === activePrayer;
+      <SectionHeader title="TODAY'S PRAYERS" />
+      {prayerTimes.filter(p => p.id !== 'sunrise').map((prayer, i) => {
+        const logStatus = prayerLog[prayer.id];
+        const isActive = activePrayer?.id === prayer.id;
+
         return (
-          <View
+          <TouchableOpacity
             key={prayer.id}
             style={[
               styles.prayerRow,
               isActive && styles.prayerRowActive,
-              i < PRAYERS.length - 1 && styles.prayerRowBorder,
+              i > 0 && styles.prayerRowBorder,
             ]}
+            onLongPress={() => {
+              if (prayer.status === 'passed') {
+                Alert.alert(
+                  `Mark ${prayer.name}`,
+                  'How did you pray?',
+                  [
+                    { text: 'Prayed On Time', onPress: () => onMarkPrayer(prayer.id, 'prayed') },
+                    { text: 'Qaza', onPress: () => onMarkPrayer(prayer.id, 'qaza') },
+                    { text: 'Cancel', style: 'cancel' },
+                  ]
+                );
+              }
+            }}
+            activeOpacity={0.7}
           >
             <View style={[styles.prayerIconWrap, isActive && styles.prayerIconActive]}>
               <Ionicons
-                name={prayer.icon as any}
+                name={(isActive ? PRAYER_ICONS[prayer.id].iconActive : PRAYER_ICONS[prayer.id].icon) as any}
                 size={18}
                 color={isActive ? C.gold : C.navySoft}
               />
@@ -98,19 +171,60 @@ function HomeScreen() {
               <Text style={[styles.prayerName, isActive && styles.prayerNameActive]}>
                 {prayer.name}
               </Text>
+              <Text style={styles.prayerArabic}>{prayer.arabic}</Text>
             </View>
             <Text style={[styles.prayerTime, isActive && styles.prayerTimeActive]}>
               {prayer.time}
             </Text>
-            {prayer.status === 'done' && (
+            {logStatus === 'prayed' && (
               <View style={styles.statusBadgeDone}><Text style={styles.statusTextDone}>Done</Text></View>
             )}
-            {prayer.status === 'ontime' && (
-              <View style={styles.statusBadgeOntime}><Text style={styles.statusTextOntime}>On time</Text></View>
-            )}
-            {prayer.status === 'qaza' && (
+            {logStatus === 'qaza' && (
               <View style={styles.statusBadgeQaza}><Text style={styles.statusTextQaza}>Qaza</Text></View>
             )}
+            {prayer.status === 'active' && !logStatus && (
+              <View style={styles.statusBadgeNow}><Text style={styles.statusTextNow}>Now</Text></View>
+            )}
+          </TouchableOpacity>
+        );
+      })}
+
+      <Text style={styles.hintText}>Long press a passed prayer to mark it</Text>
+    </ScrollView>
+  );
+}
+
+// ─── Countdown Screen ────────────────────────────────────────
+function CountdownScreen({ prayerTimes, nextPrayer }: { prayerTimes: PrayerTime[]; nextPrayer: PrayerTime | null }) {
+  const [now, setNow] = useState(minutesFromMidnight());
+
+  useEffect(() => {
+    const interval = setInterval(() => setNow(minutesFromMidnight()), 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (!nextPrayer) return <View style={styles.centered}><Text style={styles.loadingText}>Loading...</Text></View>;
+
+  const diff = Math.max(0, nextPrayer.minutes - now);
+  const upcoming = prayerTimes.filter(p => p.id !== 'sunrise' && p.minutes > now).slice(0, 4);
+
+  return (
+    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
+      <View style={styles.cdHero}>
+        <Text style={styles.cdLabel}>Time until {nextPrayer.name}</Text>
+        <Text style={styles.cdTime}>{formatCountdown(diff)}</Text>
+        <Text style={styles.cdPrayer}>{nextPrayer.name} — {nextPrayer.time}</Text>
+        <View style={styles.cdDivider} />
+      </View>
+
+      <SectionHeader title="UPCOMING PRAYERS" />
+      {upcoming.map((p) => {
+        const elapsed = Math.max(0, p.minutes - now);
+        return (
+          <View key={p.id} style={styles.cdCard}>
+            <Text style={styles.cdCardTime}>{p.time}</Text>
+            <Text style={styles.cdCardName}>{p.name}</Text>
+            <Text style={styles.cdCardElapsed}>{formatCountdown(elapsed)}</Text>
           </View>
         );
       })}
@@ -118,52 +232,46 @@ function HomeScreen() {
   );
 }
 
-// ─── Countdown Screen ────────────────────────────────────────
-function CountdownScreen() {
-  return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
-      <View style={styles.cdHero}>
-        <Text style={styles.cdLabel}>Time until Fajr</Text>
-        <Text style={styles.cdTime}>4:23</Text>
-        <Text style={styles.cdPrayer}>Fajr — 5:17 AM</Text>
-        <View style={styles.cdDivider} />
-      </View>
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>UPCOMING PRAYERS</Text>
-      </View>
-
-      {[
-        { time: '12:04', name: 'Dhuhr',   elapsed: '2h 41m' },
-        { time: '3:48',  name: 'Asr',     elapsed: '6h 25m' },
-        { time: '6:19',  name: 'Maghrib', elapsed: '8h 56m' },
-        { time: '7:39',  name: 'Isha',    elapsed: '10h 16m' },
-      ].map((p) => (
-        <View key={p.name} style={styles.cdCard}>
-          <Text style={styles.cdCardTime}>{p.time}</Text>
-          <Text style={styles.cdCardName}>{p.name}</Text>
-          <View style={styles.cdCardElapsed}><Text style={styles.cdCardElapsedText}>{p.elapsed}</Text></View>
-        </View>
-      ))}
-    </ScrollView>
-  );
-}
-
 // ─── Calendar Screen ─────────────────────────────────────────
-function CalendarScreen() {
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
-  const firstDayOffset = 4; // May 1 2026 = Thursday (index 4)
-  const prayedDays = new Set([1,2,3,5,6,7,9,10,12,14,15]);
-  const missedDays = new Set([4,8,11,13]);
+function CalendarScreen({ prayerTimes }: { prayerTimes: PrayerTime[] }) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [prayerLog, setPrayerLog] = useState<Record<string, Record<string, string>>>({});
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const today = new Date();
+  const todayKey = getDateKey(today);
+
+  useEffect(() => {
+    loadPrayerLog().then(setPrayerLog);
+  }, []);
+
+  const grid = HijriService.getMonthGrid(year, month);
+  const hijriToday = HijriService.gregorianToHijri(today);
+  const hijriCurrent = HijriService.gregorianToHijri(new Date(year, month, 15));
+
+  const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
+  const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+
+  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const hijriMonthStr = `${hijriCurrent.monthNameArabic} ${hijriCurrent.year}`;
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
       {/* Month header */}
       <View style={styles.calHeader}>
-        <Text style={styles.calMonth}>May 2026</Text>
+        <View>
+          <Text style={styles.calMonth}>{monthName}</Text>
+          <Text style={styles.calHijri}>{hijriMonthStr}</Text>
+        </View>
         <View style={styles.calNav}>
-          <TouchableOpacity style={styles.calNavBtn}><Ionicons name="chevron-back" size={16} color={C.navy} /></TouchableOpacity>
-          <TouchableOpacity style={styles.calNavBtn}><Ionicons name="chevron-forward" size={16} color={C.navy} /></TouchableOpacity>
+          <TouchableOpacity style={styles.calNavBtn} onPress={prevMonth}>
+            <Ionicons name="chevron-back" size={16} color={C.navy} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.calNavBtn} onPress={nextMonth}>
+            <Ionicons name="chevron-forward" size={16} color={C.navy} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -176,111 +284,195 @@ function CalendarScreen() {
 
       {/* Calendar grid */}
       <View style={styles.calGrid}>
-        {Array.from({ length: firstDayOffset }).map((_, i) => (
-          <View key={`empty-${i}`} style={styles.calDayEmpty} />
-        ))}
-        {days.map(day => {
-          const isToday = day === 15;
-          const isPrayed = prayedDays.has(day);
-          const isMissed = missedDays.has(day);
+        {grid.map((cell: { gregorian: Date; hijri: { day: number; monthNameArabic: string }; isCurrentMonth: boolean }, idx: number) => {
+          const { gregorian, hijri, isCurrentMonth } = cell;
+          const dateKey = getDateKey(gregorian);
+          const isToday = dateKey === todayKey;
+          const dayLog = prayerLog[dateKey];
+          const prayedCount = dayLog ? Object.entries(dayLog).filter(([id, s]) => id !== 'sunrise' && s === 'prayed').length : 0;
+          const isSelected = dateKey === selectedDate;
+
           return (
-            <View key={day} style={[styles.calDay, isToday && styles.calDayToday, isPrayed && styles.calDayPrayed, isMissed && styles.calDayMissed]}>
-              <Text style={[styles.calDayText, isToday && styles.calDayTextToday, isPrayed && styles.calDayTextPrayed]}>
-                {day}
+            <TouchableOpacity
+              key={idx}
+              style={[
+                styles.calDay,
+                !isCurrentMonth && styles.calDayOther,
+                isToday && styles.calDayToday,
+                isSelected && styles.calDaySelected,
+              ]}
+              onPress={() => setSelectedDate(dateKey === selectedDate ? null : dateKey)}
+            >
+              <Text style={[
+                styles.calDayNum,
+                isToday && styles.calDayNumToday,
+                !isCurrentMonth && styles.calDayNumOther,
+              ]}>
+                {gregorian.getDate()}
               </Text>
-            </View>
+              {isCurrentMonth && (
+                <Text style={[styles.calDayHijri, prayedCount > 0 && styles.calDayHijriPrayed]}>
+                  {hijri.day}
+                </Text>
+              )}
+              {prayedCount >= 5 && (
+                <View style={styles.calPrayedDot} />
+              )}
+            </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* Focus Time */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>FOCUS TIME TODAY</Text>
-      </View>
-      {[
-        { name: 'Fajr',   fill: 100, min: '30m' },
-        { name: 'Dhuhr',  fill: 0,   min: '0m'  },
-        { name: 'Asr',    fill: 0,   min: '0m'  },
-      ].map(p => (
-        <View key={p.name} style={styles.focusRow}>
-          <Text style={styles.focusName}>{p.name}</Text>
-          <View style={styles.focusBar}>
-            <View style={[styles.focusFill, { width: `${p.fill}%` }]} />
-          </View>
-          <Text style={styles.focusMin}>{p.min}</Text>
+      {/* Selected date detail */}
+      {selectedDate && (
+        <View style={styles.calDetail}>
+          {(() => {
+            const selected = new Date(selectedDate + 'T12:00:00');
+            const hijri = gregorianToHijri(selected);
+            const dayLog = prayerLog[selectedDate] || {};
+            const times = getPrayerTimesObject(
+              selected,
+              -33.8688, 151.2093,
+              'muslim_world_league', 'shafi',
+              0
+            );
+            return (
+              <>
+                <Text style={styles.calDetailDate}>
+                  {selected.toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })}
+                </Text>
+                <Text style={styles.calDetailHijri}>
+                  {hijri.day} {hijri.monthNameArabic} {hijri.year}
+                </Text>
+                {times.filter((t: PrayerTime) => t.id !== 'sunrise').map((p: PrayerTime) => (
+                  <View key={p.id} style={styles.calDetailRow}>
+                    <Text style={styles.calDetailPrayer}>{p.name}</Text>
+                    <Text style={styles.calDetailTime}>{p.time}</Text>
+                    {dayLog[p.id] === 'prayed' && <Text style={styles.calDetailDone}>✓</Text>}
+                    {dayLog[p.id] === 'qaza' && <Text style={styles.calDetailQaza}>Q</Text>}
+                  </View>
+                ))}
+              </>
+            );
+          })()}
         </View>
-      ))}
+      )}
     </ScrollView>
   );
 }
 
 // ─── Journey Screen ──────────────────────────────────────────
 function JourneyScreen() {
-  const heatmapApril = [
-    [1,2,2,1,3,3,0],
-    [2,1,1,2,1,0,0],
-    [1,2,3,2,1,0,0],
-    [1,1,2,1,3,0,0],
-    [2,1,1,0,0,0,0],
-  ];
+  const [streak, setStreak] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [onTimeRate, setOnTimeRate] = useState(0);
+  const [heatmap, setHeatmap] = useState<Record<string, number>>({});
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadStats = useCallback(async () => {
+    const [s, t, o, h] = await Promise.all([
+      getStreak(), getTotalPrayers(), getOnTimeRate(), getHeatmapData(8)
+    ]);
+    setStreak(s); setTotal(t); setOnTimeRate(o); setHeatmap(h);
+  }, []);
+
+  useEffect(() => { loadStats(); }, []);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadStats();
+    setRefreshing(false);
+  };
+
+  // Build last 5 weeks of heatmap (35 days)
+  const now = new Date();
+  const weeks: Array<Array<{ date: string; level: number }>> = [];
+  for (let w = 4; w >= 0; w--) {
+    const week: Array<{ date: string; level: number }> = [];
+    for (let d = 0; d < 7; d++) {
+      const dt = new Date(now);
+      dt.setDate(dt.getDate() - (w * 7 + (6 - d)));
+      const key = getDateKey(dt);
+      const count = heatmap[key] || 0;
+      const level = count === 0 ? 0 : count <= 2 ? 1 : count <= 4 ? 2 : 3;
+      week.push({ date: key, level });
+    }
+    weeks.push(week);
+  }
+
+  // Weekly bar chart — last 7 days
+  const weeklyBars = Array.from({ length: 7 }, (_, i) => {
+    const dt = new Date(now);
+    dt.setDate(dt.getDate() - (6 - i));
+    const key = getDateKey(dt);
+    const count = heatmap[key] || 0;
+    const maxCount = 6;
+    return { day: ['S','M','T','W','T','F','S'][dt.getDay()], h: Math.min(100, (count / maxCount) * 100) };
+  });
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.screenPadding}
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.gold} />}
+    >
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
-        <View style={styles.statCard}>
-          <Text style={[styles.statValue, { color: C.gold }]}>27</Text>
+        <Card style={styles.statCard}>
+          <Text style={[styles.statValue, { color: C.gold }]}>{streak}</Text>
           <Text style={styles.statLabel}>Day Streak</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>142</Text>
+        </Card>
+        <Card style={styles.statCard}>
+          <Text style={styles.statValue}>{total}</Text>
           <Text style={styles.statLabel}>Total Prayers</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Text style={[styles.statValue, { color: C.emerald }]}>94%</Text>
+        </Card>
+        <Card style={styles.statCard}>
+          <Text style={[styles.statValue, { color: C.emerald }]}>{onTimeRate}%</Text>
           <Text style={styles.statLabel}>On Time</Text>
-        </View>
+        </Card>
       </View>
 
       {/* Heatmap */}
-      <View style={styles.heatmapCard}>
+      <SectionHeader title="ACTIVITY" />
+      <Card style={styles.heatmapCard}>
         <View style={styles.heatmapHeader}>
-          <Text style={styles.heatmapTitle}>April Activity</Text>
+          <Text style={styles.heatmapTitle}>Last 5 Weeks</Text>
           <View style={styles.heatmapLegend}>
             <Text style={styles.heatmapLegendText}>Less</Text>
-            {[0,1,2,3,4].map(l => <View key={l} style={[styles.heatCell, l === 1 && styles.heatCellL1, l === 2 && styles.heatCellL2, l === 3 && styles.heatCellL3]} />)}
+            {[0,1,2,3].map(l => <View key={l} style={[styles.heatCell, l === 1 && styles.heatCellL1, l === 2 && styles.heatCellL2, l === 3 && styles.heatCellL3]} />)}
             <Text style={styles.heatmapLegendText}>More</Text>
           </View>
         </View>
         <View style={styles.heatWeekdays}>
           {['S','M','T','W','T','F','S'].map((d,i) => <Text key={i} style={styles.heatDayLabel}>{d}</Text>)}
         </View>
-        {heatmapApril.map((week, wi) => (
+        {weeks.map((week, wi) => (
           <View key={wi} style={styles.heatRow}>
-            {week.map((level, di) => (
-              <View key={di} style={[styles.heatCellBase, level === 1 && styles.heatCellL1, level === 2 && styles.heatCellL2, level === 3 && styles.heatCellL3]} />
+            {week.map(({ date, level }, di) => (
+              <View
+                key={di}
+                style={[
+                  styles.heatCellBase,
+                  level === 1 && styles.heatCellL1,
+                  level === 2 && styles.heatCellL2,
+                  level === 3 && styles.heatCellL3,
+                ]}
+              />
             ))}
           </View>
         ))}
-      </View>
+      </Card>
 
       {/* Weekly Chart */}
-      <View style={styles.weeklyCard}>
+      <Card style={styles.weeklyCard}>
         <View style={styles.weeklyHeader}>
           <Text style={styles.weeklyTitle}>This Week</Text>
-          <View style={styles.weeklyTrend}><Text style={styles.weeklyTrendText}>↑ 12%</Text></View>
+          <View style={styles.weeklyTrend}><Text style={styles.weeklyTrendText}>↑ {onTimeRate}%</Text></View>
         </View>
         <View style={styles.weeklyBars}>
-          {[
-            { day: 'S', h: 60 },
-            { day: 'M', h: 85 },
-            { day: 'T', h: 100 },
-            { day: 'W', h: 70 },
-            { day: 'T', h: 90 },
-            { day: 'F', h: 0 },
-            { day: 'S', h: 0 },
-          ].map((b) => (
-            <View key={b.day} style={styles.wbarWrap}>
+          {weeklyBars.map((b, i) => (
+            <View key={i} style={styles.wbarWrap}>
               <View style={styles.wbarTrack}>
                 <View style={[styles.wbar, b.h > 0 && styles.wbarFilled, { height: `${b.h}%` }]} />
               </View>
@@ -288,169 +480,371 @@ function JourneyScreen() {
             </View>
           ))}
         </View>
-      </View>
+      </Card>
     </ScrollView>
   );
 }
 
-// ─── Qibla Screen ────────────────────────────────────────────
-function QiblaScreen() {
-  const [toggled, setToggled] = useState(false);
+// ─── Qibla Screen ─────────────────────────────────────────────
+function QiblaScreen({ location }: { location: { latitude: number; longitude: number; name: string } }) {
+  const [rotation, setRotation] = useState(0);
+  const [compassSupported, setCompassSupported] = useState(true);
+
+  const qiblaDir = calculateQiblaDirection(location.latitude, location.longitude);
+  const bearingStr = bearingToCompassDirection(qiblaDir);
+  const distance = Math.round(
+    6371 * 2 * Math.atan2(
+      Math.sqrt(Math.abs(Math.sin((location.latitude - 21.4225) * Math.PI / 360) ** 2 +
+        Math.cos(location.latitude * Math.PI / 180) * Math.cos(21.4225 * Math.PI / 180) *
+        Math.sin((location.longitude - 39.8264) * Math.PI / 360) ** 2)),
+      Math.sqrt(1 - (Math.abs(Math.sin((location.latitude - 21.4225) * Math.PI / 360) ** 2 +
+        Math.cos(location.latitude * Math.PI / 180) * Math.cos(21.4225 * Math.PI / 180) *
+        Math.sin((location.longitude - 39.8264) * Math.PI / 360) ** 2))
+      )
+    )
+  );
+
+  useEffect(() => {
+    let subscription: { remove: () => void } | null = null;
+    const { Magnetometer } = require('expo-sensors');
+    Magnetometer.addListener((data: { x: number; y: number; z: number }) => {
+      const { x, y } = data;
+      const angle = Math.atan2(y, x) * (180 / Math.PI);
+      const corrected = (angle + 360) % 360;
+      const relative = (qiblaDir - corrected + 360) % 360;
+      setRotation(relative);
+    });
+    return () => subscription?.remove();
+  }, [qiblaDir]);
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
       {/* Compass */}
       <View style={styles.qiblaWrap}>
-        <View style={styles.compassRing}>
+        <View style={[styles.compassRing, { transform: [{ rotate: `${rotation}deg` }] }]}>
+          {/* Direction markers */}
+          {['N','E','S','W'].map((d, i) => {
+            const angles: Record<string, number> = { N: 0, E: 90, S: 180, W: 270 };
+            const angle = angles[d];
+            const offset = (angle - rotation + 360) % 360;
+            return (
+              <View
+                key={d}
+                style={[
+                  styles.compassMarker,
+                  { transform: [{ rotate: `${angle}deg` }, { translateY: -85 }], opacity: offset < 45 || offset > 315 ? 1 : 0.3 }
+                ]}
+              >
+                <Text style={styles.compassMarkerText}>{d}</Text>
+              </View>
+            );
+          })}
           <View style={styles.compassInner}>
-            <Ionicons name="location" size={28} color={C.navy} />
-            <Text style={styles.compassDeg}>243°</Text>
-            <Text style={styles.compassBearing}>SE</Text>
+            <Ionicons name="location" size={24} color={C.navy} />
+            <Text style={styles.compassDeg}>{Math.round(qiblaDir)}°</Text>
+            <Text style={styles.compassBearing}>{bearingStr}</Text>
           </View>
         </View>
         <Text style={styles.qiblaCity}>Makkah Al Mukkaramah</Text>
-        <Text style={styles.qiblaDist}>8,356 km away</Text>
+        <Text style={styles.qiblaDist}>{distance.toLocaleString()} km away</Text>
+        <Text style={styles.qiblaLocation}>{location.name}</Text>
       </View>
 
-      {/* Nearby Mosques */}
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>NEARBY MOSQUES</Text>
-      </View>
-
-      {[
-        { name: 'Lakemba Mosque', dist: '1.2 km away' },
-        { name: 'Auburn Mosque',   dist: '2.8 km away' },
-      ].map((m) => (
-        <View key={m.name} style={styles.mosqueCard}>
-          <View style={styles.mosqueIcon}>
-            <Ionicons name="business-outline" size={20} color={C.gold} />
-          </View>
-          <View>
-            <Text style={styles.mosqueName}>{m.name}</Text>
-            <Text style={styles.mosqueDist}>{m.dist}</Text>
-          </View>
+      {/* Info */}
+      <Card style={styles.qiblaInfoCard}>
+        <View style={styles.qiblaInfoRow}>
+          <Ionicons name="navigate" size={18} color={C.gold} />
+          <Text style={styles.qiblaInfoText}>
+            Point your device in the direction of the arrow. The compass shows the relative direction to Makkah.
+          </Text>
         </View>
-      ))}
+      </Card>
+
+      {/* Nearby Mosques placeholder */}
+      <SectionHeader title="NEARBY MOSQUES" />
+      <Card>
+        <View style={styles.mosquePlaceholder}>
+          <Ionicons name="search" size={24} color={C.textMuted} />
+          <Text style={styles.mosquePlaceholderText}>Location-based mosque search coming soon</Text>
+        </View>
+      </Card>
     </ScrollView>
   );
 }
 
 // ─── Settings Screen ─────────────────────────────────────────
-function SettingsScreen() {
+function SettingsScreen({
+  settings,
+  onUpdate,
+}: {
+  settings: AppSettings;
+  onUpdate: (partial: Partial<AppSettings>) => void;
+}) {
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  useEffect(() => {
+    hasNotificationPermission().then(setNotificationsEnabled);
+  }, []);
+
+  const METHOD_LABELS: Record<string, string> = {
+    muslim_world_league: 'Islamic Society (MWL)',
+    isna: 'ISNA',
+    egyptian: 'Egyptian',
+    umm_al_qura: 'Umm Al-Qura',
+    karachi: 'Karachi (University)',
+  };
+
+  const handleToggle = async (key: keyof AppSettings, value: boolean) => {
+    if (key === 'notificationsEnabled' && value) {
+      const granted = await hasNotificationPermission();
+      if (!granted) {
+        Alert.alert('Permission Required', 'Enable notifications in your device settings.');
+        return;
+      }
+    }
+    onUpdate({ [key]: value });
+  };
+
+  const handleFajrAlarmToggle = async (value: boolean) => {
+    if (value) {
+      const granted = await hasNotificationPermission();
+      if (!granted) {
+        Alert.alert('Permission Required', 'Enable notifications to use Fajr alarm.');
+        return;
+      }
+    }
+    onUpdate({ fajrAlarmEnabled: value });
+  };
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
+      {/* Location */}
+      <Text style={styles.settingsSectionTitle}>LOCATION</Text>
+      <Card>
+        <View style={styles.srow}>
+          <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
+            <Ionicons name="location-outline" size={16} color={C.navy} />
+          </View>
+          <View style={styles.srowLeft}>
+            <Text style={styles.srowLabel}>Current Location</Text>
+            <Text style={styles.srowSub}>{settings.location?.name || 'Not set'}</Text>
+          </View>
+        </View>
+      </Card>
+
       {/* Notifications */}
       <Text style={styles.settingsSectionTitle}>NOTIFICATIONS</Text>
-      <View style={styles.settingsCard}>
+      <Card>
         <View style={styles.srow}>
-          <View style={styles.srowLeft}>
-            <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
-              <Ionicons name="notifications-outline" size={16} color={C.navy} />
-            </View>
-            <Text style={styles.srowLabel}>Prayer Alerts</Text>
+          <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
+            <Ionicons name="notifications-outline" size={16} color={C.navy} />
           </View>
-          <View style={[styles.toggle, true && styles.toggleActive]}><View style={styles.toggleKnob} /></View>
+          <Text style={styles.srowLabel}>Prayer Alerts</Text>
+          <Switch
+            value={settings.notificationsEnabled}
+            onValueChange={v => handleToggle('notificationsEnabled', v)}
+            trackColor={{ false: 'rgba(7,26,53,0.12)', true: C.emeraldPale }}
+            thumbColor={settings.notificationsEnabled ? C.emerald : '#fff'}
+          />
         </View>
         <View style={[styles.srow, styles.srowBorder]}>
-          <View style={styles.srowLeft}>
-            <View style={[styles.srowIcon, { backgroundColor: C.goldPale }]}>
-              <Ionicons name="alarm-outline" size={16} color={C.gold} />
-            </View>
-            <Text style={styles.srowLabel}>Fajr Auto-Alarm</Text>
+          <View style={[styles.srowIcon, { backgroundColor: C.goldPale }]}>
+            <Ionicons name="alarm-outline" size={16} color={C.gold} />
           </View>
-          <Text style={styles.srowValue}>15 min before</Text>
-          <Ionicons name="chevron-forward" size={14} color={C.textMuted} />
+          <Text style={styles.srowLabel}>Fajr Auto-Alarm</Text>
+          <Switch
+            value={settings.fajrAlarmEnabled}
+            onValueChange={handleFajrAlarmToggle}
+            trackColor={{ false: 'rgba(7,26,53,0.12)', true: C.emeraldPale }}
+            thumbColor={settings.fajrAlarmEnabled ? C.emerald : '#fff'}
+          />
         </View>
         <View style={[styles.srow, styles.srowBorder]}>
-          <View style={styles.srowLeft}>
-            <View style={[styles.srowIcon, { backgroundColor: C.emeraldPale }]}>
-              <Ionicons name="checkmark-circle-outline" size={16} color={C.emerald} />
-            </View>
-            <Text style={styles.srowLabel}>Iqama Countdown</Text>
+          <View style={[styles.srowIcon, { backgroundColor: C.emeraldPale }]}>
+            <Ionicons name="checkmark-circle-outline" size={16} color={C.emerald} />
           </View>
-          <View style={styles.toggle}><View style={styles.toggleKnob} /></View>
+          <Text style={styles.srowLabel}>Iqama Countdown</Text>
+          <Switch
+            value={settings.iqamaCountdownEnabled}
+            onValueChange={v => handleToggle('iqamaCountdownEnabled', v)}
+            trackColor={{ false: 'rgba(7,26,53,0.12)', true: C.emeraldPale }}
+            thumbColor={settings.iqamaCountdownEnabled ? C.emerald : '#fff'}
+          />
         </View>
-      </View>
-
-      {/* Calendar */}
-      <Text style={styles.settingsSectionTitle}>CALENDAR</Text>
-      <View style={styles.settingsCard}>
-        <View style={[styles.srow, styles.srowBorder]}>
-          <View style={styles.srowLeft}>
-            <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
-              <Ionicons name="calendar-outline" size={16} color={C.navy} />
-            </View>
-            <Text style={styles.srowLabel}>Import Calendar</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={14} color={C.textMuted} />
-        </View>
-        <View style={[styles.srow, styles.srowBorder]}>
-          <View style={styles.srowLeft}>
-            <View style={[styles.srowIcon, { backgroundColor: 'rgba(107,114,128,0.1)' }]}>
-              <Ionicons name="sync-outline" size={16} color={C.textSecondary} />
-            </View>
-            <Text style={styles.srowLabel}>Sync to Calendar</Text>
-          </View>
-          <View style={styles.toggle}><View style={styles.toggleKnob} /></View>
-        </View>
-      </View>
+      </Card>
 
       {/* Calculation */}
       <Text style={styles.settingsSectionTitle}>CALCULATION</Text>
-      <View style={styles.settingsCard}>
-        <View style={[styles.srow, styles.srowBorder]}>
-          <View style={styles.srowLeft}>
-            <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
-              <Ionicons name="globe-outline" size={16} color={C.navy} />
-            </View>
-            <Text style={styles.srowLabel}>Madhab</Text>
+      <Card>
+        <TouchableOpacity
+          style={[styles.srow, styles.srowBorder]}
+          onPress={() => {
+            const methods = Object.keys(METHOD_LABELS);
+            const current = methods.indexOf(settings.calculationMethod);
+            Alert.alert(
+              'Calculation Method',
+              'Select your preferred calculation method',
+              methods.map((m, i) => ({
+                text: i === current ? `✓ ${METHOD_LABELS[m]}` : METHOD_LABELS[m],
+                onPress: () => onUpdate({ calculationMethod: m as any }),
+              }))
+            );
+          }}
+        >
+          <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
+            <Ionicons name="globe-outline" size={16} color={C.navy} />
           </View>
-          <Text style={styles.srowValue}>Shafi</Text>
+          <Text style={styles.srowLabel}>Method</Text>
+          <Text style={styles.srowValue}>{METHOD_LABELS[settings.calculationMethod]}</Text>
           <Ionicons name="chevron-forward" size={14} color={C.textMuted} />
-        </View>
-        <View style={[styles.srow, styles.srowBorder]}>
-          <View style={styles.srowLeft}>
-            <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
-              <Ionicons name="options-outline" size={16} color={C.navy} />
-            </View>
-            <Text style={styles.srowLabel}>Calculation Method</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.srow, styles.srowBorder]}
+          onPress={() => {
+            Alert.alert('Madhab', 'Select your school of jurisprudence', [
+              { text: 'Shafi ✓', onPress: () => onUpdate({ madhab: 'shafi' }) },
+              { text: 'Hanafi', onPress: () => onUpdate({ madhab: 'hanafi' }) },
+            ]);
+          }}
+        >
+          <View style={[styles.srowIcon, { backgroundColor: 'rgba(7,26,53,0.07)' }]}>
+            <Ionicons name="book-outline" size={16} color={C.navy} />
           </View>
-          <Text style={styles.srowValue}>Islamic Society</Text>
+          <Text style={styles.srowLabel}>Madhab</Text>
+          <Text style={styles.srowValue}>{settings.madhab === 'shafi' ? 'Shafi' : 'Hanafi'}</Text>
           <Ionicons name="chevron-forward" size={14} color={C.textMuted} />
+        </TouchableOpacity>
+      </Card>
+
+      {/* About */}
+      <Text style={styles.settingsSectionTitle}>ABOUT</Text>
+      <Card>
+        <View style={styles.srow}>
+          <Text style={styles.srowLabel}>Nur Minimal</Text>
+          <Text style={styles.srowValue}>v1.0.0</Text>
         </View>
-      </View>
+      </Card>
     </ScrollView>
   );
 }
 
 // ─── Main App ────────────────────────────────────────────────
 export default function App() {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState<string>('home');
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [prayerTimes, setPrayerTimes] = useState<PrayerTime[]>([]);
+  const [nextPrayer, setNextPrayer] = useState<PrayerTime | null>(null);
+  const [location, setLocation] = useState(DEFAULT_LOCATION);
+  const [loading, setLoading] = useState(true);
+
+  // Initialize
+  useEffect(() => {
+    const init = async () => {
+      // Set Android nav bar
+      if (Platform.OS === 'android') {
+        await NavigationBar.setBackgroundColorAsync(C.bgBase);
+        await NavigationBar.setButtonStyleAsync('dark');
+      }
+
+      // Load settings
+      const saved = await loadSettings();
+      setSettings(saved);
+
+      // Get location
+      const loc = await getCurrentLocation();
+      if (loc) {
+        setLocation(loc);
+        const newSettings = { ...saved, location: loc };
+        setSettings(newSettings);
+        await saveSettings(newSettings);
+      } else if (saved.location) {
+        setLocation(saved.location);
+      }
+
+      setLoading(false);
+    };
+    init();
+  }, []);
+
+  // Update prayer times when settings or location changes
+  useEffect(() => {
+    if (loading) return;
+    updatePrayerTimes();
+  }, [settings.calculationMethod, settings.madhab, location, loading]);
+
+  // Tick every minute
+  useEffect(() => {
+    if (loading) return;
+    const interval = setInterval(updatePrayerTimes, 60000);
+    return () => clearInterval(interval);
+  }, [settings.calculationMethod, settings.madhab, location, loading]);
+
+  const updatePrayerTimes = useCallback(() => {
+    const times = getPrayerTimesObject(
+      new Date(),
+      location.latitude,
+      location.longitude,
+      settings.calculationMethod,
+      settings.madhab
+    );
+    setPrayerTimes(times);
+    const next = getNextPrayer(times, minutesFromMidnight());
+    setNextPrayer(next);
+
+    // Schedule notifications if enabled
+    if (settings.notificationsEnabled) {
+      times.forEach(p => {
+        if (p.id === 'sunrise') return;
+        const { hour, minute } = getHourMinute(p.minutes);
+        schedulePrayerNotification(p.id, p.name, hour, minute, false);
+      });
+    }
+  }, [settings, location, loading]);
+
+  const handleMarkPrayer = useCallback(async (prayerId: PrayerId, status: 'prayed' | 'qaza') => {
+    const todayKey = getDateKey(new Date());
+    await markPrayer(todayKey, prayerId, status);
+    // Refresh stats on Journey
+  }, []);
+
+  const handleSettingsUpdate = useCallback(async (partial: Partial<AppSettings>) => {
+    const updated = { ...settings, ...partial };
+    setSettings(updated);
+    await saveSettings(updated);
+  }, [settings]);
+
+  if (loading) {
+    return (
+      <View style={styles.root}>
+        <StatusBar barStyle="dark-content" backgroundColor={C.bgBase} />
+        <View style={{ height: 47 }} />
+        <View style={[styles.screen, styles.centered]}>
+          <Ionicons name="moon-outline" size={48} color={C.gold} />
+          <Text style={styles.loadingText}>Nur Minimal</Text>
+          <Text style={styles.loadingSubText}>Loading...</Text>
+        </View>
+        <View style={styles.tabBar} />
+      </View>
+    );
+  }
 
   const renderScreen = () => {
     switch (activeTab) {
-      case 'home':      return <HomeScreen />;
-      case 'countdown': return <CountdownScreen />;
-      case 'calendar':  return <CalendarScreen />;
+      case 'home':      return <HomeScreen prayerTimes={prayerTimes} nextPrayer={nextPrayer} settings={settings} onMarkPrayer={handleMarkPrayer} />;
+      case 'countdown': return <CountdownScreen prayerTimes={prayerTimes} nextPrayer={nextPrayer} />;
+      case 'calendar':  return <CalendarScreen prayerTimes={prayerTimes} />;
       case 'journey':   return <JourneyScreen />;
-      case 'qibla':     return <QiblaScreen />;
-      case 'settings':  return <SettingsScreen />;
-      default:          return <HomeScreen />;
+      case 'qibla':     return <QiblaScreen location={location} />;
+      case 'settings':  return <SettingsScreen settings={settings} onUpdate={handleSettingsUpdate} />;
+      default:          return <HomeScreen prayerTimes={prayerTimes} nextPrayer={nextPrayer} settings={settings} onMarkPrayer={handleMarkPrayer} />;
     }
   };
 
   return (
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bgBase} />
-      {/* Status Bar spacer */}
-      <View style={styles.statusBarSpacer} />
-
-      {/* Screen */}
-      <View style={styles.screenWrapper}>
-        {renderScreen()}
-      </View>
-
-      {/* Tab Bar */}
+      <View style={{ height: 47, backgroundColor: C.bgBase }} />
+      <View style={styles.screenWrapper}>{renderScreen()}</View>
       <View style={styles.tabBar}>
         {NAV_TABS.map(tab => (
           <TouchableOpacity
@@ -476,743 +870,170 @@ export default function App() {
 
 // ─── Styles ──────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: C.bgBase,
-  },
-  statusBarSpacer: {
-    height: 47,
-    backgroundColor: C.bgBase,
-  },
-  screenWrapper: {
-    flex: 1,
-  },
-  screen: {
-    flex: 1,
-    backgroundColor: C.bgBase,
-  },
-  screenPadding: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-  },
+  root: { flex: 1, backgroundColor: C.bgBase },
+  screenWrapper: { flex: 1 },
+  screen: { flex: 1, backgroundColor: C.bgBase },
+  screenPadding: { paddingHorizontal: 20, paddingBottom: 16 },
+  centered: { alignItems: 'center', justifyContent: 'center' },
 
-  // ── Hero Card ──
-  heroCard: {
+  card: {
     backgroundColor: C.bgSurface,
-    borderRadius: 28,
-    padding: 24,
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 8,
     ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.11, shadowRadius: 32 },
-      android: { elevation: 6 },
+      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.09, shadowRadius: 16 },
+      android: { elevation: 4 },
     }),
   },
+
+  // Loading
+  loadingText: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 24, fontWeight: '600', color: C.navy, marginTop: 16 },
+  loadingSubText: { fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif', fontSize: 14, color: C.textMuted, marginTop: 4 },
+
+  // Hero
+  heroCard: { flexDirection: 'row', alignItems: 'center' },
   heroLeft: { flex: 1 },
-  heroLabel: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: C.gold,
-    marginBottom: 4,
-  },
+  heroLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', color: C.gold, marginBottom: 4 },
   heroTimeRow: { flexDirection: 'row', alignItems: 'flex-end' },
-  heroTime: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 52,
-    fontWeight: '600',
-    color: C.navy,
-    lineHeight: 54,
-  },
-  heroAmPm: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 22,
-    fontWeight: '400',
-    color: C.navySoft,
-    marginLeft: 4,
-    marginBottom: 6,
-  },
+  heroTime: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 52, fontWeight: '600', color: C.navy, lineHeight: 54 },
+  heroAmPm: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 22, fontWeight: '400', color: C.navySoft, marginLeft: 4, marginBottom: 6 },
   heroNextRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-  heroDot: {
-    width: 6, height: 6,
-    borderRadius: 3,
-    backgroundColor: C.gold,
-    marginRight: 6,
-  },
-  heroNextText: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 12,
-    fontWeight: '500',
-    color: C.textSecondary,
-  },
+  heroDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: C.gold, marginRight: 6 },
+  heroNextText: { fontSize: 12, fontWeight: '500', color: C.textSecondary },
   heroRight: { marginLeft: 16 },
-  progressRing: {
-    width: 100, height: 100,
-    borderRadius: 50,
-    backgroundColor: C.goldPale,
-    borderWidth: 6,
-    borderColor: 'rgba(184,137,47,0.12)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  progressPct: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 24,
-    fontWeight: '600',
-    color: C.gold,
-  },
-  progressDay: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 9,
-    fontWeight: '500',
-    color: C.textMuted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
+  progressRing: { width: 100, height: 100, borderRadius: 50, backgroundColor: C.goldPale, borderWidth: 6, borderColor: 'rgba(184,137,47,0.12)', alignItems: 'center', justifyContent: 'center' },
+  progressPct: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 24, fontWeight: '600', color: C.gold },
+  progressDay: { fontSize: 9, fontWeight: '500', color: C.textMuted, textTransform: 'uppercase', letterSpacing: 0.5 },
 
-  // ── Section Header ──
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-  },
-  sectionTitle: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: C.textMuted,
-  },
-  sectionLink: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 12,
-    fontWeight: '500',
-    color: C.gold,
-  },
+  // Section Header
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14 },
+  sectionTitle: { fontSize: 10, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', color: C.textMuted },
+  sectionLink: { fontSize: 12, fontWeight: '500', color: C.gold },
+  hintText: { fontSize: 11, color: C.textMuted, textAlign: 'center', marginTop: 8, marginBottom: 16 },
 
-  // ── Prayer Rows ──
-  prayerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.bgSurface,
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 6,
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 },
-      android: { elevation: 2 },
-    }),
-  },
-  prayerRowBorder: {
-    borderBottomWidth: 0,
-  },
-  prayerRowActive: {
-    backgroundColor: C.goldPale,
-    borderWidth: 1,
-    borderColor: 'rgba(184,137,47,0.2)',
-  },
-  prayerIconWrap: {
-    width: 36, height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(7,26,53,0.05)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  prayerIconActive: {
-    backgroundColor: C.goldPale,
-  },
+  // Prayer Row
+  prayerRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 6, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 }, android: { elevation: 2 } }) },
+  prayerRowBorder: {},
+  prayerRowActive: { backgroundColor: C.goldPale, borderWidth: 1, borderColor: 'rgba(184,137,47,0.2)' },
+  prayerIconWrap: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(7,26,53,0.05)', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  prayerIconActive: { backgroundColor: 'rgba(184,137,47,0.15)' },
   prayerInfo: { flex: 1 },
-  prayerName: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 17,
-    fontWeight: '500',
-    color: C.navy,
-  },
+  prayerName: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 17, fontWeight: '500', color: C.navy },
   prayerNameActive: { color: C.navy },
-  prayerTime: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 13,
-    fontWeight: '500',
-    color: C.textMuted,
-    marginRight: 10,
-  },
-  prayerTimeActive: {
-    color: C.gold,
-    fontWeight: '600',
-  },
-  statusBadgeDone: {
-    backgroundColor: C.emeraldPale,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-  },
-  statusTextDone: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.emerald,
-  },
-  statusBadgeOntime: {
-    backgroundColor: C.emeraldPale,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-  },
-  statusTextOntime: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.emerald,
-  },
-  statusBadgeQaza: {
-    backgroundColor: 'rgba(107,114,128,0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-  },
-  statusTextQaza: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.textMuted,
-  },
+  prayerArabic: { fontSize: 11, color: C.textMuted, marginTop: 2 },
+  prayerTime: { fontSize: 13, fontWeight: '500', color: C.textMuted, marginRight: 10 },
+  prayerTimeActive: { color: C.gold, fontWeight: '600' },
+  statusBadgeDone: { backgroundColor: C.emeraldPale, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  statusTextDone: { fontSize: 11, fontWeight: '600', color: C.emerald },
+  statusBadgeNow: { backgroundColor: C.goldPale, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  statusTextNow: { fontSize: 11, fontWeight: '600', color: C.gold },
+  statusBadgeQaza: { backgroundColor: 'rgba(107,114,128,0.1)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  statusTextQaza: { fontSize: 11, fontWeight: '600', color: C.textMuted },
 
-  // ── Countdown ──
+  // Countdown
   cdHero: { alignItems: 'center', paddingVertical: 32 },
-  cdLabel: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: C.textMuted,
-    marginBottom: 16,
-  },
-  cdTime: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 72,
-    fontWeight: '300',
-    color: C.navy,
-    lineHeight: 74,
-    letterSpacing: -2,
-  },
-  cdPrayer: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 24,
-    fontWeight: '400',
-    color: C.gold,
-    marginTop: 6,
-    marginBottom: 32,
-  },
-  cdDivider: {
-    width: 40,
-    height: 1,
-    backgroundColor: C.borderStrong,
-  },
-  cdCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.bgSurface,
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    marginBottom: 8,
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8 },
-      android: { elevation: 3 },
-    }),
-  },
-  cdCardTime: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 26,
-    fontWeight: '500',
-    color: C.navy,
-    marginRight: 12,
-    minWidth: 90,
-  },
-  cdCardName: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 16,
-    fontWeight: '500',
-    color: C.textSecondary,
-    flex: 1,
-  },
-  cdCardElapsed: {
-    backgroundColor: 'rgba(107,114,128,0.08)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  cdCardElapsedText: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.textMuted,
-  },
+  cdLabel: { fontSize: 11, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', color: C.textMuted, marginBottom: 16 },
+  cdTime: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 72, fontWeight: '300', color: C.navy, lineHeight: 74, letterSpacing: -2 },
+  cdPrayer: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 24, fontWeight: '400', color: C.gold, marginTop: 6, marginBottom: 32 },
+  cdDivider: { width: 40, height: 1, backgroundColor: C.borderStrong },
+  cdCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 18, marginBottom: 8, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8 }, android: { elevation: 3 } }) },
+  cdCardTime: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 26, fontWeight: '500', color: C.navy, marginRight: 12, minWidth: 90 },
+  cdCardName: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 16, fontWeight: '500', color: C.textSecondary, flex: 1 },
+  cdCardElapsed: { backgroundColor: 'rgba(107,114,128,0.08)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  cdCardElapsedText: { fontSize: 11, fontWeight: '600', color: C.textMuted },
 
-  // ── Calendar ──
-  calHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  calMonth: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 22,
-    fontWeight: '600',
-    color: C.navy,
-  },
+  // Calendar
+  calHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16 },
+  calMonth: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 22, fontWeight: '600', color: C.navy },
+  calHijri: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 14, color: C.gold, marginTop: 4 },
   calNav: { flexDirection: 'row', gap: 8 },
-  calNavBtn: {
-    width: 34, height: 34,
-    borderRadius: 17,
-    backgroundColor: C.bgSurface,
-    borderWidth: 1,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 },
-      android: { elevation: 2 },
-    }),
-  },
-  calWeekdays: {
-    flexDirection: 'row',
-    marginBottom: 8,
-  },
-  calWeekday: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.textMuted,
-    letterSpacing: 0.5,
-  },
-  calGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  calDayEmpty: { width: `${100/7}%`, aspectRatio: 1 },
-  calDay: {
-    width: `${100/7}%`,
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 22,
-  },
+  calNavBtn: { width: 34, height: 34, borderRadius: 17, backgroundColor: C.bgSurface, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 }, android: { elevation: 2 } }) },
+  calWeekdays: { flexDirection: 'row', marginBottom: 8 },
+  calWeekday: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '600', color: C.textMuted, letterSpacing: 0.5 },
+  calGrid: { flexDirection: 'row', flexWrap: 'wrap' },
+  calDay: { width: `${100/7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 22 },
+  calDayOther: { opacity: 0.3 },
   calDayToday: { backgroundColor: C.goldPale },
-  calDayPrayed: { backgroundColor: C.emeraldPale },
-  calDayMissed: { backgroundColor: 'rgba(184,137,47,0.1)' },
-  calDayText: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 14,
-    fontWeight: '500',
-    color: C.textPrimary,
-  },
-  calDayTextToday: { color: C.gold, fontWeight: '700' },
-  calDayTextPrayed: { color: C.emerald },
-  focusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.bgSurface,
-    borderRadius: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 },
-      android: { elevation: 2 },
-    }),
-  },
-  focusName: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 15,
-    fontWeight: '500',
-    color: C.navy,
-    minWidth: 70,
-  },
-  focusBar: {
-    flex: 1,
-    height: 6,
-    backgroundColor: C.goldPale,
-    borderRadius: 3,
-    marginHorizontal: 12,
-    overflow: 'hidden',
-  },
-  focusFill: {
-    height: '100%',
-    backgroundColor: C.gold,
-    borderRadius: 3,
-  },
-  focusMin: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.textMuted,
-    minWidth: 28,
-    textAlign: 'right',
-  },
+  calDaySelected: { backgroundColor: 'rgba(184,137,47,0.15)', borderWidth: 2, borderColor: C.gold },
+  calDayNum: { fontSize: 14, fontWeight: '500', color: C.textPrimary },
+  calDayNumToday: { color: C.gold, fontWeight: '700' },
+  calDayNumOther: { color: C.textMuted },
+  calDayHijri: { fontSize: 9, color: C.textMuted, marginTop: 2 },
+  calDayHijriPrayed: { color: C.emerald },
+  calPrayedDot: { position: 'absolute', bottom: 6, width: 5, height: 5, borderRadius: 2.5, backgroundColor: C.emerald },
+  calDetail: { backgroundColor: C.bgSurface, borderRadius: 16, padding: 16, marginTop: 8, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8 }, android: { elevation: 3 } }) },
+  calDetailDate: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 17, fontWeight: '600', color: C.navy },
+  calDetailHijri: { fontSize: 13, color: C.gold, marginTop: 2, marginBottom: 12 },
+  calDetailRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: C.border },
+  calDetailPrayer: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 15, color: C.navy, flex: 1 },
+  calDetailTime: { fontSize: 13, color: C.textMuted, marginRight: 8 },
+  calDetailDone: { fontSize: 14, color: C.emerald, fontWeight: '700' },
+  calDetailQaza: { fontSize: 12, color: C.textMuted, fontWeight: '600' },
 
-  // ── Journey ──
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 16,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: C.bgSurface,
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    alignItems: 'center',
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.09, shadowRadius: 16 },
-      android: { elevation: 4 },
-    }),
-  },
-  statValue: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 28,
-    fontWeight: '600',
-    color: C.navy,
-    lineHeight: 30,
-  },
-  statLabel: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
-    color: C.textMuted,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  heatmapCard: {
-    backgroundColor: C.bgSurface,
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 16,
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.09, shadowRadius: 16 },
-      android: { elevation: 4 },
-    }),
-  },
-  heatmapHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-  },
-  heatmapTitle: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.navy,
-  },
-  heatmapLegend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  heatmapLegendText: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 10,
-    color: C.textMuted,
-  },
-  heatCell: {
-    width: 14, height: 14,
-    borderRadius: 3,
-    backgroundColor: 'rgba(7,26,53,0.06)',
-  },
+  // Journey
+  statsGrid: { flexDirection: 'row', gap: 10, marginBottom: 8 },
+  statCard: { flex: 1, alignItems: 'center', paddingVertical: 16 },
+  statValue: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 28, fontWeight: '600', color: C.navy, lineHeight: 30 },
+  statLabel: { fontSize: 10, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase', color: C.textMuted, marginTop: 4, textAlign: 'center' },
+  heatmapCard: { padding: 18 },
+  heatmapHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  heatmapTitle: { fontSize: 13, fontWeight: '600', color: C.navy },
+  heatmapLegend: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  heatmapLegendText: { fontSize: 10, color: C.textMuted },
+  heatCell: { width: 14, height: 14, borderRadius: 3, backgroundColor: 'rgba(7,26,53,0.06)' },
   heatCellL1: { backgroundColor: C.goldPale },
   heatCellL2: { backgroundColor: 'rgba(184,137,47,0.35)' },
   heatCellL3: { backgroundColor: 'rgba(184,137,47,0.60)' },
-  heatWeekdays: {
-    flexDirection: 'row',
-    marginBottom: 6,
-  },
-  heatDayLabel: {
-    flex: 1,
-    textAlign: 'center',
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 9,
-    color: C.textMuted,
-  },
-  heatRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 4,
-  },
-  heatCellBase: {
-    flex: 1,
-    aspectRatio: 1,
-    borderRadius: 3,
-    backgroundColor: 'rgba(7,26,53,0.04)',
-  },
-  weeklyCard: {
-    backgroundColor: C.bgSurface,
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 16,
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.09, shadowRadius: 16 },
-      android: { elevation: 4 },
-    }),
-  },
-  weeklyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  weeklyTitle: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 13,
-    fontWeight: '600',
-    color: C.navy,
-  },
-  weeklyTrend: {
-    backgroundColor: C.emeraldPale,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-  },
-  weeklyTrendText: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.emerald,
-  },
-  weeklyBars: {
-    flexDirection: 'row',
-    gap: 8,
-    height: 80,
-  },
-  wbarWrap: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  wbarTrack: {
-    flex: 1,
-    width: '100%',
-    justifyContent: 'flex-end',
-  },
-  wbar: {
-    width: '100%',
-    borderRadius: 4,
-    backgroundColor: 'rgba(7,26,53,0.06)',
-    minHeight: 4,
-  },
-  wbarFilled: {
-    backgroundColor: C.gold,
-  },
-  wbarLabel: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 10,
-    fontWeight: '600',
-    color: C.textMuted,
-    marginTop: 6,
-  },
+  heatWeekdays: { flexDirection: 'row', marginBottom: 6 },
+  heatDayLabel: { flex: 1, textAlign: 'center', fontSize: 9, color: C.textMuted },
+  heatRow: { flexDirection: 'row', gap: 6, marginBottom: 4 },
+  heatCellBase: { flex: 1, aspectRatio: 1, borderRadius: 3, backgroundColor: 'rgba(7,26,53,0.04)' },
+  weeklyCard: { padding: 18 },
+  weeklyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  weeklyTitle: { fontSize: 13, fontWeight: '600', color: C.navy },
+  weeklyTrend: { backgroundColor: C.emeraldPale, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 20 },
+  weeklyTrendText: { fontSize: 11, fontWeight: '600', color: C.emerald },
+  weeklyBars: { flexDirection: 'row', gap: 8, height: 80 },
+  wbarWrap: { flex: 1, alignItems: 'center' },
+  wbarTrack: { flex: 1, width: '100%', justifyContent: 'flex-end' },
+  wbar: { width: '100%', borderRadius: 4, backgroundColor: 'rgba(7,26,53,0.06)', minHeight: 4 },
+  wbarFilled: { backgroundColor: C.gold },
+  wbarLabel: { fontSize: 10, fontWeight: '600', color: C.textMuted, marginTop: 6 },
 
-  // ── Qibla ──
-  qiblaWrap: {
-    alignItems: 'center',
-    paddingVertical: 32,
-  },
-  compassRing: {
-    width: 220, height: 220,
-    borderRadius: 110,
-    borderWidth: 2,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: C.bgSurface,
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.11, shadowRadius: 24 },
-      android: { elevation: 5 },
-    }),
-  },
-  compassInner: {
-    width: 160, height: 160,
-    borderRadius: 80,
-    borderWidth: 1,
-    borderColor: C.border,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: C.bgSurface,
-  },
-  compassDeg: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 32,
-    fontWeight: '600',
-    color: C.navy,
-    lineHeight: 34,
-  },
-  compassBearing: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 11,
-    fontWeight: '600',
-    color: C.textMuted,
-    letterSpacing: 1,
-    marginTop: 4,
-  },
-  qiblaCity: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 20,
-    fontWeight: '500',
-    color: C.navy,
-    marginTop: 24,
-  },
-  qiblaDist: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 13,
-    color: C.textSecondary,
-    marginTop: 4,
-  },
-  mosqueCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.bgSurface,
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8 },
-      android: { elevation: 3 },
-    }),
-  },
-  mosqueIcon: {
-    width: 42, height: 42,
-    borderRadius: 12,
-    backgroundColor: C.goldPale,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
-  },
-  mosqueName: {
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontSize: 16,
-    fontWeight: '500',
-    color: C.navy,
-  },
-  mosqueDist: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 12,
-    color: C.textMuted,
-    marginTop: 2,
-  },
+  // Qibla
+  qiblaWrap: { alignItems: 'center', paddingVertical: 32 },
+  compassRing: { width: 220, height: 220, borderRadius: 110, borderWidth: 2, borderColor: C.border, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgSurface, ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.11, shadowRadius: 24 }, android: { elevation: 5 } }) },
+  compassMarker: { position: 'absolute', alignItems: 'center' },
+  compassMarkerText: { fontSize: 12, fontWeight: '700', color: C.textMuted },
+  compassInner: { width: 160, height: 160, borderRadius: 80, borderWidth: 1, borderColor: C.border, alignItems: 'center', justifyContent: 'center', backgroundColor: C.bgSurface },
+  compassDeg: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 32, fontWeight: '600', color: C.navy, lineHeight: 34 },
+  compassBearing: { fontSize: 11, fontWeight: '600', color: C.textMuted, letterSpacing: 1, marginTop: 4 },
+  qiblaCity: { fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', fontSize: 20, fontWeight: '500', color: C.navy, marginTop: 24 },
+  qiblaDist: { fontSize: 13, color: C.textSecondary, marginTop: 4 },
+  qiblaLocation: { fontSize: 12, color: C.textMuted, marginTop: 8 },
+  qiblaInfoCard: { padding: 16 },
+  qiblaInfoRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  qiblaInfoText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 },
+  mosquePlaceholder: { alignItems: 'center', paddingVertical: 24, gap: 8 },
+  mosquePlaceholderText: { fontSize: 13, color: C.textMuted, textAlign: 'center' },
 
-  // ── Settings ──
-  settingsSectionTitle: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-    color: C.textMuted,
-    paddingVertical: 12,
-  },
-  settingsCard: {
-    backgroundColor: C.bgSurface,
-    borderRadius: 18,
-    marginBottom: 8,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.07, shadowRadius: 8 },
-      android: { elevation: 3 },
-    }),
-  },
-  srow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 18,
-  },
-  srowBorder: {
-    borderTopWidth: 1,
-    borderTopColor: C.border,
-  },
-  srowLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  srowIcon: {
-    width: 34, height: 34,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  srowLabel: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 15,
-    fontWeight: '500',
-    color: C.textPrimary,
-  },
-  srowValue: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 13,
-    color: C.textMuted,
-    marginRight: 8,
-  },
-  toggle: {
-    width: 50, height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(7,26,53,0.12)',
-    justifyContent: 'center',
-  },
-  toggleActive: {
-    backgroundColor: C.emerald,
-  },
-  toggleKnob: {
-    width: 24, height: 24,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    alignSelf: 'flex-start',
-    marginLeft: 3,
-    ...Platform.select({
-      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.15, shadowRadius: 4 },
-      android: { elevation: 2 },
-    }),
-  },
+  // Settings
+  settingsSectionTitle: { fontSize: 10, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase', color: C.textMuted, paddingVertical: 12 },
+  srow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 15, paddingHorizontal: 18 },
+  srowBorder: { borderTopWidth: 1, borderTopColor: C.border },
+  srowLeft: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  srowIcon: { width: 34, height: 34, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  srowLabel: { fontSize: 15, fontWeight: '500', color: C.textPrimary },
+  srowSub: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  srowValue: { fontSize: 13, color: C.textMuted, marginRight: 8 },
 
-  // ── Tab Bar ──
+  // Tab Bar
   tabBar: {
-    flexDirection: 'row',
-    height: 80,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    borderTopWidth: 1,
-    borderTopColor: C.border,
-    paddingTop: 10,
-    ...Platform.select({
-      ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 12 },
-      android: { elevation: 8 },
-    }),
+    flexDirection: 'row', height: 80, backgroundColor: 'rgba(255,255,255,0.92)', borderTopWidth: 1, borderTopColor: C.border, paddingTop: 10,
+    ...Platform.select({ ios: { shadowColor: C.navy, shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.06, shadowRadius: 12 }, android: { elevation: 8 } }),
   },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  tabLabel: {
-    fontFamily: Platform.OS === 'ios' ? 'System' : 'sans-serif',
-    fontSize: 10,
-    fontWeight: '600',
-    color: C.textMuted,
-  },
-  tabLabelActive: {
-    color: C.gold,
-  },
+  tabItem: { flex: 1, alignItems: 'center', gap: 4 },
+  tabLabel: { fontSize: 10, fontWeight: '600', color: C.textMuted },
+  tabLabelActive: { color: C.gold },
 });
