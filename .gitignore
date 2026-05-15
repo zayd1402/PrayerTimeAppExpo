@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.expo/
+
+# Screenshots & captures
+screenshots/
+screenshots-*/
+*.png
+
+# Reference files
+refs/
+*.jpg
+*.jpeg
+ref_*.html
+ref_data_url.txt
+show_ref.html
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+
+# Playwright
+playwright-report/
+test-results/
+
+# Misc
+*.swp
+*.swo

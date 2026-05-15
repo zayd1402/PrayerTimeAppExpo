@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nur Minimal — Prayer Times</title>
+<style>
+/* ============================================================
+   NUR MINIMAL v8 — Premium Prayer App
+   Design: Clean ivory, refined depth, elegant Islamic geometry
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Color Palette — Warm Ivory + Deep Navy + Muted Gold */
+  --bg-base:       #FAF6EF;   /* Main background — warm ivory cream */
+  --bg-surface:    #FFFFFF;   /* Card surfaces — pure white */
+  --navy:          #071A35;   /* Primary text — deep navy */
+  --navy-soft:     #1A3560;   /* Secondary navy */
+  --gold:          #B8892F;   /* Accent — muted antique gold */
+  --gold-light:    #D4AF6A;   /* Gold highlight */
+  --gold-pale:     #F0E4C8;   /* Gold tint */
+  --emerald:       #0F7A4F;   /* Success/on-time — emerald green */
+  --emerald-pale:  #D4EDE1;  /* Emerald tint */
+  --text-primary:  #071A35;  /* Primary text */
+  --text-secondary:#6B7280;  /* Secondary text */
+  --text-muted:    #9CA3AF;  /* Muted/hint text */
+  --border:        rgba(7,26,53,0.08);
+  --border-strong: rgba(7,26,53,0.15);
+
+  /* Shadows — Refined, warm, layered */
+  --shadow-xs:  0 1px 3px rgba(7,26,53,0.06);
+  --shadow-sm:  0 2px 8px rgba(7,26,53,0.07), 0 1px 2px rgba(7,26,53,0.04);
+  --shadow-md:  0 4px 16px rgba(7,26,53,0.09), 0 2px 4px rgba(7,26,53,0.05);
+  --shadow-lg:  0 8px 32px rgba(7,26,53,0.11), 0 4px 8px rgba(7,26,53,0.06);
+  --shadow-xl:  0 16px 48px rgba(7,26,53,0.13), 0 8px 16px rgba(7,26,53,0.07);
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-ui:      'DM Sans', system-ui, sans-serif;
+
+  /* Spacing — 4pt grid */
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px; --sp-10: 40px;
+  --sp-12: 48px; --sp-16: 64px;
+
+  /* Radii */
+  --r-sm: 8px;  --r-md: 14px; --r-lg: 20px; --r-xl: 28px;
+}
+
+html, body {
+  height: 100%;
+  background: #E8E2D8;
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   DEVICE FRAME
+   ============================================================ */
+
+.device {
+  width: 393px;
+  height: 852px;
+  margin: 0 auto;
+  background: var(--bg-base);
+  position: relative;
+  overflow: hidden;
+  border-radius: 44px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.22), 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+/* Dynamic Island */
+.dynamic-island {
+  width: 126px; height: 37px;
+  background: #000;
+  border-radius: 20px;
+  position: absolute;
+  top: 12px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+}
+
+/* Status Bar */
+.status-bar {
+  height: 54px;
+  padding: 12px 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  z-index: 100;
+}
+.sb-time {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--navy);
+  margin-top: 2px;
+}
+.sb-icons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 2px;
+}
+.sb-icons svg { opacity: 0.9; }
+
+/* Screen Container */
+.screen-container {
+  position: absolute;
+  top: 54px; bottom: 80px;
+  left: 0; right: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+.screen-container::-webkit-scrollbar { display: none; }
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+
+.screen { display: none; flex-direction: column; min-height: 100%; padding: 0 20px 16px; }
+.screen.active { display: flex; }
+
+/* ============================================================
+   BACKGROUND — Clean with subtle geometric warmth
+   ============================================================ */
+
+.screen-home {
+  background:
+    radial-gradient(ellipse 140% 50% at 50% -5%, rgba(240,228,200,0.7) 0%, transparent 65%),
+    radial-gradient(ellipse 80% 40% at 85% 20%, rgba(184,137,47,0.06) 0%, transparent 55%),
+    radial-gradient(ellipse 60% 35% at 15% 80%, rgba(15,122,79,0.04) 0%, transparent 55%),
+    var(--bg-base);
+}
+
+.screen-countdown {
+  background:
+    radial-gradient(ellipse 130% 55% at 50% 0%, rgba(240,228,200,0.65) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 40% at 80% 25%, rgba(184,137,47,0.05) 0%, transparent 50%),
+    var(--bg-base);
+}
+
+.screen-calendar {
+  background:
+    radial-gradient(ellipse 120% 45% at 50% 0%, rgba(240,228,200,0.6) 0%, transparent 55%),
+    var(--bg-base);
+}
+
+.screen-journey {
+  background:
+    radial-gradient(ellipse 110% 50% at 50% 0%, rgba(240,228,200,0.6) 0%, transparent 58%),
+    var(--bg-base);
+}
+
+.screen-qibla {
+  background:
+    radial-gradient(ellipse 130% 60% at 50% 30%, rgba(15,122,79,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(184,137,47,0.07) 0%, transparent 55%),
+    var(--bg-base);
+}
+
+.screen-settings {
+  background: var(--bg-base);
+}
+
+/* ============================================================
+   SECTION HEADER — Clean & minimal
+   ============================================================ */
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 20px 0 14px;
+  margin-top: 4px;
+}
+.section-title {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.section-link {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--gold);
+}
+
+/* ============================================================
+   HERO CARD — Main prayer card with premium depth
+   ============================================================ */
+
+.hero-card {
+  background: var(--bg-surface);
+  border-radius: var(--r-xl);
+  padding: 24px 22px 20px;
+  margin-bottom: 16px;
+  position: relative;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(7,26,53,0.05);
+  overflow: hidden;
+}
+
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+}
+
+.hero-card-inner {
+  position: relative;
+  z-index: 1;
+}
+
+/* Prayer name — large serif */
+.hero-prayer-label {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+
+.hero-time {
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1;
+  letter-spacing: -1px;
+  margin-bottom: 2px;
+}
+
+.hero-ampm {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--navy-soft);
+  margin-left: 4px;
+  vertical-align: super;
+}
+
+.hero-next {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hero-next-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* Progress Arc */
+.hero-progress {
+  position: absolute;
+  right: -8px; top: 50%;
+  transform: translateY(-50%);
+  width: 140px; height: 140px;
+}
+
+.hero-progress svg {
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+}
+
+.progress-track {
+  fill: none;
+  stroke: rgba(184,137,47,0.10);
+  stroke-width: 6;
+}
+
+.progress-fill {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 345;
+  stroke-dashoffset: 103;
+  transition: stroke-dashoffset 1s ease;
+}
+
+/* ============================================================
+   PRAYER ROWS — Clean list items
+   ============================================================ */
+
+.prayer-list { display: flex; flex-direction: column; gap: 6px; }
+
+.prayer-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xs);
+  border: 1px solid rgba(7,26,53,0.04);
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.prayer-row:active {
+  transform: scale(0.985);
+  background: rgba(240,228,200,0.3);
+}
+
+.prayer-row.active {
+  background: var(--gold-pale);
+  border-color: rgba(184,137,47,0.2);
+  box-shadow: var(--shadow-sm);
+}
+
+.prayer-row-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+
+.prayer-row-info { flex: 1; }
+
+.prayer-row-name {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--navy);
+  line-height: 1.2;
+}
+
+.prayer-row.active .prayer-row-name { color: var(--navy); }
+
+.prayer-row-time {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.prayer-row.active .prayer-row-time { color: var(--gold); font-weight: 600; }
+
+.prayer-row-status {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--emerald);
+  background: var(--emerald-pale);
+  padding: 3px 8px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+}
+
+.prayer-row-qaza {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(107,114,128,0.1);
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+/* ============================================================
+   COUNTDOWN SCREEN — Large elegant countdown
+   ============================================================ */
+
+.countdown-hero {
+  text-align: center;
+  padding: 32px 0 24px;
+}
+
+.countdown-label {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.countdown-time {
+  font-family: var(--font-display);
+  font-size: 72px;
+  font-weight: 300;
+  color: var(--navy);
+  line-height: 1;
+  letter-spacing: -2px;
+  margin-bottom: 6px;
+}
+
+.countdown-prayer {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--gold);
+  margin-bottom: 32px;
+}
+
+.countdown-divider {
+  width: 40px; height: 1px;
+  background: var(--border-strong);
+  margin: 0 auto 32px;
+}
+
+.countdown-card-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cdown-card {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(7,26,53,0.04);
+}
+
+.cdown-card-time {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  color: var(--navy);
+  margin-right: 12px;
+  min-width: 90px;
+}
+
+.cdown-card-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.cdown-card-elapsed {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: rgba(107,114,128,0.08);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ============================================================
+   CALENDAR SCREEN — Clean monthly view
+   ============================================================ */
+
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 14px;
+}
+
+.cal-month {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--navy);
+  letter-spacing: -0.3px;
+}
+
+.cal-nav {
+  display: flex;
+  gap: 8px;
+}
+
+.cal-nav-btn {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-xs);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cal-nav-btn:active {
+  transform: scale(0.93);
+  background: var(--gold-pale);
+}
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.cal-weekday {
+  text-align: center;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  padding: 4px 0;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  gap: 1px;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.cal-day:active { transform: scale(0.9); }
+
+.cal-day.other-month { color: var(--text-muted); opacity: 0.5; }
+
+.cal-day.today {
+  background: var(--gold-pale);
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.cal-day.prayed {
+  background: var(--emerald-pale);
+  color: var(--emerald);
+}
+
+.cal-day.missed {
+  background: rgba(184,137,47,0.1);
+  color: var(--gold);
+}
+
+.cal-day .day-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+/* Focus Blocks below calendar */
+.focus-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 0 10px;
+}
+
+.focus-title {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.focus-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.focus-block {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xs);
+  border: 1px solid var(--border);
+}
+
+.focus-block-prayer {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--navy);
+  min-width: 80px;
+}
+
+.focus-block-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--gold-pale);
+  border-radius: 3px;
+  margin: 0 12px;
+  overflow: hidden;
+}
+
+.focus-block-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold-light), var(--gold));
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.focus-block-time {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 36px;
+  text-align: right;
+}
+
+/* ============================================================
+   JOURNEY SCREEN — Stats and heatmap
+   ============================================================ */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.stat-card {
+  background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  padding: 16px 14px 14px;
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(7,26,53,0.04);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-value.gold { color: var(--gold); }
+.stat-value.emerald { color: var(--emerald); }
+
+.stat-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* Heatmap */
+.heatmap-card {
+  background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  padding: 18px 18px 16px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(7,26,53,0.04);
+  margin-bottom: 16px;
+}
+
+.heatmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.heatmap-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.heat-cell {
+  width: 14px; height: 14px;
+  border-radius: 3px;
+  background: rgba(7,26,53,0.06);
+}
+
+.heatmap-weekdays {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.heat-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.heat-day-label {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  color: var(--text-muted);
+  width: 14px;
+  text-align: center;
+  line-height: 14px;
+}
+
+.heat-cell.l1 { background: var(--gold-pale); }
+.heat-cell.l2 { background: rgba(184,137,47,0.35); }
+.heat-cell.l3 { background: rgba(184,137,47,0.60); }
+.heat-cell.l4 { background: var(--gold); }
+.heat-cell.l5 { background: var(--emerald); }
+
+/* Weekly Chart */
+.weekly-card {
+  background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  padding: 18px 18px 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(7,26,53,0.04);
+  margin-bottom: 16px;
+}
+
+.weekly-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.weekly-title {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+}
+
+.weekly-trend {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--emerald);
+  background: var(--emerald-pale);
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+.weekly-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 80px;
+}
+
+.wbar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+.wbar-track {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.wbar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: rgba(7,26,53,0.06);
+  min-height: 4px;
+}
+
+.wbar.filled {
+  background: linear-gradient(to top, var(--gold-light), var(--gold));
+}
+
+.wbar-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   QIBLA SCREEN — Clean compass
+   ============================================================ */
+
+.qibla-compass-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 0 24px;
+}
+
+.compass-ring {
+  width: 240px; height: 240px;
+  border-radius: 50%;
+  border: 2px solid rgba(7,26,53,0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: var(--shadow-md), inset 0 0 40px rgba(240,228,200,0.3);
+  background: var(--bg-surface);
+}
+
+.compass-inner {
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: var(--bg-surface);
+  box-shadow: inset 0 2px 8px rgba(7,26,53,0.04);
+}
+
+.compass-kaaba-icon {
+  margin-bottom: 4px;
+}
+
+.compass-degrees {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1;
+}
+
+.compass-bearing {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+.compass-direction {
+  position: absolute;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+.compass-direction.north { top: -20px; }
+.compass-direction.south { bottom: -20px; }
+.compass-direction.east { right: -24px; }
+.compass-direction.west { left: -24px; }
+
+.qibla-info {
+  margin-top: 28px;
+  text-align: center;
+}
+
+.qibla-city {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+
+.qibla-distance {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Nearby Mosques */
+.mosque-card {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(7,26,53,0.04);
+  margin-bottom: 8px;
+}
+
+.mosque-icon {
+  width: 42px; height: 42px;
+  border-radius: 12px;
+  background: var(--gold-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  flex-shrink: 0;
+}
+
+.mosque-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--navy);
+  line-height: 1.2;
+}
+
+.mosque-distance {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ============================================================
+   SETTINGS SCREEN
+   ============================================================ */
+
+.settings-card {
+  background: var(--bg-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid rgba(7,26,53,0.04);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.srow {
+  display: flex;
+  align-items: center;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  cursor: pointer;
+}
+
+.srow:last-child { border-bottom: none; }
+
+.srow:active { background: rgba(0,0,0,0.02); }
+
+.srow-left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.srow-icon {
+  width: 34px; height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.srow-icon.navy   { background: rgba(7,26,53,0.07); }
+.srow-icon.gold   { background: var(--gold-pale); }
+.srow-icon.green  { background: var(--emerald-pale); }
+.srow-icon.gray   { background: rgba(107,114,128,0.1); }
+
+.srow-label {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.srow-value {
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-right: 8px;
+}
+
+.srow-arrow {
+  color: var(--text-muted);
+}
+
+/* Toggle */
+.toggle {
+  width: 50px; height: 30px;
+  border-radius: 15px;
+  background: rgba(7,26,53,0.12);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.25s ease;
+  flex-shrink: 0;
+}
+
+.toggle.active { background: var(--emerald); }
+
+.toggle-knob {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 3px; left: 3px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  transition: transform 0.25s ease;
+}
+
+.toggle.active .toggle-knob { transform: translateX(20px); }
+
+/* Settings sections */
+.settings-section-title {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 16px 0 8px;
+}
+
+/* ============================================================
+   BOTTOM NAVIGATION
+   ============================================================ */
+
+.bottom-nav {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 80px;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+  padding-top: 10px;
+  z-index: 100;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 4px 12px;
+  transition: all 0.2s;
+  min-width: 52px;
+}
+
+.nav-item:active { transform: scale(0.92); }
+
+.nav-item .nav-icon {
+  width: 26px; height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-item .nav-label {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.nav-item.active .nav-label { color: var(--gold); }
+
+.nav-item.active .nav-icon svg { stroke: var(--gold); }
+.nav-item .nav-icon svg { stroke: var(--text-muted); }
+
+/* ============================================================
+   TAB INDICATOR LINE
+   ============================================================ */
+
+.nav-indicator {
+  position: absolute;
+  top: 0;
+  width: 20px; height: 2px;
+  background: var(--gold);
+  border-radius: 0 0 2px 2px;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s;
+  opacity: 0;
+}
+
+.nav-item.active .nav-indicator { opacity: 1; }
+
+/* ============================================================
+   ICONS — Clean SVG line style
+   ============================================================ */
+
+.icon { display: block; }
+
+/* ============================================================
+   PREVIEW CONTROLS
+   ============================================================ */
+
+.preview-controls {
+  position: fixed;
+  top: 16px; right: 16px;
+  display: flex;
+  gap: 8px;
+  z-index: 999;
+}
+
+.theme-btn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.1);
+  background: white;
+  color: #333;
+  transition: all 0.2s;
+}
+
+.theme-btn:hover { background: #f5f5f5; }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.screen.active > * {
+  animation: fadeIn 0.35s ease both;
+}
+
+.screen.active > *:nth-child(1) { animation-delay: 0ms; }
+.screen.active > *:nth-child(2) { animation-delay: 60ms; }
+.screen.active > *:nth-child(3) { animation-delay: 110ms; }
+.screen.active > *:nth-child(4) { animation-delay: 160ms; }
+.screen.active > *:nth-child(5) { animation-delay: 210ms; }
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+
+.emerald { color: var(--emerald); }
+.gold    { color: var(--gold); }
+.muted   { color: var(--text-muted); }
+.navy    { color: var(--navy); }
+
+/* Spacer */
+.sp-4  { height: 4px; }
+.sp-8  { height: 8px; }
+.sp-12 { height: 12px; }
+.sp-16 { height: 16px; }
+</style>
+</head>
+<body>
+
+<!-- Preview Controls -->
+<div class="preview-controls">
+  <div class="theme-btn active">☀ Nur Minimal</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- DEVICE -->
+<!-- ============================================================ -->
+
+<div class="device" id="device">
+
+  <!-- Dynamic Island -->
+  <div class="dynamic-island"></div>
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <div class="sb-time">9:41</div>
+    <div class="sb-icons">
+      <!-- Signal -->
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+        <rect x="0" y="8" width="2.5" height="4" rx="0.6" fill="#071A35"/>
+        <rect x="3.5" y="5" width="2.5" height="7" rx="0.6" fill="#071A35"/>
+        <rect x="7" y="2" width="2.5" height="10" rx="0.6" fill="#071A35"/>
+        <rect x="10.5" y="0" width="2.5" height="12" rx="0.6" fill="#071A35"/>
+      </svg>
+      <!-- WiFi -->
+      <svg width="16" height="12" viewBox="0 0 16 12" fill="none">
+        <path d="M8 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" fill="#071A35"/>
+        <path d="M5.5 8.5a5 5 0 0 0 5 0" stroke="#071A35" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M3 6.5a8.5 8.5 0 0 0 10 0" stroke="#071A35" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <!-- Battery -->
+      <svg width="24" height="12" viewBox="0 0 24 12" fill="none">
+        <rect x="0.5" y="1.5" width="20" height="9" rx="2.5" stroke="#071A35" stroke-width="1.5"/>
+        <rect x="3" y="4" width="14" height="4" rx="1" fill="#071A35"/>
+        <path d="M21 4.5v3" stroke="#071A35" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Screen Container -->
+  <div class="screen-container">
+
+    <!-- ===================================================== -->
+    <!-- HOME SCREEN -->
+    <!-- ===================================================== -->
+    <div class="screen screen-home active" id="screen-home">
+
+      <!-- Hero Prayer Card -->
+      <div class="hero-card">
+        <div class="hero-progress">
+          <svg viewBox="0 0 140 140">
+            <circle class="progress-track" cx="70" cy="70" r="55"/>
+            <circle class="progress-fill"  cx="70" cy="70" r="55"/>
+          </svg>
+        </div>
+        <div class="hero-card-inner">
+          <div class="hero-prayer-label">Next Prayer</div>
+          <div class="hero-time">5:17<span class="hero-ampm">AM</span></div>
+          <div class="hero-next">
+            <span class="hero-next-dot"></span>
+            <span>Fajr in 4h 23m</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prayer List -->
+      <div class="section-header">
+        <span class="section-title">Today's Prayers</span>
+        <span class="section-link">View Calendar</span>
+      </div>
+
+      <div class="prayer-list">
+        <div class="prayer-row">
+          <div class="prayer-row-icon" style="background: var(--gold-pale);">
+            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8892F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+            </svg>
+          </div>
+          <div class="prayer-row-info">
+            <div class="prayer-row-name">Fajr</div>
+          </div>
+          <div class="prayer-row-time">5:17 AM</div>
+          <div class="prayer-row-status">On time</div>
+        </div>
+
+        <div class="prayer-row active">
+          <div class="prayer-row-icon" style="background: var(--gold-pale);">
+            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8892F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"/>
+              <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+            </svg>
+          </div>
+          <div class="prayer-row-info">
+            <div class="prayer-row-name">Sunrise</div>
+          </div>
+          <div class="prayer-row-time">6:42 AM</div>
+          <div class="prayer-row-status">Completed</div>
+        </div>
+
+        <div class="prayer-row">
+          <div class="prayer-row-icon" style="background: rgba(7,26,53,0.06);">
+            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A3560" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          </div>
+          <div class="prayer-row-info">
+            <div class="prayer-row-name">Dhuhr</div>
+          </div>
+          <div class="prayer-row-time">12:04 PM</div>
+          <div class="prayer-row-qaza">Qaza</div>
+        </div>
+
+        <div class="prayer-row">
+          <div class="prayer-row-icon" style="background: rgba(7,26,53,0.06);">
+            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A3560" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          </div>
+          <div class="prayer-row-info">
+            <div class="prayer-row-name">Asr</div>
+          </div>
+          <div class="prayer-row-time">3:48 PM</div>
+          <div class="prayer-row-qaza">Qaza</div>
+        </div>
+
+        <div class="prayer-row">
+          <div class="prayer-row-icon" style="background: rgba(184,137,47,0.15);">
+            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B8892F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          </div>
+          <div class="prayer-row-info">
+            <div class="prayer-row-name">Maghrib</div>
+          </div>
+          <div class="prayer-row-time">6:19 PM</div>
+          <div class="prayer-row-qaza">Qaza</div>
+        </div>
+
+        <div class="prayer-row">
+          <div class="prayer-row-icon" style="background: rgba(7,26,53,0.06);">
+            <svg class="icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1A3560" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/>
+            </svg>
+          </div>
+          <div class="prayer-row-info">
+            <div class="prayer-row-name">Isha</div>
+          </div>
+          <div class="prayer-row-time">7:39 PM</div>
+          <div class="prayer-row-qaza">Qaza</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- COUNTDOWN SCREEN -->
+    <!-- ===================================================== -->
+    <div class="screen screen-countdown" id="screen-countdown">
+      <div class="countdown-hero">
+        <div class="countdown-label">Time until Fajr</div>
+        <div class="countdown-time">4:23</div>
+        <div class="countdown-prayer">Fajr — 5:17 AM</div>
+        <div class="countdown-divider"></div>
+      </div>
+
+      <div class="section-header" style="padding-top:0">
+        <span class="section-title">Upcoming Prayers</span>
+      </div>
+
+      <div class="countdown-card-stack">
+        <div class="cdown-card">
+          <div class="cdown-card-time">12:04</div>
+          <div class="cdown-card-name">Dhuhr</div>
+          <div class="cdown-card-elapsed">2h 41m</div>
+        </div>
+        <div class="cdown-card">
+          <div class="cdown-card-time">3:48</div>
+          <div class="cdown-card-name">Asr</div>
+          <div class="cdown-card-elapsed">6h 25m</div>
+        </div>
+        <div class="cdown-card">
+          <div class="cdown-card-time">6:19</div>
+          <div class="cdown-card-name">Maghrib</div>
+          <div class="cdown-card-elapsed">8h 56m</div>
+        </div>
+        <div class="cdown-card">
+          <div class="cdown-card-time">7:39</div>
+          <div class="cdown-card-name">Isha</div>
+          <div class="cdown-card-elapsed">10h 16m</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- CALENDAR SCREEN -->
+    <!-- ===================================================== -->
+    <div class="screen screen-calendar" id="screen-calendar">
+      <div class="cal-header">
+        <div class="cal-month">May 2026</div>
+        <div class="cal-nav">
+          <div class="cal-nav-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#071A35" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </div>
+          <div class="cal-nav-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#071A35" stroke-width="2" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="cal-weekdays">
+        <div class="cal-weekday">SUN</div>
+        <div class="cal-weekday">MON</div>
+        <div class="cal-weekday">TUE</div>
+        <div class="cal-weekday">WED</div>
+        <div class="cal-weekday">THU</div>
+        <div class="cal-weekday">FRI</div>
+        <div class="cal-weekday">SAT</div>
+      </div>
+
+      <div class="cal-grid" id="cal-grid">
+        <!-- Generated by JS -->
+      </div>
+
+      <div class="focus-header">
+        <div class="focus-title">Focus Time Today</div>
+      </div>
+      <div class="focus-blocks">
+        <div class="focus-block">
+          <div class="focus-block-prayer">Fajr</div>
+          <div class="focus-block-bar"><div class="focus-block-fill" style="width:100%"></div></div>
+          <div class="focus-block-time">30m</div>
+        </div>
+        <div class="focus-block">
+          <div class="focus-block-prayer">Dhuhr</div>
+          <div class="focus-block-bar"><div class="focus-block-fill" style="width:0%"></div></div>
+          <div class="focus-block-time">0m</div>
+        </div>
+        <div class="focus-block">
+          <div class="focus-block-prayer">Asr</div>
+          <div class="focus-block-bar"><div class="focus-block-fill" style="width:0%"></div></div>
+          <div class="focus-block-time">0m</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- JOURNEY SCREEN -->
+    <!-- ===================================================== -->
+    <div class="screen screen-journey" id="screen-journey">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value gold">27</div>
+          <div class="stat-label">Day Streak</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">142</div>
+          <div class="stat-label">Total Prayers</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value emerald">94%</div>
+          <div class="stat-label">On Time</div>
+        </div>
+      </div>
+
+      <div class="heatmap-card">
+        <div class="heatmap-header">
+          <div class="heatmap-title">April Activity</div>
+          <div class="heatmap-legend">
+            <span>Less</span>
+            <div class="heat-cell"></div>
+            <div class="heat-cell l1"></div>
+            <div class="heat-cell l2"></div>
+            <div class="heat-cell l3"></div>
+            <div class="heat-cell l4"></div>
+            <div class="heat-cell l5"></div>
+            <span>More</span>
+          </div>
+        </div>
+        <div class="heatmap-weekdays">
+          <div class="heat-day-label">S</div>
+          <div class="heat-day-label">M</div>
+          <div class="heat-day-label">T</div>
+          <div class="heat-day-label">W</div>
+          <div class="heat-day-label">T</div>
+          <div class="heat-day-label">F</div>
+          <div class="heat-day-label">S</div>
+        </div>
+        <div id="heatmap-body">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+
+      <div class="weekly-card">
+        <div class="weekly-header">
+          <div class="weekly-title">This Week</div>
+          <div class="weekly-trend">↑ 12%</div>
+        </div>
+        <div class="weekly-bars">
+          <div class="wbar-wrap">
+            <div class="wbar-track">
+              <div class="wbar filled" style="height:60%"></div>
+            </div>
+            <div class="wbar-label">S</div>
+          </div>
+          <div class="wbar-wrap">
+            <div class="wbar-track">
+              <div class="wbar filled" style="height:85%"></div>
+            </div>
+            <div class="wbar-label">M</div>
+          </div>
+          <div class="wbar-wrap">
+            <div class="wbar-track">
+              <div class="wbar filled" style="height:100%"></div>
+            </div>
+            <div class="wbar-label">T</div>
+          </div>
+          <div class="wbar-wrap">
+            <div class="wbar-track">
+              <div class="wbar filled" style="height:70%"></div>
+            </div>
+            <div class="wbar-label">W</div>
+          </div>
+          <div class="wbar-wrap">
+            <div class="wbar-track">
+              <div class="wbar filled" style="height:90%"></div>
+            </div>
+            <div class="wbar-label">T</div>
+          </div>
+          <div class="wbar-wrap">
+            <div class="wbar-track">
+              <div class="wbar" style="height:0%"></div>
+            </div>
+            <div class="wbar-label">F</div>
+          </div>
+          <div class="wbar-wrap">
+            <div class="wbar-track">
+              <div class="wbar" style="height:0%"></div>
+            </div>
+            <div class="wbar-label">S</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- QIBLA SCREEN -->
+    <!-- ===================================================== -->
+    <div class="screen screen-qibla" id="screen-qibla">
+      <div class="qibla-compass-wrap">
+        <div class="compass-ring">
+          <div class="compass-direction north">N</div>
+          <div class="compass-inner">
+            <div class="compass-kaaba-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#071A35" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                <path d="M3 9h18M9 3v18"/>
+              </svg>
+            </div>
+            <div class="compass-degrees">243°</div>
+            <div class="compass-bearing">SE</div>
+          </div>
+        </div>
+        <div class="qibla-info">
+          <div class="qibla-city">Makkah Al Mukkaramah</div>
+          <div class="qibla-distance">8,356 km away</div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <span class="section-title">Nearby Mosques</span>
+      </div>
+
+      <div class="mosque-card">
+        <div class="mosque-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B8892F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18M4 21V10l8-7 8 7v11M9 21v-6h6v6"/>
+          </svg>
+        </div>
+        <div style="flex:1">
+          <div class="mosque-name">Lakemba Mosque</div>
+          <div class="mosque-distance">1.2 km away</div>
+        </div>
+      </div>
+
+      <div class="mosque-card">
+        <div class="mosque-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B8892F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 21h18M4 21V10l8-7 8 7v11M9 21v-6h6v6"/>
+          </svg>
+        </div>
+        <div style="flex:1">
+          <div class="mosque-name">Auburn Mosque</div>
+          <div class="mosque-distance">2.8 km away</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- SETTINGS SCREEN -->
+    <!-- ===================================================== -->
+    <div class="screen screen-settings" id="screen-settings">
+
+      <div class="settings-section-title">Notifications</div>
+      <div class="settings-card">
+        <div class="srow">
+          <div class="srow-left">
+            <div class="srow-icon navy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#071A35" stroke-width="1.8" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <div class="srow-label">Prayer Alerts</div>
+          </div>
+          <div class="toggle active" onclick="this.classList.toggle('active')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="srow-left">
+            <div class="srow-icon gold">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#B8892F" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <div class="srow-label">Fajr Auto-Alarm</div>
+          </div>
+          <div class="srow-value">15 min before</div>
+          <div class="srow-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="srow-left">
+            <div class="srow-icon green">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0F7A4F" stroke-width="1.8" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
+            </div>
+            <div class="srow-label">Iqama Countdown</div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('active')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section-title">Calendar</div>
+      <div class="settings-card">
+        <div class="srow">
+          <div class="srow-left">
+            <div class="srow-icon navy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#071A35" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+            </div>
+            <div class="srow-label">Import Calendar</div>
+          </div>
+          <div class="srow-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="srow-left">
+            <div class="srow-icon gray">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="1.8" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg>
+            </div>
+            <div class="srow-label">Sync to Calendar</div>
+          </div>
+          <div class="toggle" onclick="this.classList.toggle('active')">
+            <div class="toggle-knob"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-section-title">Calculation</div>
+      <div class="settings-card">
+        <div class="srow">
+          <div class="srow-left">
+            <div class="srow-icon navy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#071A35" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div class="srow-label">Madhab</div>
+          </div>
+          <div class="srow-value">Shafi</div>
+          <div class="srow-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+        <div class="srow">
+          <div class="srow-left">
+            <div class="srow-icon navy">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#071A35" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            </div>
+            <div class="srow-label">Calculation Method</div>
+          </div>
+          <div class="srow-value">Islamic Society</div>
+          <div class="srow-arrow">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div><!-- /screen-container -->
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <div class="nav-item active" data-screen="home" onclick="switchTab('home')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+      </div>
+      <div class="nav-label">Home</div>
+    </div>
+    <div class="nav-item" data-screen="countdown" onclick="switchTab('countdown')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 6v6l4 2"/>
+        </svg>
+      </div>
+      <div class="nav-label">Countdown</div>
+    </div>
+    <div class="nav-item" data-screen="calendar" onclick="switchTab('calendar')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+        </svg>
+      </div>
+      <div class="nav-label">Calendar</div>
+    </div>
+    <div class="nav-item" data-screen="journey" onclick="switchTab('journey')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+      </div>
+      <div class="nav-label">Journey</div>
+    </div>
+    <div class="nav-item" data-screen="qibla" onclick="switchTab('qibla')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+        </svg>
+      </div>
+      <div class="nav-label">Qibla</div>
+    </div>
+    <div class="nav-item" data-screen="settings" onclick="switchTab('settings')">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </div>
+      <div class="nav-label">Settings</div>
+    </div>
+  </nav>
+
+</div><!-- /device -->
+
+<script>
+/* ============================================================
+   TAB NAVIGATION
+   ============================================================ */
+
+function switchTab(screen) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + screen).classList.add('active');
+  document.querySelector(`.nav-item[data-screen="${screen}"]`).classList.add('active');
+  document.querySelector('.screen-container').scrollTop = 0;
+}
+
+/* ============================================================
+   CALENDAR GENERATION
+   ============================================================ */
+
+function buildCalendar() {
+  const grid = document.getElementById('cal-grid');
+  const today = new Date(2026, 4, 15); // May 15, 2026 (already prayed)
+  const firstDay = new Date(2026, 4, 1).getDay();
+  const daysInMonth = 31;
+
+  // Prayer data for May 2026 (1=prayed, 2=missed, 0=not done, null=future)
+  const prayerData = {
+    1: 2, 2: 2, 3: 1, 4: 2, 5: 1, 6: 2, 7: 1, 8: 2, 9: 1,
+    10: 1, 11: 2, 12: 1, 13: 2, 14: 1, 15: 1
+  };
+
+  let html = '';
+
+  // Leading empty cells
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div class="cal-day other-month"></div>';
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const isToday = (d === 15);
+    const isFuture = (d > 15);
+    const state = prayerData[d];
+
+    let cls = 'cal-day';
+    if (isToday) cls += ' today';
+    else if (state === 1) cls += ' prayed';
+    else if (state === 2) cls += ' missed';
+    else if (isFuture) cls += ' other-month';
+
+    let inner = d;
+    if (isToday) inner += '<span class="day-dot"></span>';
+
+    html += `<div class="${cls}">${inner}</div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+/* ============================================================
+   HEATMAP GENERATION — April 2026
+   ============================================================ */
+
+function buildHeatmap() {
+  const body = document.getElementById('heatmap-body');
+  // April has 30 days, 5 weeks
+  // prayerData: 1=prayed all, 2=partial, 3=none
+  const aprilData = [
+    [1,2,2,1,3,3,0],  // W1: Sun-Sat
+    [2,1,1,2,1,0,0],  // W2
+    [1,2,3,2,1,0,0],  // W3
+    [1,1,2,1,3,0,0],  // W4
+    [2,1,1,0,0,0,0],  // W5 (partial)
+  ];
+
+  let html = '';
+  aprilData.forEach((week, wi) => {
+    html += '<div class="heat-row">';
+    week.forEach((level, di) => {
+      let cls = 'heat-cell';
+      if (level === 1) cls += ' l1';
+      else if (level === 2) cls += ' l2';
+      else if (level === 3) cls += ' l3';
+      else if (level === 4) cls += ' l4';
+      else if (level === 5) cls += ' l5';
+      // else: empty (no class = default gray)
+      html += `<div class="${cls}"></div>`;
+    });
+    html += '</div>';
+  });
+  body.innerHTML = html;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+
+buildCalendar();
+buildHeatmap();
+</script>
+
+</body>
+</html>

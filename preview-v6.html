@@ -1,0 +1,3114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nur Minimal v6 — Premium Prayer App</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+/* ============================================================
+   DESIGN TOKENS — STRICT 8PT GRID
+   ============================================================ */
+
+:root {
+  /* --- Colors Light --- */
+  --bg-primary:    #FAF6F0;
+  --bg-secondary:  #F2EDE3;
+  --bg-card:      rgba(255, 252, 247, 0.88);
+  --bg-card-solid:#FFFDF9;
+  --bg-elevated:  #FFFFFF;
+
+  --border-subtle:  rgba(184, 137, 47, 0.14);
+  --border-soft:    rgba(184, 137, 47, 0.08);
+  --border-sep:     rgba(15, 31, 61, 0.08);
+  --border-sep-strong: rgba(15, 31, 61, 0.14);
+
+  --text-primary:   #071A35;
+  --text-secondary:  rgba(7, 26, 53, 0.60);
+  --text-tertiary:  rgba(7, 26, 53, 0.36);
+  --text-disabled:   rgba(7, 26, 53, 0.20);
+
+  --gold:         #B8892F;
+  --gold-soft:    #D4AF5A;
+  --gold-muted:   rgba(184, 137, 47, 0.12);
+  --gold-glow:    rgba(184, 137, 47, 0.22);
+
+  --emerald:      #0A6E4F;
+  --emerald-soft: #EAF4EE;
+  --emerald-mid:  rgba(10, 110, 79, 0.12);
+  --emerald-glow: rgba(10, 110, 79, 0.18);
+
+  --rose:         #C45C5C;
+  --rose-soft:    #FAF0F0;
+
+  /* iOS surface separators */
+  --separator:    rgba(60, 60, 67, 0.12);
+  --separator-strong: rgba(60, 60, 67, 0.22);
+
+  /* --- Shadows — 3 Tier System --- */
+  --shadow-hero:   0 12px 48px rgba(7, 26, 53, 0.10), 0 4px 16px rgba(7, 26, 53, 0.06);
+  --shadow-card:   0 4px 20px rgba(7, 26, 53, 0.06), 0 1px 4px rgba(7, 26, 53, 0.04);
+  --shadow-row:    0 1px 0 rgba(0, 0, 0, 0.04);
+
+  /* --- Typography --- */
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-ui:      'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* --- Spacing — 8pt grid --- */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* --- Radius --- */
+  --r-sm:  8px;
+  --r-md:  12px;
+  --r-lg:  16px;
+  --r-xl:  20px;
+  --r-2xl: 28px;
+  --r-full: 9999px;
+
+  /* --- Transitions --- */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.15, 1);
+  --dur-fast:  0.15s;
+  --dur-normal: 0.25s;
+  --dur-slow:  0.40s;
+}
+
+[data-theme="dark"] {
+  --bg-primary:    #000000;
+  --bg-secondary:  #1C1C1E;
+  --bg-card:       rgba(28, 28, 30, 0.88);
+  --bg-card-solid: #1C1C1E;
+  --bg-elevated:   #2C2C2E;
+
+  --border-subtle:  rgba(184, 137, 47, 0.10);
+  --border-soft:    rgba(184, 137, 47, 0.06);
+  --border-sep:     rgba(255, 255, 255, 0.06);
+  --border-sep-strong: rgba(255, 255, 255, 0.12);
+
+  --text-primary:   #FFFFFF;
+  --text-secondary: rgba(235, 235, 245, 0.60);
+  --text-tertiary:  rgba(235, 235, 245, 0.36);
+  --text-disabled:  rgba(235, 235, 245, 0.20);
+
+  --gold-muted:   rgba(184, 137, 47, 0.10);
+  --gold-glow:    rgba(184, 137, 47, 0.16);
+  --emerald-soft: rgba(10, 110, 79, 0.15);
+  --emerald-mid:  rgba(10, 110, 79, 0.10);
+  --emerald-glow: rgba(10, 110, 79, 0.14);
+
+  --separator:    rgba(84, 84, 88, 0.32);
+  --separator-strong: rgba(84, 84, 88, 0.48);
+
+  /* Dark mode — no shadows, use borders */
+  --shadow-hero: none;
+  --shadow-card: none;
+  --shadow-row: 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+
+html, body { height: 100%; overflow: hidden; background: #111; }
+
+body {
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   DEVICE
+   ============================================================ */
+
+.device {
+  width: 393px;
+  height: 852px;
+  background: var(--bg-primary);
+  border-radius: 47px;
+  overflow: hidden;
+  position: relative;
+  margin: 0 auto;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.06),
+    0 60px 120px rgba(10, 18, 32, 0.55),
+    0 20px 60px rgba(10, 18, 32, 0.40);
+}
+
+/* Dynamic Island */
+.dynamic-island {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 37px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 12px;
+}
+.dynamic-island::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  width: 10px;
+  height: 10px;
+  background: #1A1A1A;
+  border-radius: 50%;
+}
+
+/* Geometric Background */
+.bg-geo {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 360px;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+.bg-geo::before {
+  content: '';
+  position: absolute;
+  top: -80px; left: -80px; right: -80px; bottom: 0;
+  background:
+    radial-gradient(ellipse 90% 55% at 50% 0%, var(--gold-muted) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 40% at 15% 20%, rgba(10,110,79,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse 55% 40% at 85% 30%, rgba(10,110,79,0.05) 0%, transparent 50%);
+  opacity: 0.6;
+}
+.bg-geo::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 220px;
+  background-image: url("data:image/svg+xml,%3Csvg width='48' height='48' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M24 0L48 24L24 48L0 24Z' fill='none' stroke='%23B8892F' stroke-width='0.4' opacity='0.07'/%3E%3Ccircle cx='24' cy='24' r='6' fill='none' stroke='%23B8892F' stroke-width='0.4' opacity='0.05'/%3E%3C/svg%3E");
+  background-size: 36px 36px;
+  opacity: 0.5;
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+
+.screens {
+  height: calc(100% - 83px);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.screen {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: none;
+  padding-top: 60px;
+  background: transparent;
+}
+.screen::-webkit-scrollbar { display: none; }
+.screen { -ms-overflow-style: none; scrollbar-width: none; }
+.screen.active { display: block; }
+
+/* ============================================================
+   BOTTOM NAVIGATION
+   ============================================================ */
+
+.bottom-nav {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 83px;
+  background: var(--bg-card);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border-top: 0.5px solid var(--separator);
+  display: flex;
+  align-items: flex-start;
+  padding-top: 8px;
+  z-index: 50;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-tertiary);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+  position: relative;
+  padding: 6px 0;
+}
+
+.nav-item.active { color: var(--emerald); }
+
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2.5px;
+  background: var(--emerald);
+  border-radius: 0 0 3px 3px;
+  transition: all var(--dur-normal) var(--ease-spring);
+}
+
+.nav-item svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.6;
+  transition: transform var(--dur-normal) var(--ease-spring);
+}
+
+.nav-item.active svg { transform: scale(1.12); }
+
+/* ============================================================
+   STATUS BAR
+   ============================================================ */
+
+.status-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 54px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 var(--sp-6) 8px;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.status-time {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.status-icons {
+  display: flex;
+  gap: var(--sp-1);
+  font-size: 12px;
+}
+
+/* ============================================================
+   SECTION LABELS
+   ============================================================ */
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-tertiary);
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-2);
+}
+
+/* ============================================================
+   HOME SCREEN
+   ============================================================ */
+
+.screen-home { padding-top: 54px; }
+
+/* Header meta */
+.header-meta {
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-5);
+}
+
+.header-meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  flex-wrap: wrap;
+}
+
+.location-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.location-badge svg { width: 13px; height: 13px; }
+
+.method-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--bg-card);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: var(--r-full);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.date-row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  margin-top: var(--sp-2);
+}
+
+.hijri-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.4px;
+}
+
+.hijri-label svg { width: 14px; height: 14px; }
+
+.gregorian-label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* Hero Card */
+.hero-card {
+  margin: 0 var(--sp-6);
+  margin-bottom: var(--sp-5);
+  background: var(--bg-card);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: var(--r-2xl);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow-hero);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+  user-select: none;
+}
+
+.hero-card:active {
+  transform: scale(0.985);
+  box-shadow: var(--shadow-card);
+}
+
+/* Gold gradient top border */
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2.5px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-soft), var(--emerald));
+  border-radius: var(--r-2xl) var(--r-2xl) 0 0;
+}
+
+.hero-card-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+
+.hero-left { flex: 1; }
+
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.hero-eyebrow-text {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--emerald);
+}
+
+.hero-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--emerald);
+  animation: pulse-dot 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 var(--emerald-glow); }
+  50% { opacity: 0.6; transform: scale(0.85); box-shadow: 0 0 0 4px transparent; }
+}
+
+.hero-prayer {
+  font-family: var(--font-display);
+  font-size: 54px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 2px;
+  letter-spacing: -1.5px;
+}
+
+.hero-arabic {
+  font-family: var(--font-display);
+  font-size: 15px;
+  color: var(--text-tertiary);
+  direction: rtl;
+  text-align: left;
+  margin-bottom: var(--sp-2);
+}
+
+.hero-time {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-bottom: var(--sp-3);
+}
+
+.hero-countdown {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.countdown-num {
+  font-family: var(--font-ui);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+}
+
+.countdown-suffix {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+/* Small progress ring — bottom right */
+.hero-ring {
+  width: 56px;
+  height: 56px;
+  position: relative;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.hero-ring svg {
+  transform: rotate(-90deg);
+  width: 56px;
+  height: 56px;
+}
+
+.hero-ring circle {
+  fill: none;
+  stroke-width: 4.5;
+  stroke-linecap: round;
+}
+
+.hero-ring .bg { stroke: var(--separator-strong); }
+.hero-ring .progress {
+  stroke: var(--gold);
+  stroke-dasharray: 132;
+  stroke-dashoffset: 35;
+  filter: drop-shadow(0 0 3px var(--gold-glow));
+  transition: stroke-dashoffset 1s var(--ease-out);
+}
+
+.hero-ring-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+/* Prayer List Card — iOS grouped style */
+.prayer-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-2);
+}
+
+.section-action {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--emerald);
+  cursor: pointer;
+}
+
+.prayer-list-card {
+  margin: 0 var(--sp-6);
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.prayer-row {
+  display: flex;
+  align-items: center;
+  padding: 13px var(--sp-5);
+  position: relative;
+  transition:
+    background var(--dur-fast),
+    transform var(--dur-fast);
+  cursor: pointer;
+}
+
+.prayer-row:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 60px;
+  right: var(--sp-5);
+  bottom: 0;
+  height: 0.5px;
+  background: var(--separator);
+}
+
+.prayer-row:last-child { border-radius: 0 0 var(--r-lg) var(--r-lg); }
+.prayer-row:first-child { border-radius: var(--r-lg) var(--r-lg) 0 0; }
+
+.prayer-row:active {
+  background: rgba(0,0,0,0.03);
+  transform: scale(0.99);
+}
+
+[data-theme="dark"] .prayer-row:active {
+  background: rgba(255,255,255,0.04);
+}
+
+.prayer-row.active {
+  background: var(--emerald-soft);
+}
+
+.prayer-row.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: var(--emerald);
+}
+
+.prayer-row.active::after {
+  border-color: var(--emerald-mid) !important;
+}
+
+.prayer-row.done { opacity: 0.7; }
+
+.prayer-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--sp-3);
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  transition: background var(--dur-fast);
+}
+
+.prayer-row.active .prayer-icon-wrap {
+  background: var(--emerald-mid);
+}
+
+.prayer-icon-wrap svg {
+  width: 20px;
+  height: 20px;
+}
+
+.prayer-info { flex: 1; min-width: 0; }
+
+.prayer-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 1px;
+}
+
+.prayer-arabic-name {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  direction: rtl;
+}
+
+.prayer-time {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  margin-right: var(--sp-3);
+}
+
+.prayer-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--r-full);
+  background: var(--bg-secondary);
+  color: var(--text-tertiary);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.prayer-status svg { width: 10px; height: 10px; }
+
+.prayer-row.active .prayer-status {
+  background: var(--emerald);
+  color: white;
+}
+
+.prayer-row.done .prayer-status {
+  background: var(--emerald-mid);
+  color: var(--emerald);
+}
+
+.footer-pad { height: 100px; }
+
+/* ============================================================
+   COUNTDOWN SCREEN
+   ============================================================ */
+
+.screen-countdown {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+.screen-countdown.active { display: flex; }
+
+.countdown-hero {
+  padding: var(--sp-8) var(--sp-6) var(--sp-4);
+  text-align: center;
+  width: 100%;
+}
+
+.countdown-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--emerald);
+  margin-bottom: var(--sp-2);
+}
+
+.countdown-prayer-name {
+  font-family: var(--font-display);
+  font-size: 58px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -2px;
+  margin-bottom: 4px;
+}
+
+.countdown-arabic {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-tertiary);
+  direction: rtl;
+  margin-bottom: 4px;
+}
+
+.countdown-time-str {
+  font-family: var(--font-display);
+  font-size: 18px;
+  color: var(--text-secondary);
+}
+
+/* Big ring */
+.big-ring-wrap {
+  display: flex;
+  justify-content: center;
+  margin: var(--sp-4) 0;
+}
+
+.big-ring {
+  width: 220px;
+  height: 220px;
+  position: relative;
+}
+
+.big-ring svg {
+  transform: rotate(-90deg);
+  width: 220px;
+  height: 220px;
+}
+
+.big-ring circle {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+}
+
+.big-ring .bg { stroke: var(--separator-strong); }
+.big-ring .progress {
+  stroke: var(--emerald);
+  stroke-dasharray: 628;
+  stroke-dashoffset: 160;
+  filter: drop-shadow(0 0 10px var(--emerald-glow));
+}
+
+.big-ring-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.big-ring-time {
+  font-family: var(--font-ui);
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -1px;
+  line-height: 1;
+  overflow: hidden;
+}
+
+.big-ring-unit {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+}
+
+/* Digit slide animation */
+.digit-group {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+}
+
+.countdown-display {
+  display: flex;
+  gap: 2px;
+  justify-content: center;
+}
+
+.countdown-segment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.countdown-sep {
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--text-tertiary);
+  line-height: 1;
+  margin: 0 1px;
+  align-self: flex-start;
+  padding-top: 2px;
+}
+
+/* Mini prayer cards */
+.mini-cards-scroll {
+  display: flex;
+  gap: var(--sp-2);
+  padding: 0 var(--sp-6);
+  overflow-x: auto;
+  margin-bottom: var(--sp-5);
+  -webkit-overflow-scrolling: touch;
+}
+.mini-cards-scroll::-webkit-scrollbar { display: none; }
+
+.mini-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: 12px var(--sp-3);
+  min-width: 68px;
+  text-align: center;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background var(--dur-fast),
+    border-color var(--dur-fast),
+    box-shadow var(--dur-fast);
+  flex-shrink: 0;
+}
+
+.mini-card:active { transform: scale(0.94); }
+
+.mini-card.active {
+  background: var(--emerald-soft);
+  border-color: var(--emerald-mid);
+  box-shadow: 0 0 0 3px var(--emerald-glow);
+}
+
+.mini-card.done { opacity: 0.5; }
+
+.mini-icon { margin-bottom: 5px; }
+.mini-icon svg { width: 20px; height: 20px; }
+
+.mini-name { font-size: 12px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.mini-time { font-size: 11px; color: var(--text-tertiary); }
+
+/* Info row */
+.info-row {
+  display: flex;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-6);
+}
+
+.info-card-sm {
+  flex: 1;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: 14px var(--sp-4);
+  text-align: center;
+}
+
+.info-card-sm .label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+
+.info-card-sm .value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ============================================================
+   CALENDAR SCREEN
+   ============================================================ */
+
+.screen-calendar { padding-top: 54px; }
+
+.cal-header {
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-5);
+}
+
+.cal-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: 2px;
+}
+
+.cal-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Week strip */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-5);
+}
+
+.wd { text-align: center; padding: var(--sp-2) 0; }
+
+.wd-name {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 5px;
+}
+
+.wd-num {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 auto;
+  transition: all var(--dur-fast);
+}
+
+.wd-num.today {
+  background: var(--emerald);
+  color: white;
+  box-shadow: 0 2px 8px var(--emerald-glow);
+}
+
+.wd-num.selected {
+  background: var(--gold-muted);
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* Timeline */
+.timeline-wrap {
+  margin: 0 var(--sp-6);
+  margin-bottom: var(--sp-5);
+}
+
+.timeline-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.tl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px var(--sp-5);
+  border-bottom: 0.5px solid var(--separator);
+}
+
+.tl-date {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.tl-hijri {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tl-hijri svg { width: 12px; height: 12px; }
+
+.tl-items { padding: var(--sp-2) 0; }
+
+.tl-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 10px var(--sp-5);
+  position: relative;
+}
+
+.tl-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 52px;
+  top: 42px;
+  bottom: 0;
+  width: 0.5px;
+  background: var(--separator);
+}
+
+.tl-item.active:not(:last-child)::after {
+  background: linear-gradient(to bottom, var(--emerald), var(--separator));
+}
+
+.tl-time {
+  width: 46px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  margin-right: var(--sp-3);
+  padding-top: 2px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.tl-item.active .tl-time { color: var(--emerald); }
+
+.tl-dot-wrap {
+  width: 22px;
+  display: flex;
+  justify-content: center;
+  margin-right: var(--sp-3);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.tl-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--separator-strong);
+  border: 2px solid var(--bg-card);
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+
+.tl-item.active .tl-dot {
+  background: var(--emerald);
+  box-shadow: 0 0 0 3px var(--emerald-mid);
+}
+
+.tl-item.done .tl-dot { background: var(--emerald); }
+
+.tl-item.event .tl-dot {
+  background: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-muted);
+}
+
+.tl-content { flex: 1; padding-bottom: 10px; }
+
+.tl-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1px;
+}
+
+.tl-arabic {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  direction: rtl;
+  margin-bottom: 3px;
+}
+
+.tl-meta {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tl-meta svg { width: 10px; height: 10px; }
+
+.tl-event-card {
+  background: var(--gold-muted);
+  border-radius: var(--r-sm);
+  padding: 6px var(--sp-3);
+  margin-top: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.tl-event-card .emoji { font-size: 12px; }
+
+.tl-event-info .name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+.tl-event-info .time {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.tl-focus-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--emerald-mid);
+  border-radius: var(--r-sm);
+  padding: 3px 9px;
+  margin-top: 5px;
+}
+
+.tl-focus-tag .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--emerald);
+}
+
+.tl-focus-tag .text {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--emerald);
+}
+
+/* Quranic quote card with geometric frame */
+.quote-card {
+  margin: 0 var(--sp-6);
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.quote-card::before {
+  content: '';
+  position: absolute;
+  top: 8px; left: 8px; right: 8px; bottom: 8px;
+  border: 0.5px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  pointer-events: none;
+}
+
+.quote-geo {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.5;
+  animation: shimmer 4s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+.quote-text {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-style: italic;
+  color: var(--text-primary);
+  line-height: 1.8;
+  margin-bottom: var(--sp-3);
+  position: relative;
+}
+
+.quote-src {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+  position: relative;
+}
+
+/* ============================================================
+   JOURNEY SCREEN
+   ============================================================ */
+
+.screen-journey { padding-top: 54px; }
+
+.journey-header {
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-5);
+}
+
+.journey-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: 2px;
+}
+
+.journey-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Streak card */
+.streak-card {
+  margin: 0 var(--sp-6);
+  margin-bottom: var(--sp-4);
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-xl);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+}
+
+.streak-icon-wrap {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, #FF9500, #FF3B30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(255, 149, 0, 0.25);
+}
+
+.streak-icon-wrap svg { width: 26px; height: 26px; }
+
+.streak-info { flex: 1; }
+
+.streak-main {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.streak-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.streak-right {
+  text-align: right;
+}
+
+.streak-best-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+  margin-bottom: 2px;
+}
+
+.streak-best {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--gold);
+}
+
+/* Stats row */
+.stats-row {
+  display: flex;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-4);
+}
+
+.stat-card {
+  flex: 1;
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-md);
+  padding: 14px var(--sp-2);
+  text-align: center;
+}
+
+[data-theme="dark"] .stat-card { border-color: var(--border-sep); }
+
+.stat-card .val {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.stat-card .lbl {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-tertiary);
+  line-height: 1.3;
+}
+
+.stat-card.highlight .val { color: var(--emerald); }
+
+/* Heatmap */
+.heatmap-section {
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-4);
+}
+
+.heatmap-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+[data-theme="dark"] .heatmap-card { border-color: var(--border-sep); }
+
+.heatmap-head {
+  padding: 13px var(--sp-5);
+  border-bottom: 0.5px solid var(--separator);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heatmap-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.heatmap-months {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.heatmap-body { padding: var(--sp-4) var(--sp-5); }
+
+.heat-col-labels {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+.heat-col-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  text-align: center;
+  letter-spacing: 0.3px;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: var(--sp-3);
+  position: relative;
+}
+
+.heat-cell {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--bg-secondary);
+  transition: all var(--dur-fast);
+  cursor: default;
+  position: relative;
+}
+
+[data-theme="dark"] .heat-cell { background: #2C2C2E; }
+
+.heat-cell.l1 { background: rgba(10, 110, 79, 0.18); }
+.heat-cell.l2 { background: rgba(10, 110, 79, 0.35); }
+.heat-cell.l3 { background: rgba(10, 110, 79, 0.55); }
+.heat-cell.l4 { background: var(--emerald); box-shadow: 0 0 5px var(--emerald-glow); }
+
+.heat-cell.today {
+  outline: 2px solid var(--gold);
+  outline-offset: 1.5px;
+}
+
+/* Tooltip */
+.heat-cell[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-size: 9px;
+  font-weight: 600;
+  padding: 3px 7px;
+  border-radius: 5px;
+  white-space: nowrap;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.heat-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.heat-legend-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
+
+/* Weekly bar */
+.weekly-section {
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-4);
+}
+
+.weekly-card {
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  padding: var(--sp-4) var(--sp-5);
+  box-shadow: var(--shadow-card);
+}
+
+[data-theme="dark"] .weekly-card { border-color: var(--border-sep); }
+
+.weekly-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--sp-4);
+}
+
+.weekly-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  height: 64px;
+}
+
+.wbar-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.wbar {
+  width: 100%;
+  max-width: 26px;
+  border-radius: 4px 4px 0 0;
+  background: var(--bg-secondary);
+  transition: all var(--dur-normal) var(--ease-spring);
+}
+
+[data-theme="dark"] .wbar { background: #2C2C2E; }
+
+.wbar.filled {
+  background: var(--emerald);
+  box-shadow: 0 -2px 8px var(--emerald-glow);
+}
+
+.wbar-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--text-tertiary);
+}
+
+.wbar-label.active { color: var(--emerald); }
+
+/* Insight card */
+.insight-card {
+  margin: 0 var(--sp-6);
+  background: linear-gradient(135deg, var(--emerald-mid), rgba(10, 110, 79, 0.04));
+  border: 0.5px solid var(--emerald-mid);
+  border-radius: var(--r-lg);
+  padding: var(--sp-5);
+}
+
+.insight-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.insight-icon svg { width: 16px; height: 16px; }
+
+.insight-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--emerald);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.insight-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+/* ============================================================
+   QIBLA SCREEN
+   ============================================================ */
+
+.screen-qibla {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+.screen-qibla.active { display: flex; }
+
+.qibla-header {
+  text-align: center;
+  padding: var(--sp-8) var(--sp-6) var(--sp-4);
+}
+
+.qibla-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+
+.qibla-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.compass-wrap {
+  display: flex;
+  justify-content: center;
+  margin: var(--sp-4) 0 var(--sp-5);
+}
+
+.compass {
+  width: 260px;
+  height: 260px;
+  position: relative;
+}
+
+.compass-ring-outer {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--separator-strong);
+  border-radius: 50%;
+}
+
+.compass-ring-mid {
+  position: absolute;
+  inset: 28px;
+  border: 0.5px solid var(--separator);
+  border-radius: 50%;
+}
+
+.compass-ring-inner {
+  position: absolute;
+  inset: 56px;
+  border: 0.5px solid var(--border-soft);
+  border-radius: 50%;
+}
+
+/* Degree ticks */
+.compass-ticks {
+  position: absolute;
+  inset: 0;
+}
+
+.compass-ticks::before,
+.compass-ticks::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1px;
+  height: 10px;
+  background: var(--separator-strong);
+  transform-origin: bottom center;
+}
+
+.compass-dir {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+.compass-dir.n { top: 12px; left: 50%; transform: translateX(-50%); color: var(--gold); }
+.compass-dir.s { bottom: 12px; left: 50%; transform: translateX(-50%); color: var(--text-tertiary); }
+.compass-dir.e { right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); }
+.compass-dir.w { left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); }
+
+.compass-needle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 108px;
+  transform: translate(-50%, -50%) rotate(32deg);
+  transform-origin: center center;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+}
+
+.compass-needle::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, var(--gold), var(--gold-soft));
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.compass-needle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: var(--text-tertiary);
+  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+}
+
+.compass-pivot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  background: var(--gold);
+  border-radius: 50%;
+  box-shadow:
+    0 0 14px var(--gold-glow),
+    0 2px 6px rgba(0,0,0,0.18);
+  z-index: 2;
+}
+
+.qibla-stats {
+  text-align: center;
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-5);
+}
+
+.qibla-distance {
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.qibla-bearing {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: var(--sp-5);
+}
+
+.kaaba-emblem {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto var(--sp-5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kaaba-emblem svg { width: 52px; height: 52px; }
+
+.qibla-note {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: center;
+  padding: 0 var(--sp-8);
+  line-height: 1.7;
+}
+
+/* ============================================================
+   SETTINGS SCREEN
+   ============================================================ */
+
+.screen-settings { padding-top: 54px; }
+
+.settings-head {
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-5);
+}
+
+.settings-title {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+/* Alarm widget */
+.alarm-widget {
+  margin: 0 var(--sp-6);
+  margin-bottom: var(--sp-5);
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-xl);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-card);
+}
+
+.alarm-top {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.alarm-icon svg { width: 24px; height: 24px; }
+
+.alarm-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.alarm-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.alarm-toggle { margin-left: auto; }
+
+/* Spring physics toggle */
+.toggle {
+  width: 51px;
+  height: 31px;
+  background: var(--separator-strong);
+  border-radius: 16px;
+  position: relative;
+  cursor: pointer;
+  transition: background var(--dur-fast);
+}
+
+[data-theme="dark"] .toggle { background: #3C3C3E; }
+
+.toggle.active { background: var(--emerald); }
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  width: 27px;
+  height: 27px;
+  background: white;
+  border-radius: 14px;
+  top: 2px;
+  left: 2px;
+  transition: transform var(--dur-normal) var(--ease-spring);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+
+.toggle.active::after { transform: translateX(20px); }
+
+.alarm-ctrl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--sp-3);
+  border-top: 0.5px solid var(--separator);
+}
+
+.alarm-ctrl-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.alarm-ctrl-right {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.alarm-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  border: 0.5px solid var(--border-sep);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background var(--dur-fast);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  user-select: none;
+}
+
+.alarm-btn:active {
+  transform: scale(0.88);
+  background: var(--separator);
+}
+
+.alarm-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  min-width: 36px;
+  text-align: center;
+}
+
+/* Settings section */
+.settings-section { margin-bottom: var(--sp-5); }
+
+.settings-section-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-tertiary);
+  padding: 0 var(--sp-6);
+  margin-bottom: var(--sp-2);
+}
+
+.settings-card {
+  margin: 0 var(--sp-6);
+  background: var(--bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 0.5px solid var(--border-soft);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+[data-theme="dark"] .settings-card { border-color: var(--border-sep); }
+
+.srow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px var(--sp-5);
+  cursor: pointer;
+  transition: background var(--dur-fast);
+  position: relative;
+}
+
+.srow:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 60px;
+  right: var(--sp-5);
+  bottom: 0;
+  height: 0.5px;
+  background: var(--separator);
+}
+
+.srow:last-child { border-radius: 0 0 var(--r-lg) var(--r-lg); }
+.srow:first-child { border-radius: var(--r-lg) var(--r-lg) 0 0; }
+
+.srow:active { background: rgba(0,0,0,0.025); }
+
+[data-theme="dark"] .srow:active { background: rgba(255,255,255,0.04); }
+
+.srow-left { display: flex; align-items: center; gap: var(--sp-3); }
+
+.srow-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .srow-icon { background: #2C2C2E; }
+
+.srow-icon svg { width: 17px; height: 17px; }
+
+.srow-label {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.srow-val {
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.srow-chevron {
+  font-size: 16px;
+  color: var(--text-tertiary);
+  margin-left: var(--sp-2);
+}
+
+.connected-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--emerald);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.connected-badge svg { width: 12px; height: 12px; }
+
+.footer-pad-lg { height: 120px; }
+
+/* ============================================================
+   PREVIEW CONTROLS
+   ============================================================ */
+
+.preview-controls {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  background: rgba(10, 18, 32, 0.92);
+  backdrop-filter: blur(20px);
+  padding: 10px 16px;
+  border-radius: 24px;
+  z-index: 200;
+  border: 0.5px solid rgba(255,255,255,0.08);
+}
+
+.theme-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--dur-fast) var(--ease-spring);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-btn.active { border-color: rgba(255,255,255,0.6); transform: scale(1.1); }
+.theme-btn:hover { transform: scale(1.05); }
+
+/* ============================================================
+   SCREEN-SPECIFIC PADDING
+   ============================================================ */
+
+.screen-journey .footer-pad-lg,
+.screen-qibla .footer-pad-lg,
+.screen-settings .footer-pad-lg { height: 120px; }
+</style>
+</head>
+<body>
+
+<div class="device" data-theme="light">
+
+  <!-- Status Bar -->
+  <div class="status-bar">
+    <span class="status-time" id="status-time">9:41</span>
+    <span class="status-icons">
+      <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+        <path d="M7 0L14 7H0L7 0Z" fill="currentColor" opacity="0.3"/>
+        <path d="M7 3L11 7H3L7 3Z" fill="currentColor" opacity="0.6"/>
+        <path d="M7 6L10 9H4L7 6Z" fill="currentColor"/>
+      </svg>
+      <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+        <rect x="0.5" y="0.5" width="11" height="9" rx="2" stroke="currentColor" stroke-opacity="0.4"/>
+        <rect x="2" y="2" width="8" height="6" rx="1" fill="currentColor" opacity="0.4"/>
+      </svg>
+      <svg width="25" height="12" viewBox="0 0 25 12" fill="none">
+        <rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="currentColor" stroke-opacity="0.4"/>
+        <rect x="2" y="2" width="18" height="8" rx="2" fill="currentColor" opacity="0.3"/>
+        <rect x="23" y="3.5" width="1.5" height="5" rx="0.75" fill="currentColor"/>
+      </svg>
+    </span>
+  </div>
+
+  <!-- Dynamic Island -->
+  <div class="dynamic-island"></div>
+
+  <!-- Geometric Background -->
+  <div class="bg-geo"></div>
+
+  <!-- Screens -->
+  <div class="screens">
+
+    <!-- ================================================ -->
+    <!-- HOME SCREEN -->
+    <!-- ================================================ -->
+    <div class="screen screen-home active" id="screen-home">
+
+      <div class="header-meta">
+        <div class="header-meta-row">
+          <div class="location-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+              <circle cx="12" cy="9" r="2.5"/>
+            </svg>
+            Sydney, Australia
+          </div>
+          <div class="method-pill">Muslim World League</div>
+        </div>
+        <div class="date-row">
+          <span class="hijri-label">
+            <!-- Crescent moon SVG -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            27 Dhul Qadah 1447
+          </span>
+          <span class="gregorian-label">Thursday, 14 May</span>
+        </div>
+      </div>
+
+      <!-- Hero Card -->
+      <div class="hero-card" onclick="showScreen('countdown')">
+        <div class="hero-card-inner">
+          <div class="hero-left">
+            <div class="hero-eyebrow">
+              <span class="hero-eyebrow-text">Next Prayer</span>
+              <div class="hero-dot"></div>
+            </div>
+            <div class="hero-prayer">Asr</div>
+            <div class="hero-arabic">العصر</div>
+            <div class="hero-time">03:42 PM</div>
+            <div class="hero-countdown">
+              <span class="countdown-num" id="hero-countdown">01:24:33</span>
+              <span class="countdown-suffix">until prayer</span>
+            </div>
+          </div>
+          <div class="hero-ring">
+            <svg viewBox="0 0 56 56">
+              <circle class="bg" cx="28" cy="28" r="21"/>
+              <circle class="progress" cx="28" cy="28" r="21"/>
+            </svg>
+            <div class="hero-ring-label">65%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prayer List -->
+      <div class="prayer-list-header">
+        <span class="section-label">Today's Schedule</span>
+        <span class="section-action">View Calendar</span>
+      </div>
+
+      <div class="prayer-list-card">
+
+        <!-- Fajr — done -->
+        <div class="prayer-row done">
+          <div class="prayer-icon-wrap">
+            <!-- Fajr crescent moon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </div>
+          <div class="prayer-info">
+            <div class="prayer-name">Fajr</div>
+            <div class="prayer-arabic-name">الفجر</div>
+          </div>
+          <div class="prayer-time">05:12</div>
+          <div class="prayer-status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Done
+          </div>
+        </div>
+
+        <!-- Sunrise — done -->
+        <div class="prayer-row done">
+          <div class="prayer-icon-wrap">
+            <!-- Sunrise horizon sun -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M17 18a5 5 0 0 0-10 0"/>
+              <line x1="12" y1="2" x2="12" y2="9"/>
+              <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/>
+              <line x1="1" y1="18" x2="3" y2="18"/>
+              <line x1="21" y1="18" x2="23" y2="18"/>
+              <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/>
+              <line x1="23" y1="22" x2="1" y2="22"/>
+            </svg>
+          </div>
+          <div class="prayer-info">
+            <div class="prayer-name">Sunrise</div>
+            <div class="prayer-arabic-name">الشروق</div>
+          </div>
+          <div class="prayer-time">06:38</div>
+          <div class="prayer-status">Passed</div>
+        </div>
+
+        <!-- Dhuhr — done -->
+        <div class="prayer-row done">
+          <div class="prayer-icon-wrap">
+            <!-- Full sun -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="5"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+              <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/>
+              <line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
+              <line x1="2" y1="12" x2="5" y2="12"/>
+              <line x1="19" y1="12" x2="22" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/>
+              <line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
+            </svg>
+          </div>
+          <div class="prayer-info">
+            <div class="prayer-name">Dhuhr</div>
+            <div class="prayer-arabic-name">الظهر</div>
+          </div>
+          <div class="prayer-time">12:48</div>
+          <div class="prayer-status">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Done
+          </div>
+        </div>
+
+        <!-- Asr — active -->
+        <div class="prayer-row active">
+          <div class="prayer-icon-wrap">
+            <!-- Afternoon sun (lower) -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M12 16a4 4 0 0 0 4-4"/>
+              <path d="M12 16V8"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+              <line x1="4.22" y1="16.22" x2="6.34" y2="14.1"/>
+              <line x1="17.66" y1="16.22" x2="19.78" y2="14.1"/>
+              <line x1="1" y1="18" x2="4" y2="18"/>
+              <line x1="20" y1="18" x2="23" y2="18"/>
+              <line x1="2" y1="22" x2="22" y2="22"/>
+            </svg>
+          </div>
+          <div class="prayer-info">
+            <div class="prayer-name">Asr</div>
+            <div class="prayer-arabic-name">العصر</div>
+          </div>
+          <div class="prayer-time">03:42</div>
+          <div class="prayer-status">Next</div>
+        </div>
+
+        <!-- Maghrib -->
+        <div class="prayer-row">
+          <div class="prayer-icon-wrap">
+            <!-- Sunset -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M17 18a5 5 0 0 0-10 0"/>
+              <line x1="12" y1="9" x2="12" y2="2"/>
+              <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/>
+              <line x1="1" y1="18" x2="3" y2="18"/>
+              <line x1="21" y1="18" x2="23" y2="18"/>
+              <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/>
+              <line x1="23" y1="22" x2="1" y2="22"/>
+            </svg>
+          </div>
+          <div class="prayer-info">
+            <div class="prayer-name">Maghrib</div>
+            <div class="prayer-arabic-name">المغرب</div>
+          </div>
+          <div class="prayer-time">05:58</div>
+          <div class="prayer-status">Later</div>
+        </div>
+
+        <!-- Isha -->
+        <div class="prayer-row">
+          <div class="prayer-icon-wrap">
+            <!-- Moon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </div>
+          <div class="prayer-info">
+            <div class="prayer-name">Isha</div>
+            <div class="prayer-arabic-name">العشاء</div>
+          </div>
+          <div class="prayer-time">07:19</div>
+          <div class="prayer-status">Later</div>
+        </div>
+
+      </div>
+
+      <div class="footer-pad"></div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- COUNTDOWN SCREEN -->
+    <!-- ================================================ -->
+    <div class="screen screen-countdown" id="screen-countdown">
+
+      <div class="countdown-hero">
+        <div class="countdown-eyebrow">Next Prayer</div>
+        <div class="countdown-prayer-name">Asr</div>
+        <div class="countdown-arabic">العصر</div>
+        <div class="countdown-time-str">03:42 PM — Thursday, 14 May</div>
+      </div>
+
+      <div class="big-ring-wrap">
+        <div class="big-ring">
+          <svg viewBox="0 0 220 220">
+            <circle class="bg" cx="110" cy="110" r="100"/>
+            <circle class="progress" cx="110" cy="110" r="100"/>
+          </svg>
+          <div class="big-ring-center">
+            <div class="big-ring-time" id="big-countdown">01:24:33</div>
+            <div class="big-ring-unit">remaining</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mini-cards-scroll">
+        <!-- Fajr done -->
+        <div class="mini-card done">
+          <div class="mini-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </div>
+          <div class="mini-name">Fajr</div>
+          <div class="mini-time">05:12</div>
+        </div>
+        <!-- Dhuhr done -->
+        <div class="mini-card done">
+          <div class="mini-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="12" cy="12" r="4"/>
+              <line x1="12" y1="2" x2="12" y2="5"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+              <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/>
+              <line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
+              <line x1="2" y1="12" x2="5" y2="12"/>
+              <line x1="19" y1="12" x2="22" y2="12"/>
+              <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/>
+              <line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
+            </svg>
+          </div>
+          <div class="mini-name">Dhuhr</div>
+          <div class="mini-time">12:48</div>
+        </div>
+        <!-- Asr active -->
+        <div class="mini-card active">
+          <div class="mini-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M12 16a4 4 0 0 0 4-4"/>
+              <path d="M12 16V8"/>
+              <line x1="12" y1="19" x2="12" y2="22"/>
+              <line x1="4.22" y1="16.22" x2="6.34" y2="14.1"/>
+              <line x1="17.66" y1="16.22" x2="19.78" y2="14.1"/>
+              <line x1="1" y1="18" x2="4" y2="18"/>
+              <line x1="20" y1="18" x2="23" y2="18"/>
+              <line x1="2" y1="22" x2="22" y2="22"/>
+            </svg>
+          </div>
+          <div class="mini-name">Asr</div>
+          <div class="mini-time">03:42</div>
+        </div>
+        <!-- Maghrib -->
+        <div class="mini-card">
+          <div class="mini-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M17 18a5 5 0 0 0-10 0"/>
+              <line x1="12" y1="9" x2="12" y2="2"/>
+              <line x1="4.22" y1="10.22" x2="5.64" y2="11.64"/>
+              <line x1="1" y1="18" x2="3" y2="18"/>
+              <line x1="21" y1="18" x2="23" y2="18"/>
+              <line x1="18.36" y1="11.64" x2="19.78" y2="10.22"/>
+              <line x1="23" y1="22" x2="1" y2="22"/>
+            </svg>
+          </div>
+          <div class="mini-name">Maghrib</div>
+          <div class="mini-time">05:58</div>
+        </div>
+        <!-- Isha -->
+        <div class="mini-card">
+          <div class="mini-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+          </div>
+          <div class="mini-name">Isha</div>
+          <div class="mini-time">07:19</div>
+        </div>
+      </div>
+
+      <div class="info-row">
+        <div class="info-card-sm">
+          <div class="label">Jumu'ah</div>
+          <div class="value">01:15 PM</div>
+        </div>
+        <div class="info-card-sm">
+          <div class="label">Iqamah</div>
+          <div class="value">+10 min</div>
+        </div>
+      </div>
+
+      <div class="footer-pad"></div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- CALENDAR SCREEN -->
+    <!-- ================================================ -->
+    <div class="screen screen-calendar" id="screen-calendar">
+
+      <div class="cal-header">
+        <div class="cal-title">Calendar</div>
+        <div class="cal-subtitle">Plan your day around prayer</div>
+      </div>
+
+      <div class="week-strip">
+        <div class="wd"><div class="wd-name">Mon</div><div class="wd-num">11</div></div>
+        <div class="wd"><div class="wd-name">Tue</div><div class="wd-num">12</div></div>
+        <div class="wd"><div class="wd-name">Wed</div><div class="wd-num">13</div></div>
+        <div class="wd"><div class="wd-name">Thu</div><div class="wd-num today">14</div></div>
+        <div class="wd"><div class="wd-name">Fri</div><div class="wd-num">15</div></div>
+        <div class="wd"><div class="wd-name">Sat</div><div class="wd-num">16</div></div>
+        <div class="wd"><div class="wd-name">Sun</div><div class="wd-num">17</div></div>
+      </div>
+
+      <div class="timeline-wrap">
+        <div class="timeline-card">
+          <div class="tl-head">
+            <span class="tl-date">Thursday, 14 May</span>
+            <span class="tl-hijri">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+              27 Dhul Qadah
+            </span>
+          </div>
+          <div class="tl-items">
+
+            <div class="tl-item done">
+              <div class="tl-time">05:12</div>
+              <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+              <div class="tl-content">
+                <div class="tl-name">Fajr</div>
+                <div class="tl-arabic">الفجر</div>
+                <div class="tl-meta">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Completed
+                </div>
+                <div class="tl-focus-tag"><div class="dot"></div><span class="text">Focus 15min</span></div>
+              </div>
+            </div>
+
+            <div class="tl-item event">
+              <div class="tl-time">09:00</div>
+              <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+              <div class="tl-content">
+                <div class="tl-name">Morning Block</div>
+                <div class="tl-meta">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+                  Imported from calendar
+                </div>
+                <div class="tl-event-card">
+                  <span class="emoji">📞</span>
+                  <div class="tl-event-info">
+                    <div class="name">Team Standup</div>
+                    <div class="time">09:00 – 09:30</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tl-item done">
+              <div class="tl-time">12:48</div>
+              <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+              <div class="tl-content">
+                <div class="tl-name">Dhuhr</div>
+                <div class="tl-arabic">الظهر</div>
+                <div class="tl-meta">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Completed
+                </div>
+                <div class="tl-focus-tag"><div class="dot"></div><span class="text">Focus 15min</span></div>
+              </div>
+            </div>
+
+            <div class="tl-item active">
+              <div class="tl-time">15:42</div>
+              <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+              <div class="tl-content">
+                <div class="tl-name">Asr</div>
+                <div class="tl-arabic">العصر</div>
+                <div class="tl-meta">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  In 1h 24m
+                </div>
+                <div class="tl-focus-tag"><div class="dot"></div><span class="text">Focus 15min</span></div>
+              </div>
+            </div>
+
+            <div class="tl-item event">
+              <div class="tl-time">16:00</div>
+              <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+              <div class="tl-content">
+                <div class="tl-name">Afternoon Block</div>
+                <div class="tl-meta">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+                  Imported from calendar
+                </div>
+                <div class="tl-event-card">
+                  <span class="emoji">💼</span>
+                  <div class="tl-event-info">
+                    <div class="name">Client Call</div>
+                    <div class="time">16:00 – 17:00</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tl-item">
+              <div class="tl-time">17:58</div>
+              <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+              <div class="tl-content">
+                <div class="tl-name">Maghrib</div>
+                <div class="tl-arabic">المغرب</div>
+                <div class="tl-meta">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 18a5 5 0 0 0-10 0"/><line x1="12" y1="9" x2="12" y2="2"/><line x1="23" y1="22" x2="1" y2="22"/></svg>
+                  Sunset
+                </div>
+                <div class="tl-focus-tag"><div class="dot"></div><span class="text">Focus 15min</span></div>
+              </div>
+            </div>
+
+            <div class="tl-item">
+              <div class="tl-time">19:19</div>
+              <div class="tl-dot-wrap"><div class="tl-dot"></div></div>
+              <div class="tl-content">
+                <div class="tl-name">Isha</div>
+                <div class="tl-arabic">العشاء</div>
+                <div class="tl-meta">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                  Night
+                </div>
+                <div class="tl-focus-tag"><div class="dot"></div><span class="text">Focus 15min</span></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Quranic quote card -->
+      <div class="quote-card">
+        <div class="quote-geo"></div>
+        <div class="quote-text">"Indeed, prayer prohibits indecency and wrongdoing."</div>
+        <div class="quote-src">— Al-Qur'an 29:45</div>
+      </div>
+
+      <div class="footer-pad"></div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- JOURNEY SCREEN -->
+    <!-- ================================================ -->
+    <div class="screen screen-journey" id="screen-journey">
+
+      <div class="journey-header">
+        <div class="journey-title">Your Journey</div>
+        <div class="journey-subtitle">Track your prayer consistency</div>
+      </div>
+
+      <!-- Streak card -->
+      <div class="streak-card">
+        <div class="streak-icon-wrap">
+          <!-- Flame icon -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+            <path d="M12 2c0 6-6 6-6 12a6 6 0 0 0 12 0c0-6-6-6-6-12z"/>
+            <path d="M12 12c0 3-2 4-2 6a2 2 0 0 0 4 0c0-2-2-3-2-6z" fill="white" stroke="none"/>
+          </svg>
+        </div>
+        <div class="streak-info">
+          <div class="streak-main">12</div>
+          <div class="streak-sub">Day Current Streak</div>
+        </div>
+        <div class="streak-right">
+          <div class="streak-best-label">Personal Best</div>
+          <div class="streak-best">21 days</div>
+        </div>
+      </div>
+
+      <!-- Stats row -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="val">34</div>
+          <div class="lbl">Prayers This Week</div>
+        </div>
+        <div class="stat-card highlight">
+          <div class="val">97%</div>
+          <div class="lbl">On-Time Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="val">5</div>
+          <div class="lbl">Missed (Qada)</div>
+        </div>
+      </div>
+
+      <!-- Heatmap -->
+      <div class="heatmap-section">
+        <div class="heatmap-card">
+          <div class="heatmap-head">
+            <span class="heatmap-title">Activity — May 2026</span>
+            <span class="heatmap-months">Apr 28 – May 25</span>
+          </div>
+          <div class="heatmap-body">
+            <div class="heat-col-labels">
+              <span class="heat-col-label">M</span>
+              <span class="heat-col-label">T</span>
+              <span class="heat-col-label">W</span>
+              <span class="heat-col-label">T</span>
+              <span class="heat-col-label">F</span>
+              <span class="heat-col-label">S</span>
+              <span class="heat-col-label">S</span>
+            </div>
+            <div class="heatmap-grid" id="heatmap-grid"></div>
+            <div class="heat-legend">
+              <span>Less</span>
+              <div class="heat-legend-cell" style="background: var(--bg-secondary)"></div>
+              <div class="heat-legend-cell heat-cell l1"></div>
+              <div class="heat-legend-cell heat-cell l2"></div>
+              <div class="heat-legend-cell heat-cell l3"></div>
+              <div class="heat-legend-cell heat-cell l4"></div>
+              <span>More</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly bars -->
+      <div class="weekly-section">
+        <div class="weekly-card">
+          <div class="weekly-title">This Week</div>
+          <div class="weekly-bars">
+            <div class="wbar-wrap">
+              <div class="wbar filled" style="height:55px"></div>
+              <div class="wbar-label">M</div>
+            </div>
+            <div class="wbar-wrap">
+              <div class="wbar filled" style="height:50px"></div>
+              <div class="wbar-label">T</div>
+            </div>
+            <div class="wbar-wrap">
+              <div class="wbar filled" style="height:60px"></div>
+              <div class="wbar-label active">W</div>
+            </div>
+            <div class="wbar-wrap">
+              <div class="wbar" style="height:0px"></div>
+              <div class="wbar-label">T</div>
+            </div>
+            <div class="wbar-wrap">
+              <div class="wbar" style="height:0px"></div>
+              <div class="wbar-label">F</div>
+            </div>
+            <div class="wbar-wrap">
+              <div class="wbar" style="height:0px"></div>
+              <div class="wbar-label">S</div>
+            </div>
+            <div class="wbar-wrap">
+              <div class="wbar" style="height:0px"></div>
+              <div class="wbar-label">S</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insight card -->
+      <div class="insight-card">
+        <div class="insight-header">
+          <span class="insight-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </span>
+          <span class="insight-title">Weekly Insight</span>
+        </div>
+        <div class="insight-text">You've maintained a 12-day streak! Setting an alarm 30 minutes before Fajr could help you pray on time more consistently.</div>
+      </div>
+
+      <div class="footer-pad-lg"></div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- QIBLA SCREEN -->
+    <!-- ================================================ -->
+    <div class="screen screen-qibla" id="screen-qibla">
+
+      <div class="qibla-header">
+        <div class="qibla-title">Qibla Direction</div>
+        <div class="qibla-subtitle">Mecca, Saudi Arabia</div>
+      </div>
+
+      <div class="compass-wrap">
+        <div class="compass">
+          <div class="compass-ring-outer"></div>
+          <div class="compass-ring-mid"></div>
+          <div class="compass-ring-inner"></div>
+          <div class="compass-dir n">N</div>
+          <div class="compass-dir s">S</div>
+          <div class="compass-dir e">E</div>
+          <div class="compass-dir w">W</div>
+          <div class="compass-needle"></div>
+          <div class="compass-pivot"></div>
+        </div>
+      </div>
+
+      <div class="qibla-stats">
+        <div class="qibla-distance">12,847 km</div>
+        <div class="qibla-bearing">242° — Southeast · Straight ahead</div>
+        <div class="kaaba-emblem">
+          <!-- Kaaba SVG -->
+          <svg viewBox="0 0 64 64" fill="none">
+            <rect x="12" y="20" width="40" height="36" rx="2" fill="#071A35" stroke="#B8892F" stroke-width="1.5"/>
+            <rect x="16" y="20" width="32" height="4" fill="#B8892F"/>
+            <rect x="12" y="20" width="40" height="36" rx="2" stroke="#B8892F" stroke-width="1.5"/>
+            <line x1="32" y1="24" x2="32" y2="56" stroke="#B8892F" stroke-width="0.8" opacity="0.5"/>
+            <rect x="26" y="38" width="12" height="18" rx="1" fill="none" stroke="#B8892F" stroke-width="1"/>
+            <ellipse cx="32" cy="44" rx="4" ry="5" fill="#B8892F" opacity="0.3"/>
+          </svg>
+        </div>
+      </div>
+
+      <div class="qibla-note">Hold your device flat and align the needle with the golden top. The direction to Mecca will be shown.</div>
+
+      <div class="footer-pad-lg"></div>
+    </div>
+
+    <!-- ================================================ -->
+    <!-- SETTINGS SCREEN -->
+    <!-- ================================================ -->
+    <div class="screen screen-settings" id="screen-settings">
+
+      <div class="settings-head">
+        <div class="settings-title">Settings</div>
+      </div>
+
+      <!-- Fajr Alarm Widget -->
+      <div class="alarm-widget">
+        <div class="alarm-top">
+          <div class="alarm-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div>
+            <div class="alarm-title">Fajr Auto-Alarm</div>
+            <div class="alarm-desc">Automatically set alarm before Fajr</div>
+          </div>
+          <div class="alarm-toggle">
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          </div>
+        </div>
+        <div class="alarm-ctrl">
+          <span class="alarm-ctrl-label">Minutes before Fajr</span>
+          <div class="alarm-ctrl-right">
+            <div class="alarm-btn" onclick="adjAlarm(-5)">−</div>
+            <div class="alarm-val" id="alarm-val">30</div>
+            <div class="alarm-btn" onclick="adjAlarm(5)">+</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Location -->
+      <div class="settings-section">
+        <div class="settings-section-title">Location & Method</div>
+        <div class="settings-card">
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                  <circle cx="12" cy="9" r="2.5"/>
+                </svg>
+              </div>
+              <span class="srow-label">Sydney, Australia</span>
+            </div>
+            <span class="srow-val">Current</span>
+          </div>
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+              </div>
+              <span class="srow-label">Calculation Method</span>
+            </div>
+            <span class="srow-val">MWL ›</span>
+          </div>
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+              </div>
+              <span class="srow-label">Madhhab</span>
+            </div>
+            <span class="srow-val">Shafi ›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="settings-section">
+        <div class="settings-section-title">Notifications</div>
+        <div class="settings-card">
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+              </div>
+              <span class="srow-label">Prayer Alerts</span>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          </div>
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <span class="srow-label">Reminder Before</span>
+            </div>
+            <span class="srow-val">15 min ›</span>
+          </div>
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 8v4l3 3"/>
+                </svg>
+              </div>
+              <span class="srow-label">Focus Time Buffer</span>
+            </div>
+            <span class="srow-val">15 min ›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendar -->
+      <div class="settings-section">
+        <div class="settings-section-title">Calendar Integration</div>
+        <div class="settings-card">
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <path d="M3 10h18M8 2v4M16 2v4"/>
+                </svg>
+              </div>
+              <span class="srow-label">Apple Calendar</span>
+            </div>
+            <span class="connected-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Connected
+            </span>
+          </div>
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <rect x="3" y="4" width="18" height="18" rx="2"/>
+                  <path d="M3 10h18M8 2v4M16 2v4"/>
+                </svg>
+              </div>
+              <span class="srow-label">Google Calendar</span>
+            </div>
+            <span class="srow-val">Connect ›</span>
+          </div>
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <span class="srow-label">Export Prayer Times (iCal)</span>
+            </div>
+            <span class="srow-chevron">›</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Appearance -->
+      <div class="settings-section">
+        <div class="settings-section-title">Appearance</div>
+        <div class="settings-card">
+          <div class="srow" onclick="toggleTheme()">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+              </div>
+              <span class="srow-label">Dark Mode</span>
+            </div>
+            <div class="toggle" id="dm-toggle"></div>
+          </div>
+          <div class="srow">
+            <div class="srow-left">
+              <div class="srow-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <rect x="5" y="2" width="14" height="20" rx="2"/>
+                  <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+              </div>
+              <span class="srow-label">Haptic Feedback</span>
+            </div>
+            <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-pad-lg"></div>
+    </div>
+
+  </div>
+
+  <!-- ================================================ -->
+  <!-- BOTTOM NAVIGATION -->
+  <!-- ================================================ -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-screen="home" onclick="showScreen('home')">
+      <!-- Sun icon -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="4"/>
+        <line x1="12" y1="2" x2="12" y2="5"/>
+        <line x1="12" y1="19" x2="12" y2="22"/>
+        <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"/>
+        <line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
+        <line x1="2" y1="12" x2="5" y2="12"/>
+        <line x1="19" y1="12" x2="22" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/>
+        <line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
+      </svg>
+      <span>Today</span>
+    </div>
+    <div class="nav-item" data-screen="countdown" onclick="showScreen('countdown')">
+      <!-- Clock icon -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="10"/>
+        <polyline points="12 6 12 12 16 14"/>
+      </svg>
+      <span>Focus</span>
+    </div>
+    <div class="nav-item" data-screen="calendar" onclick="showScreen('calendar')">
+      <!-- Calendar icon -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <path d="M3 10h18M8 2v4M16 2v4"/>
+      </svg>
+      <span>Calendar</span>
+    </div>
+    <div class="nav-item" data-screen="journey" onclick="showScreen('journey')">
+      <!-- Chart icon -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      <span>Journey</span>
+    </div>
+    <div class="nav-item" data-screen="qibla" onclick="showScreen('qibla')">
+      <!-- Compass icon -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="10"/>
+        <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+      </svg>
+      <span>Qibla</span>
+    </div>
+    <div class="nav-item" data-screen="settings" onclick="showScreen('settings')">
+      <!-- Gear icon -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      <span>Settings</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Preview Controls -->
+<div class="preview-controls">
+  <div class="theme-btn active" data-theme="light" onclick="setTheme('light')" style="background:#FAF6F0;color:#071A35;">☀</div>
+  <div class="theme-btn" data-theme="dark" onclick="setTheme('dark')" style="background:#000000;color:#FFFFFF;">🌙</div>
+</div>
+
+<script>
+// ============================================================
+// NAVIGATION
+// ============================================================
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-screen="${name}"]`).classList.add('active');
+}
+
+// ============================================================
+// THEME
+// ============================================================
+
+function setTheme(theme) {
+  document.querySelector('.device').setAttribute('data-theme', theme);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.theme-btn[data-theme="${theme}"]`).classList.add('active');
+
+  const toggle = document.getElementById('dm-toggle');
+  if (!toggle) return;
+  if (theme === 'dark') toggle.classList.add('active');
+  else toggle.classList.remove('active');
+}
+
+function toggleTheme() {
+  const dev = document.querySelector('.device');
+  setTheme(dev.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+}
+
+// ============================================================
+// ALARM CONTROL
+// ============================================================
+
+let alarmMin = 30;
+function adjAlarm(d) {
+  alarmMin = Math.max(5, Math.min(60, alarmMin + d));
+  document.getElementById('alarm-val').textContent = alarmMin;
+}
+
+// ============================================================
+// COUNTDOWN TIMER
+// ============================================================
+
+let secs = 1 * 3600 + 24 * 60 + 33;
+
+function formatCountdown(s) {
+  const h = Math.floor(s / 3600).toString().padStart(2, '0');
+  const m = Math.floor((s % 3600) / 60).toString().padStart(2, '0');
+  const ss = (s % 60).toString().padStart(2, '0');
+  return `${h}:${m}:${ss}`;
+}
+
+setInterval(() => {
+  if (secs > 0) secs--;
+  const str = formatCountdown(secs);
+  const el1 = document.getElementById('hero-countdown');
+  const el2 = document.getElementById('big-countdown');
+  if (el1) el1.textContent = str;
+  if (el2) el2.textContent = str;
+}, 1000);
+
+// ============================================================
+// STATUS TIME
+// ============================================================
+
+function updateTime() {
+  const now = new Date();
+  const h = now.getHours();
+  const m = now.getMinutes().toString().padStart(2, '0');
+  document.getElementById('status-time').textContent = `${h % 12 || 12}:${m}`;
+}
+updateTime();
+setInterval(updateTime, 10000);
+
+// ============================================================
+// HEATMAP GENERATOR
+// ============================================================
+
+function buildHeatmap() {
+  const grid = document.getElementById('heatmap-grid');
+  if (!grid) return;
+
+  // 5 weeks × 7 days = 35 cells
+  const cells = [
+    '', '', 'l1', 'l2', 'l3', 'l4', 'l4',
+    'l4', 'l3', 'l2', 'l1', '', 'l1', 'l2',
+    'l3', 'l4', 'l4', 'l3', 'l2', 'l1', '',
+    'l1', 'l2', 'l3', 'l4', 'l4', 'l3', 'l2',
+    'l3', 'l4', 'l4', 'l3', 'l2', 'l1', ''
+  ];
+
+  const tips = [
+    '1 prayer', '1 prayer', '2 prayers', '3 prayers', '4 prayers', '5 prayers', '5 prayers',
+    '5 prayers', '4 prayers', '3 prayers', '2 prayers', '1 prayer', '1 prayer', '2 prayers',
+    '3 prayers', '5 prayers', '5 prayers', '4 prayers', '3 prayers', '2 prayers', '1 prayer',
+    '1 prayer', '2 prayers', '3 prayers', '5 prayers', '5 prayers', '4 prayers', '3 prayers',
+    '4 prayers', '5 prayers', '5 prayers', '4 prayers', '3 prayers', '2 prayers', '1 prayer'
+  ];
+
+  grid.style.display = 'grid';
+  grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
+  grid.style.gap = '4px';
+  grid.innerHTML = '';
+
+  cells.forEach((level, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'heat-cell' + (level ? ' ' + level : '');
+    if (i === 20) cell.classList.add('today');
+    cell.setAttribute('data-tip', tips[i] || '');
+    grid.appendChild(cell);
+  });
+}
+buildHeatmap();
+</script>
+
+</body>
+</html>

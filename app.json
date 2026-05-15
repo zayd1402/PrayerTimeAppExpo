@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "PrayerTimeApp",
+    "slug": "PrayerTimeApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#014836"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.prayertime.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Used to calculate prayer times for your current location and find nearby mosques.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to calculate prayer times and provide timely prayer notifications.",
+        "UIBackgroundModes": ["location", "fetch"]
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#014836"
+      },
+      "package": "com.prayertime.app",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "FOREGROUND_SERVICE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow PrayerTimeApp to use your location to calculate prayer times and notify you when it's prayer time."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "prayertime-local"
+      }
+    }
+  }
+}
