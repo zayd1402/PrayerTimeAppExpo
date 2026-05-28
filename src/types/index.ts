@@ -69,9 +69,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
 // ─── Navigation ─────────────────────────────────────────────
 export const NAV_TABS = [
   { id: 'home',      label: 'Home',      icon: 'home-outline',      iconActive: 'home'      },
-  { id: 'countdown', label: 'Countdown', icon: 'time-outline',      iconActive: 'time'      },
+  { id: 'worship',   label: 'Worship',   icon: 'heart-outline',     iconActive: 'heart'     },
   { id: 'calendar',  label: 'Calendar',  icon: 'calendar-outline',  iconActive: 'calendar'  },
-  { id: 'journey',   label: 'Journey',   icon: 'analytics-outline',  iconActive: 'analytics' },
+  { id: 'duas',      label: 'Duas',      icon: 'book-outline',      iconActive: 'book'      },
   { id: 'qibla',     label: 'Qibla',     icon: 'compass-outline',   iconActive: 'compass'   },
   { id: 'settings',  label: 'Settings',  icon: 'settings-outline',  iconActive: 'settings'  },
 ] as const;
@@ -87,3 +87,138 @@ export const PRAYER_ICONS: Record<PrayerId, { icon: string; iconActive: string }
   maghrib:{ icon: 'sunset-outline',        iconActive: 'sunset'        },
   isha:   { icon: 'moon-outline',          iconActive: 'moon'          },
 };
+
+// ─── Dua Types ──────────────────────────────────────────────
+export interface Dua {
+  id: string;
+  title: string;
+  arabic: string;
+  transliteration?: string;
+  meaning: string;
+  source?: string;
+  category: DuaCategory;
+  repeatCount?: number;
+  isFavorite?: boolean;
+}
+
+export type DuaCategory = 
+  | 'morning' | 'evening' | 'sleep' | 'waking' 
+  | 'mosque' | 'travel' | 'eating' | 'home'
+  | 'prayer' | 'protection' | 'forgiveness' | 'gratitude'
+  | 'sickness' | 'distress' | 'general';
+
+export const DUA_CATEGORIES: { value: DuaCategory; label: string; icon: string }[] = [
+  { value: 'morning', label: 'Morning', icon: 'sunny-outline' },
+  { value: 'evening', label: 'Evening', icon: 'moon-outline' },
+  { value: 'sleep', label: 'Before Sleep', icon: 'bed-outline' },
+  { value: 'waking', label: 'After Waking', icon: 'alarm-outline' },
+  { value: 'mosque', label: 'Mosque', icon: 'business-outline' },
+  { value: 'travel', label: 'Travel', icon: 'airplane-outline' },
+  { value: 'eating', label: 'Eating', icon: 'restaurant-outline' },
+  { value: 'home', label: 'Home', icon: 'home-outline' },
+  { value: 'prayer', label: 'Prayer', icon: 'hand-left-outline' },
+  { value: 'protection', label: 'Protection', icon: 'shield-outline' },
+  { value: 'forgiveness', label: 'Forgiveness', icon: 'water-outline' },
+  { value: 'gratitude', label: 'Gratitude', icon: 'heart-outline' },
+  { value: 'sickness', label: 'Sickness', icon: 'medical-outline' },
+  { value: 'distress', label: 'Distress', icon: 'sad-outline' },
+  { value: 'general', label: 'General', icon: 'chatbubble-outline' },
+];
+
+// ─── Hadith Types ───────────────────────────────────────────
+export interface Hadith {
+  id: string;
+  arabic: string;
+  english: string;
+  narrator: string;
+  source: string;
+  book: string;
+  chapter?: string;
+  grade: 'sahih' | 'hasan' | 'daif';
+  category: string;
+  isFavorite?: boolean;
+}
+
+// ─── Fasting Types ──────────────────────────────────────────
+export interface FastingLog {
+  date: string;
+  type: 'ramadan' | 'monday' | 'thursday' | 'white_days' | 'ashura' | 'arafah' | 'custom' | 'makeup';
+  completed: boolean;
+  notes?: string;
+}
+
+// ─── Quran Tracker Types ────────────────────────────────────
+export interface QuranLog {
+  date: string;
+  pagesRead: number;
+  surah?: string;
+  ayahStart?: number;
+  ayahEnd?: number;
+  notes?: string;
+}
+
+// ─── Dhikr History Types ────────────────────────────────────
+export interface DhikrSession {
+  id: string;
+  date: string;
+  subhanallah: number;
+  alhamdulillah: number;
+  allahuakbar: number;
+  custom?: { label: string; count: number }[];
+}
+
+// ─── Zakat Types ────────────────────────────────────────────
+export interface ZakatRecord {
+  id: string;
+  date: string;
+  goldValue: number;
+  silverValue: number;
+  cash: number;
+  investments: number;
+  debts: number;
+  totalAssets: number;
+  zakatDue: number;
+  paid: boolean;
+}
+
+export interface CharityRecord {
+  id: string;
+  date: string;
+  amount: number;
+  category: 'sadaqah' | 'zakat' | 'fidya' | 'kaffarah' | 'general';
+  recipient?: string;
+  notes?: string;
+}
+
+// ─── Prayer Journal Types ───────────────────────────────────
+export interface PrayerJournalEntry {
+  id: string;
+  date: string;
+  prayerId: PrayerId;
+  mood: 'peaceful' | 'grateful' | 'distracted' | 'tired' | 'joyful' | 'anxious';
+  reflection?: string;
+  gratitude?: string;
+  improvement?: string;
+}
+
+// ─── Islamic Event Types ────────────────────────────────────
+export interface IslamicEvent {
+  id: string;
+  title: string;
+  titleArabic?: string;
+  hijriDate: { day: number; month: number };
+  gregorianDate?: string;
+  type: 'ramadan' | 'eid' | 'hajj' | 'ashura' | 'mawlid' | 'laylatul_qadr' | 'white_days' | 'jumuah' | 'general';
+  description?: string;
+  isFixedHijri: boolean;
+}
+
+// ─── Weekly Activity Types ──────────────────────────────────
+export interface WeeklyActivity {
+  id: string;
+  title: string;
+  description: string;
+  dayOfWeek: number; // 0 = Sunday, 6 = Saturday
+  type: 'fasting' | 'sunnah' | 'quran' | 'dhikr' | 'charity' | 'reminder';
+  isEnabled: boolean;
+}
