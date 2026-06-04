@@ -98,13 +98,12 @@ function DuaCounter({ target, onComplete }: { target: number; onComplete?: () =>
 
 const counterStyles = StyleSheet.create({
   container: { marginTop: 12 },
-  track: { height: 4, backgroundColor: '#F0F0F0', borderRadius: 2, marginBottom: 8 },
+  track: { height: 4, backgroundColor: C.border, borderRadius: 2, marginBottom: 8 },
   fill: { height: 4, backgroundColor: C.emerald, borderRadius: 2 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   count: { fontSize: 13, color: C.textSecondary, fontWeight: '600' },
   btn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.emerald, justifyContent: 'center', alignItems: 'center' },
-  btnDone: { backgroundColor: C.textMuted },
-});
+  btnDone: { backgroundColor: C.textMuted }});
 
 // ─── Dua Card ────────────────────────────────────────────────
 function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onToggleFav: () => void }) {
@@ -146,16 +145,15 @@ function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onTogg
 }
 
 const duaStyles = StyleSheet.create({
-  card: { backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  card: { backgroundColor: C.bgSurface, borderRadius: 16, padding: 16, marginBottom: 10},
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerLeft: { flex: 1 },
   headerRight: { flexDirection: 'row', alignItems: 'center' },
   title: { fontSize: 15, fontWeight: '600', color: C.textPrimary },
   source: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-  body: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: '#F0F0F0' },
+  body: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
   arabic: { fontSize: 18, color: C.emerald, textAlign: 'right', lineHeight: 30, marginBottom: 10 },
-  meaning: { fontSize: 13, color: C.textSecondary, lineHeight: 20, fontStyle: 'italic' },
-});
+  meaning: { fontSize: 13, color: C.textSecondary, lineHeight: 20, fontStyle: 'italic' }});
 
 // ─── Category Chip ───────────────────────────────────────────
 function CategoryChip({ cat, active, onPress }: { cat: typeof DUA_CATEGORIES[0]; active: boolean; onPress: () => void }) {
@@ -171,11 +169,10 @@ function CategoryChip({ cat, active, onPress }: { cat: typeof DUA_CATEGORIES[0];
 }
 
 const catStyles = StyleSheet.create({
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFF', marginRight: 8, marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8, marginBottom: 8},
   chipActive: { backgroundColor: C.emerald },
   label: { fontSize: 12, color: C.textSecondary, fontWeight: '500' },
-  labelActive: { color: '#FFF', fontWeight: '600' },
-});
+  labelActive: { color: '#FFF', fontWeight: '600' }});
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function DuaLibraryScreen() {
@@ -285,11 +282,11 @@ export default function DuaLibraryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: '#014836' },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
 
-  searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 14, margin: 18, marginBottom: 12, paddingHorizontal: 14, paddingVertical: 10, gap: 10 },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, margin: 18, marginBottom: 12, paddingHorizontal: 14, paddingVertical: 10, gap: 10 },
   searchInput: { flex: 1, fontSize: 15, color: C.textPrimary },
 
   featuredCard: { backgroundColor: '#FFF8E7', borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: C.gold },
@@ -300,5 +297,4 @@ const styles = StyleSheet.create({
   featuredSource: { fontSize: 12, color: C.textMuted, marginTop: 8, textAlign: 'right' },
 
   categories: { paddingHorizontal: 18, paddingBottom: 8 },
-  listTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 },
-});
+  listTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 }});

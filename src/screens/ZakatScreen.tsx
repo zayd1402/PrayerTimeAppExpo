@@ -72,8 +72,7 @@ export default function ZakatScreen() {
       debts: parseFloat(debts) || 0,
       totalAssets,
       zakatDue,
-      paid: false,
-    };
+      paid: false};
 
     const records = await addZakatRecord(record);
     setZakatRecords(records);
@@ -91,8 +90,7 @@ export default function ZakatScreen() {
       id: Date.now().toString(),
       date: new Date().toISOString().split('T')[0],
       amount,
-      category: charityCategory,
-    };
+      category: charityCategory};
 
     const records = await addCharityRecord(record);
     setCharityRecords(records);
@@ -273,30 +271,30 @@ export default function ZakatScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: '#014836' },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
 
-  tabBar: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, margin: 18, marginBottom: 12, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 12 },
   tabActive: { backgroundColor: C.emerald },
   tabLabel: { fontSize: 13, color: C.textSecondary, fontWeight: '500' },
   tabLabelActive: { color: '#FFF', fontWeight: '700' },
 
   nisabCard: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 18, marginTop: 8, padding: 16, borderRadius: 16 },
-  nisabMet: { backgroundColor: '#E8F5F0' },
+  nisabMet: { backgroundColor: C.emeraldPale },
   nisabNotMet: { backgroundColor: '#F5F5F0' },
   nisabTitle: { fontSize: 15, fontWeight: '700', color: C.textPrimary },
   nisabDesc: { fontSize: 12, color: C.textSecondary, marginTop: 2 },
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 18, marginBottom: 10 },
 
-  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 14, marginHorizontal: 18, marginBottom: 8, paddingHorizontal: 14, paddingVertical: 12 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, marginHorizontal: 18, marginBottom: 8, paddingHorizontal: 14, paddingVertical: 12 },
   inputLabel: { flex: 1, fontSize: 14, color: C.textPrimary },
   input: { width: 100, fontSize: 15, color: C.textPrimary, textAlign: 'right', fontWeight: '600' },
 
-  resultsCard: { backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8 },
-  resultRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F8F8F8' },
+  resultsCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8 },
+  resultRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
   resultHighlight: { borderBottomWidth: 2, borderBottomColor: C.emerald },
   resultZakat: { paddingTop: 12, borderBottomWidth: 0 },
   resultLabel: { fontSize: 14, color: C.textSecondary },
@@ -307,33 +305,32 @@ const styles = StyleSheet.create({
   calculateBtn: { backgroundColor: C.emerald, borderRadius: 16, marginHorizontal: 18, marginTop: 16, paddingVertical: 16, alignItems: 'center' },
   calculateBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
 
-  recordCard: { backgroundColor: '#FFF', borderRadius: 16, marginHorizontal: 18, marginBottom: 10, padding: 16 },
+  recordCard: { backgroundColor: C.bgSurface, borderRadius: 16, marginHorizontal: 18, marginBottom: 10, padding: 16 },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   recordDate: { fontSize: 13, color: C.textMuted },
   recordBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  recordPaid: { backgroundColor: '#E8F5F0' },
-  recordUnpaid: { backgroundColor: '#FFF8E7' },
+  recordPaid: { backgroundColor: C.emeraldPale },
+  recordUnpaid: { backgroundColor: C.goldPale },
   recordBadgeText: { fontSize: 11, fontWeight: '700', color: C.emerald },
   recordAmount: { fontSize: 20, fontWeight: 'bold', color: C.textPrimary },
   recordDetail: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  charityTotalCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, marginTop: 8, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  charityTotalCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginTop: 8, padding: 18},
   charityTotalLabel: { fontSize: 13, color: C.textMuted },
-  charityTotalValue: { fontSize: 28, fontWeight: 'bold', color: '#E53935', marginTop: 2 },
+  charityTotalValue: { fontSize: 28, fontWeight: 'bold', color: C.red, marginTop: 2 },
 
-  charityInputWrap: { backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, padding: 16 },
-  charityInput: { fontSize: 18, fontWeight: '600', color: C.textPrimary, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F0F0F0', marginBottom: 12 },
+  charityInputWrap: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16 },
+  charityInput: { fontSize: 18, fontWeight: '600', color: C.textPrimary, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border, marginBottom: 12 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F5F5F0' },
-  categoryChipActive: { backgroundColor: '#E53935' },
+  categoryChipActive: { backgroundColor: C.red },
   categoryLabel: { fontSize: 12, color: C.textSecondary, fontWeight: '500' },
   categoryLabelActive: { color: '#FFF', fontWeight: '600' },
-  addCharityBtn: { backgroundColor: '#E53935', borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
+  addCharityBtn: { backgroundColor: C.red, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
   addCharityText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
 
-  charityRecord: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 14, marginHorizontal: 18, marginBottom: 8, padding: 14 },
+  charityRecord: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, marginHorizontal: 18, marginBottom: 8, padding: 14 },
   charityDot: { width: 10, height: 10, borderRadius: 5 },
   charityRecordCat: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
   charityRecordDate: { fontSize: 12, color: C.textMuted, marginTop: 1 },
-  charityRecordAmount: { fontSize: 16, fontWeight: 'bold', color: C.textPrimary },
-});
+  charityRecordAmount: { fontSize: 16, fontWeight: 'bold', color: C.textPrimary }});

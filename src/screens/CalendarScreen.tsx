@@ -13,16 +13,15 @@ function getDateKey(date: Date): string {
 }
 
 const EVENT_COLORS: Record<string, string> = {
-  ramadan: '#0F7A4F',
-  eid: '#B8892F',
-  hajj: '#1A3560',
-  ashura: '#DC2626',
-  mawlid: '#2563EB',
-  laylatul_qadr: '#7C3AED',
-  white_days: '#0891B2',
-  jumuah: '#059669',
-  general: '#6B7280',
-};
+  ramadan: C.emerald,
+  eid: C.gold,
+  hajj: C.navySoft,
+  ashura: C.red,
+  mawlid: C.blue,
+  laylatul_qadr: C.purple,
+  white_days: C.teal,
+  jumuah: C.green,
+  general: C.textSecondary};
 
 const EVENT_ICONS: Record<string, string> = {
   ramadan: 'moon-outline',
@@ -33,8 +32,7 @@ const EVENT_ICONS: Record<string, string> = {
   laylatul_qadr: 'star-outline',
   white_days: 'sunny-outline',
   jumuah: 'time-outline',
-  general: 'calendar-outline',
-};
+  general: 'calendar-outline'};
 
 export default function CalendarScreen() {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -211,11 +209,11 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: '#014836' },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
 
-  countdownCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFF', borderRadius: 18, margin: 18, marginBottom: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  countdownCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.bgSurface, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16},
   countdownLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   countdownTitle: { fontSize: 15, fontWeight: '700', color: C.textPrimary },
   countdownDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
@@ -226,7 +224,7 @@ const styles = StyleSheet.create({
   calMonth: { fontSize: 18, fontWeight: '700', color: C.textPrimary },
   calHijri: { fontSize: 13, color: C.textMuted, marginTop: 2 },
   calNav: { flexDirection: 'row', gap: 8 },
-  calNavBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#FFF', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
+  calNavBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center'},
 
   calWeekdays: { flexDirection: 'row', paddingHorizontal: 18, marginBottom: 8 },
   calWeekday: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: C.textMuted },
@@ -244,7 +242,7 @@ const styles = StyleSheet.create({
   prayedDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.emerald, marginTop: 2 },
   eventDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 2 },
 
-  detailCard: { backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  detailCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8},
   detailDate: { fontSize: 16, fontWeight: '700', color: C.textPrimary },
   detailHijri: { fontSize: 13, color: C.textMuted, marginTop: 2, marginBottom: 12 },
   eventRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8 },
@@ -253,9 +251,8 @@ const styles = StyleSheet.create({
   noEvent: { fontSize: 13, color: C.textMuted, fontStyle: 'italic' },
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
-  legendCard: { backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F8F8F8' },
+  legendCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16},
+  legendItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   legendText: { flex: 1, fontSize: 14, color: C.textPrimary, marginLeft: 10 },
-  legendHijri: { fontSize: 12, color: C.textMuted },
-});
+  legendHijri: { fontSize: 12, color: C.textMuted }});

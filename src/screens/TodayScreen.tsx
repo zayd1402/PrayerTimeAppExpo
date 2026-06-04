@@ -37,12 +37,12 @@ interface TodayScreenProps {
 }
 
 const PRAYERS: Prayer[] = [
-  { id: 'fajr', name: 'Fajr', arabicName: 'الفجر', icon: '🌅' },
-  { id: 'sunrise', name: 'Sunrise', arabicName: 'الشروق', icon: '☀️' },
-  { id: 'dhuhr', name: 'Dhuhr', arabicName: 'الظهر', icon: '🕌' },
-  { id: 'asr', name: 'Asr', arabicName: 'العصر', icon: '🌤️' },
-  { id: 'maghrib', name: 'Maghrib', arabicName: 'المغرب', icon: '🌅' },
-  { id: 'isha', name: 'Isha', arabicName: 'العشاء', icon: '🌙' },
+  { id: 'fajr', name: 'Fajr', arabicName: 'الفجر', icon: 'sunny-outline' },
+  { id: 'sunrise', name: 'Sunrise', arabicName: 'الشروق', icon: 'partly-sunny-outline' },
+  { id: 'dhuhr', name: 'Dhuhr', arabicName: 'الظهر', icon: 'sun-outline' },
+  { id: 'asr', name: 'Asr', arabicName: 'العصر', icon: 'cloud-outline' },
+  { id: 'maghrib', name: 'Maghrib', arabicName: 'المغرب', icon: 'moon-outline' },
+  { id: 'isha', name: 'Isha', arabicName: 'العشاء', icon: 'moon-outline' },
 ];
 
 const TRACKABLE = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
@@ -94,8 +94,7 @@ function PrayerRing({ completed, total }: { completed: number; total: number }) 
           borderTopColor: C.gold, borderRightColor: progress > 0.25 ? C.gold : 'transparent',
           borderBottomColor: progress > 0.5 ? C.gold : 'transparent',
           borderLeftColor: progress > 0.75 ? C.gold : 'transparent',
-          transform: [{ rotate: `${-90 + progress * 360}deg` }],
-        }]} />
+          transform: [{ rotate: `${-90 + progress * 360}deg` }]}]} />
       </View>
       <Text style={styles.ringText}>{completed}/{total}</Text>
     </View>
@@ -125,8 +124,7 @@ function PrayerRow({
         } else {
           Animated.timing(translateX, { toValue: 0, duration: 200, useNativeDriver: true }).start();
         }
-      },
-    })
+      }})
   ).current;
 
   const iqama = isTrackable ? getIqamaTime(prayer.id, time) : null;
@@ -174,7 +172,7 @@ function PrayerRow({
         ]}
       >
         <View style={[styles.prayerIconWrap, isActive && styles.prayerIconWrapActive]}>
-          <Text style={styles.prayerIcon}>{prayer.icon}</Text>
+          <Ionicons name={prayer.icon as any} size={22} color={isActive ? C.emerald : C.textSecondary} />
           {isActive && <View style={styles.activePulse} />}
         </View>
 
@@ -350,15 +348,10 @@ const styles = StyleSheet.create({
 
   // Hero
   heroCard: {
-    backgroundColor: '#014836',
+    backgroundColor: C.heroBg,
     borderRadius: 24,
     padding: 20,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    marginBottom: 16
   },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   heroLeft: { flex: 1 },
@@ -366,7 +359,7 @@ const styles = StyleSheet.create({
   locationText: { color: 'rgba(255,255,255,0.7)', fontSize: 13 },
   nextPrayerText: { color: '#FFFFFF', fontSize: 32, fontWeight: 'bold' },
   nextPrayerTime: { color: 'rgba(255,255,255,0.7)', fontSize: 14, marginTop: 2 },
-  timerText: { color: '#FDD370', fontSize: 36, fontWeight: '700', marginTop: 12, fontVariant: ['tabular-nums'] },
+  timerText: { color: C.timerAmber, fontSize: 36, fontWeight: '700', marginTop: 12, fontVariant: ['tabular-nums'] },
   progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, gap: 12 },
   progressBar: { flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 3 },
   progressFill: { height: '100%', backgroundColor: C.gold, borderRadius: 3 },
@@ -389,7 +382,7 @@ const styles = StyleSheet.create({
 
   // Prayer Row
   prayerRowWrap: { borderRadius: 18, overflow: 'hidden', marginBottom: 2 },
-  prayerRowWrapNext: { shadowColor: C.emerald, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  prayerRowWrapNext: { shadowColor: C.emerald, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8},
   prayerRowWrapActive: { borderWidth: 1.5, borderColor: 'rgba(15,122,79,0.3)' },
   prayerRowWrapCompleted: { opacity: 0.75 },
   swipeBg: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 100, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 4 },
@@ -398,9 +391,8 @@ const styles = StyleSheet.create({
   swipeText: { color: '#FFF', fontSize: 12, fontWeight: '600' },
   prayerRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFFFF', borderRadius: 18,
-    paddingHorizontal: 16, paddingVertical: 14, gap: 14,
-  },
+    backgroundColor: C.bgSurface, borderRadius: 18,
+    paddingHorizontal: 16, paddingVertical: 14, gap: 14},
   prayerRowNext: { backgroundColor: '#F0FAF5' },
   prayerRowActive: { backgroundColor: '#E8F5F0' },
   prayerRowDone: { backgroundColor: '#FAFAFA' },
@@ -418,17 +410,16 @@ const styles = StyleSheet.create({
   prayerRight: { alignItems: 'flex-end', gap: 6 },
   prayerTimeText: { fontSize: 15, color: C.textSecondary, fontWeight: '500', fontVariant: ['tabular-nums'] },
   prayerTimeNext: { color: C.emerald, fontWeight: '700' },
-  checkCircle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#DDD', justifyContent: 'center', alignItems: 'center' },
+  checkCircle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center' },
   checkCircleDone: { backgroundColor: C.emerald, borderColor: C.emerald },
   checkEmpty: { width: 10, height: 10, borderRadius: 5 },
 
   // Hadith Card
-  hadithCard: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: 18, marginTop: 16, borderLeftWidth: 4, borderLeftColor: C.gold },
+  hadithCard: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginTop: 16 },
   hadithHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   hadithTitle: { fontSize: 14, fontWeight: '700', color: C.gold },
   hadithText: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontStyle: 'italic' },
   hadithSource: { fontSize: 12, color: C.textMuted, marginTop: 8, textAlign: 'right' },
 
   // Hint
-  hintText: { textAlign: 'center', color: C.textMuted, fontSize: 12, marginTop: 16 },
-});
+  hintText: { textAlign: 'center', color: C.textMuted, fontSize: 12, marginTop: 16 }});

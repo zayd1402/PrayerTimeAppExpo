@@ -69,41 +69,11 @@ function TabBar({ active, onChange }: { active: WorshipTab; onChange: (t: Worshi
 }
 
 const tabStyles = StyleSheet.create({
-  container: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, margin: 18, marginBottom: 12, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  container: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12 },
   tabActive: { backgroundColor: C.emerald },
   tabLabel: { fontSize: 11, color: C.textSecondary, marginTop: 3, fontWeight: '500' },
-  tabLabelActive: { color: '#FFF', fontWeight: '700' },
-});
-
-// ─── Daily Worship Score ─────────────────────────────────────
-function WorshipScore({ score }: { score: number }) {
-  const anim = React.useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    Animated.timing(anim, { toValue: score, duration: 800, useNativeDriver: false }).start();
-  }, [score]);
-
-  const rotation = anim.interpolate({ inputRange: [0, 100], outputRange: ['0deg', '360deg'] });
-  const color = score >= 80 ? C.emerald : score >= 50 ? C.gold : C.textMuted;
-
-  return (
-    <View style={scoreStyles.container}>
-      <View style={scoreStyles.ring}>
-        <Animated.View style={[scoreStyles.fill, { borderColor: color, transform: [{ rotate: rotation }] }]} />
-        <Text style={[scoreStyles.value, { color }]}>{score}</Text>
-        <Text style={scoreStyles.label}>Score</Text>
-      </View>
-    </View>
-  );
-}
-
-const scoreStyles = StyleSheet.create({
-  container: { alignItems: 'center', marginVertical: 12 },
-  ring: { width: 90, height: 90, borderRadius: 45, borderWidth: 6, borderColor: '#EEE', justifyContent: 'center', alignItems: 'center' },
-  fill: { position: 'absolute', width: 90, height: 90, borderRadius: 45, borderWidth: 6, borderLeftColor: 'transparent', borderBottomColor: 'transparent', borderRightColor: 'transparent' },
-  value: { fontSize: 24, fontWeight: 'bold' },
-  label: { fontSize: 11, color: C.textMuted },
-});
+  tabLabelActive: { color: '#FFF', fontWeight: '700' }});
 
 // ─── Dhikr Ring ──────────────────────────────────────────────
 function DhikrRing({ target, current, label, color, onPress }: { target: number; current: number; label: string; color: string; onPress: () => void }) {
@@ -130,8 +100,7 @@ const dhikrStyles = StyleSheet.create({
   count: { fontSize: 22, fontWeight: 'bold' },
   target: { fontSize: 12, color: C.textMuted },
   label: { fontSize: 12, color: C.textSecondary, fontWeight: '600' },
-  completedBadge: { position: 'absolute', top: 0, right: 0, width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-});
+  completedBadge: { position: 'absolute', top: 0, right: 0, width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }});
 
 // ─── Weekly Chart ────────────────────────────────────────────
 function WeeklyChart({ data, label, color }: { data: number[]; label: string; color: string }) {
@@ -155,14 +124,13 @@ function WeeklyChart({ data, label, color }: { data: number[]; label: string; co
 }
 
 const chartStyles = StyleSheet.create({
-  container: { backgroundColor: '#FFF', borderRadius: 18, padding: 16, marginHorizontal: 18, marginBottom: 12 },
+  container: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 16, marginHorizontal: 18, marginBottom: 12 },
   title: { fontSize: 14, fontWeight: '700', color: C.textPrimary, marginBottom: 12 },
   bars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 80 },
   barWrap: { alignItems: 'center', flex: 1 },
-  barTrack: { width: 8, height: 60, backgroundColor: '#F0F0F0', borderRadius: 4, justifyContent: 'flex-end', overflow: 'hidden' },
+  barTrack: { width: 8, height: 60, backgroundColor: C.border, borderRadius: 4, justifyContent: 'flex-end', overflow: 'hidden' },
   bar: { width: 8, borderRadius: 4 },
-  dayLabel: { fontSize: 10, color: C.textMuted, marginTop: 6 },
-});
+  dayLabel: { fontSize: 10, color: C.textMuted, marginTop: 6 }});
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function WorshipScreen() {
@@ -203,11 +171,8 @@ export default function WorshipScreen() {
       });
     };
 
-    const score = Math.round((completedSunnah.size / SUNNAH_TRACKER.length) * 40 + (dhikr.subhanallah + dhikr.alhamdulillah + dhikr.allahuakbar) * 0.5);
-
     return (
       <>
-        <WorshipScore score={Math.min(score, 100)} />
         <Text style={styles.sectionTitle}>Sunnah & Optional Prayers</Text>
         <View style={styles.sunnahGrid}>
           {SUNNAH_TRACKER.map(item => {
@@ -260,8 +225,7 @@ export default function WorshipScreen() {
         date: todayKey,
         subhanallah: dhikr.subhanallah,
         alhamdulillah: dhikr.alhamdulillah,
-        allahuakbar: dhikr.allahuakbar,
-      });
+        allahuakbar: dhikr.allahuakbar});
       Alert.alert('Session Saved', `Recorded ${total} dhikr today`);
     };
 
@@ -397,7 +361,7 @@ export default function WorshipScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: '#014836' },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 18, marginBottom: 10 },
@@ -406,8 +370,7 @@ const styles = StyleSheet.create({
   sunnahGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 10 },
   sunnahCard: {
     width: (width - 56) / 2,
-    backgroundColor: '#FFFFFF', borderRadius: 16, padding: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2
+    backgroundColor: C.bgSurface, borderRadius: 16, padding: 14
   },
   sunnahCardCompleted: { backgroundColor: C.emeraldPale },
   sunnahIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
@@ -427,7 +390,7 @@ const styles = StyleSheet.create({
   // Fasting
   fastGrid: { paddingHorizontal: 18, gap: 10 },
   fastCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF',
+    flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface,
     borderRadius: 16, padding: 16, gap: 14,
     borderWidth: 1.5, borderColor: 'transparent'
   },
@@ -436,17 +399,16 @@ const styles = StyleSheet.create({
   fastLabelActive: { color: C.emerald },
   fastDesc: { fontSize: 12, color: C.textMuted, position: 'absolute', left: 54, bottom: 12 },
   fastCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.emerald, justifyContent: 'center', alignItems: 'center' },
-  ramadanCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF8E7', borderRadius: 18, padding: 18, margin: 18, marginTop: 24 },
+  ramadanCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale, borderRadius: 18, padding: 18, margin: 18, marginTop: 24 },
   ramadanTitle: { fontSize: 15, fontWeight: '700', color: C.gold },
   ramadanText: { fontSize: 13, color: C.textSecondary, marginTop: 2 },
 
   // Quran
-  quranSummary: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, padding: 20, marginTop: 8 },
+  quranSummary: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 20, marginTop: 8 },
   quranStat: { flex: 1, alignItems: 'center' },
   quranStatValue: { fontSize: 32, fontWeight: 'bold', color: C.gold },
   quranStatLabel: { fontSize: 12, color: C.textMuted, marginTop: 4 },
-  quranDivider: { width: 1, backgroundColor: '#EEE', marginHorizontal: 12 },
+  quranDivider: { width: 1, backgroundColor: C.border, marginHorizontal: 12 },
   quranInputWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 18, marginTop: 16, gap: 10 },
-  quranInput: { flex: 1, backgroundColor: '#FFF', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.textPrimary },
-  quranAddBtn: { width: 48, height: 48, borderRadius: 14, backgroundColor: C.gold, justifyContent: 'center', alignItems: 'center' },
-});
+  quranInput: { flex: 1, backgroundColor: C.bgSurface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.textPrimary },
+  quranAddBtn: { width: 48, height: 48, borderRadius: 14, backgroundColor: C.gold, justifyContent: 'center', alignItems: 'center' }});

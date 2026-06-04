@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Platform, StatusBar, Alert, RefreshControl, Switch
@@ -32,6 +32,7 @@ import WeeklyScreen from './src/screens/WeeklyScreen';
 import QiblaScreen from './src/screens/QiblaScreen';
 import ZakatScreen from './src/screens/ZakatScreen';
 import JournalScreen from './src/screens/JournalScreen';
+import MosquesScreen from './src/screens/MosquesScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 
 // ─── Utility ─────────────────────────────────────────────────
@@ -71,11 +72,12 @@ type TabId = typeof NAV_TABS[number]['id'];
 
 const MORE_MENU = [
   { id: 'hadith', label: 'Hadith', icon: 'document-text-outline', color: C.gold },
-  { id: 'friday', label: 'Friday', icon: 'star-outline', color: '#7C3AED' },
-  { id: 'weekly', label: 'Weekly', icon: 'calendar-clear-outline', color: '#0891B2' },
+  { id: 'friday', label: 'Friday', icon: 'star-outline', color: C.purple },
+  { id: 'weekly', label: 'Weekly', icon: 'calendar-clear-outline', color: C.teal },
   { id: 'qibla', label: 'Qibla', icon: 'compass-outline', color: C.emerald },
-  { id: 'zakat', label: 'Zakat', icon: 'wallet-outline', color: '#059669' },
-  { id: 'journal', label: 'Journal', icon: 'create-outline', color: '#2563EB' },
+  { id: 'zakat', label: 'Zakat', icon: 'wallet-outline', color: C.green },
+  { id: 'journal', label: 'Journal', icon: 'create-outline', color: C.blue },
+  { id: 'mosques', label: 'Mosques', icon: 'location-outline', color: C.teal },
   { id: 'settings', label: 'Settings', icon: 'settings-outline', color: C.textSecondary },
 ];
 
@@ -91,6 +93,7 @@ export default function App() {
   const [completedPrayers, setCompletedPrayers] = useState<Set<string>>(new Set());
   const [timerDisplay, setTimerDisplay] = useState('');
   const [dailyHadith, setDailyHadith] = useState<{ english: string; source: string } | null>(null);
+  const lastScheduledRef = useRef<string>(''); // Guard against redundant notification scheduling
 
   // Initialize
   useEffect(() => {
@@ -171,13 +174,17 @@ export default function App() {
       }
     });
 
-    // Schedule notifications
+    // Schedule notifications — only when times actually change
     if (settings.notificationsEnabled) {
-      times.forEach(p => {
-        if (p.id === 'sunrise') return;
-        const { hour, minute } = getHourMinute(p.minutes);
-        schedulePrayerNotification(p.id, p.name, hour, minute, false);
-      });
+      const scheduleKey = times.map(p => `${p.id}:${p.minutes}`).join('|');
+      if (scheduleKey !== lastScheduledRef.current) {
+        lastScheduledRef.current = scheduleKey;
+        times.forEach(p => {
+          if (p.id === 'sunrise') return;
+          const { hour, minute } = getHourMinute(p.minutes);
+          schedulePrayerNotification(p.id, p.name, hour, minute, false);
+        });
+      }
     }
   }, [settings.calculationMethod, settings.madhab, location, loading, settings.notificationsEnabled]);
 
@@ -241,14 +248,15 @@ export default function App() {
         case 'qibla': return <QiblaScreen coordinate={{ latitude: location.latitude, longitude: location.longitude }} />;
         case 'zakat': return <ZakatScreen />;
         case 'journal': return <JournalScreen />;
+        case 'mosques': return <MosquesScreen coordinate={{ latitude: location.latitude, longitude: location.longitude }} />;
         case 'settings': return <SettingsScreen settings={{
           method: settings.calculationMethod,
-          madhhab: settings.madhab,
+          madhhab: settings.madhab === 'hanafi' ? 'hanafi' : 'shafi',
           coordinate: { latitude: location.latitude, longitude: location.longitude },
           locationName: location.name,
         }} updateSettings={(u) => {
-          if (u.method) handleUpdateSettings({ calculationMethod: u.method as any });
-          if (u.madhhab) handleUpdateSettings({ madhab: u.madhhab as any });
+          if (u.method) handleUpdateSettings({ calculationMethod: u.method });
+          if (u.madhhab) handleUpdateSettings({ madhab: u.madhhab });
         }} />;
         default: return null;
       }
@@ -355,20 +363,15 @@ const styles = StyleSheet.create({
   screenPadding: { paddingBottom: 100 },
 
   // More screen
-  moreHeader: { padding: 18, paddingTop: 60, backgroundColor: '#014836' },
+  moreHeader: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   moreTitle: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   moreGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 14, gap: 10 },
   moreCard: {
     width: '30%',
-    backgroundColor: '#FFF',
+    backgroundColor: C.bgSurface,
     borderRadius: 18,
     padding: 16,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
   },
   moreIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   moreLabel: { fontSize: 12, fontWeight: '600', color: C.textPrimary, textAlign: 'center' },
@@ -376,11 +379,11 @@ const styles = StyleSheet.create({
   // Navigation
   navBar: {
     flexDirection: 'row',
-    backgroundColor: '#FFF',
+    backgroundColor: C.bgSurface,
     paddingBottom: Platform.OS === 'ios' ? 24 : 12,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
+    borderTopColor: C.border,
   },
   navItem: { flex: 1, alignItems: 'center', paddingVertical: 6, position: 'relative' },
   navLabel: { fontSize: 10, color: C.textMuted, marginTop: 3, fontWeight: '500' },
@@ -395,7 +398,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,

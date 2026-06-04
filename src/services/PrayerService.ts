@@ -1,4 +1,5 @@
 import { CalculationMethod, Madhab, PrayerId, PrayerTime } from '../types';
+import { getTimezoneOffset } from './TimezoneService';
 
 // ─── Constants ───────────────────────────────────────────────
 const PRAYER_IDS_ORDER: PrayerId[] = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'];
@@ -19,6 +20,14 @@ const METHOD_PARAMS: Record<CalculationMethod, [number, number]> = {
   egyptian:            [19.5, 17.5],  // Fajr 19.5°, Isha 17.5°
   umm_al_qura:        [18.5, 90],    // Fajr 18.5°, Isha 90min after Maghrib
   karachi:            [18,   18],    // Fajr 18°, Isha 18°
+  dubai:              [18.5, 90],    // Fajr 18.5°, Isha 90min after Maghrib
+  qatar:              [18,   90],    // Fajr 18°, Isha 90min after Maghrib
+  kuwait:             [18,   17.5],  // Fajr 18°, Isha 17.5°
+  moonsighting_committee: [18, 18], // Fajr 18°, Isha 18°
+  singapore:          [20,   18],    // Fajr 20°, Isha 18°
+  tehran:             [17.7, 14],    // Fajr 17.7°, Isha 14°
+  north_america:      [15,   15],    // Fajr 15°, Isha 15° (ISNA)
+  custom:             [18,   17],    // Default to MWL
 };
 
 // ─── Julian Date ─────────────────────────────────────────────
@@ -107,9 +116,9 @@ export function calculatePrayerTimes(
   const decl = getSunDeclination(jd);
   const eqt = getEquationOfTime(jd);
 
-  // Time zone offset (Sydney as default, adjust for actual location)
+  // Time zone offset (hours from UTC, positive east)
   const tzOffset = -longitude / 15; // hours
-  const zone = -5; // TODO: replace with actual timezone offset
+  const tzOff = getTimezoneOffset(date); // device timezone offset in hours
 
   const asrFactor = madhab === 'hanafi' ? 2 : 1;
 
@@ -122,30 +131,30 @@ export function calculatePrayerTimes(
   const fajrCos = (Math.sin((Math.PI / 180) * fajrAngle) - Math.sin(latRad) * Math.sin((Math.PI / 180) * decl)) /
                   (Math.cos(latRad) * Math.cos((Math.PI / 180) * decl));
   const fajrHaDeg = (fajrCos >= -1 && fajrCos <= 1) ? (180 / Math.PI) * Math.acos(fajrCos) : 0;
-  const fajrHour = (fajrHaDeg + eqt) / 15 + tzOffset - zone / 24;
+  const fajrHour = (fajrHaDeg + eqt) / 15 + tzOffset + tzOff;
 
   // Sunrise (similar to Maghrib but offset)
-  const sunriseHour = computeTime(0, latitude, decl, eqt) + tzOffset - zone / 24;
+  const sunriseHour = computeTime(0, latitude, decl, eqt) + tzOffset + tzOff;
 
   // Dhuhr
-  const dhuhrHour = (eqt + tzOffset - zone / 24);
+  const dhuhrHour = (eqt + tzOffset + tzOff);
 
   // Asr
-  const asrHour = computeAsrTime(latitude, decl, eqt, asrFactor) + tzOffset - zone / 24;
+  const asrHour = computeAsrTime(latitude, decl, eqt, asrFactor) + tzOffset + tzOff;
 
   // Maghrib
-  const maghribHour = computeMaghrib(latitude, decl, eqt) + tzOffset - zone / 24;
+  const maghribHour = computeMaghrib(latitude, decl, eqt) + tzOffset + tzOff;
 
   // Isha
   let ishaHour: number;
-  if (method === 'umm_al_qura') {
-    // 90 minutes after Maghrib
-    ishaHour = maghribHour + 1.5;
+  if (ishaAngle >= 90) {
+    // Minutes-after-Maghrib mode (e.g., Umm Al-Qura, Dubai, Qatar)
+    ishaHour = maghribHour + ishaAngle / 60;
   } else {
     const ishaCos = (Math.sin((Math.PI / 180) * ishaAngle) - Math.sin(latRad) * Math.sin((Math.PI / 180) * decl)) /
                    (Math.cos(latRad) * Math.cos((Math.PI / 180) * decl));
     const ishaHaDeg = (ishaCos >= -1 && ishaCos <= 1) ? (180 / Math.PI) * Math.acos(ishaCos) : 0;
-    ishaHour = (ishaHaDeg + eqt) / 15 + tzOffset - zone / 24;
+    ishaHour = (ishaHaDeg + eqt) / 15 + tzOffset + tzOff;
   }
 
   const times: Record<PrayerId, number> = {

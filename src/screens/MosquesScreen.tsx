@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
 import * as Location from 'expo-location';
+import { C } from '../types';
 
 interface Coordinate {
   latitude: number;
@@ -102,7 +103,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 18,
     paddingTop: 60,
-    backgroundColor: '#014836',
+    backgroundColor: C.heroBg,
   },
   title: {
     fontSize: 22,
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#666',
+    color: C.textSecondary,
   },
   list: {
     padding: 18,
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
   mosqueCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: C.bgSurface,
     borderRadius: 16,
     padding: 16,
     gap: 12,
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#E8F5F0',
+    backgroundColor: C.emeraldPale,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -151,22 +152,22 @@ const styles = StyleSheet.create({
   mosqueName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: C.textPrimary,
   },
   mosqueAddress: {
     fontSize: 13,
-    color: '#888',
+    color: C.textMuted,
     marginTop: 2,
   },
   distanceTag: {
-    backgroundColor: '#E8F5F0',
+    backgroundColor: C.emeraldPale,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
   },
   distanceText: {
     fontSize: 12,
-    color: '#014836',
+    color: C.heroBg,
     fontWeight: '600',
   },
 });

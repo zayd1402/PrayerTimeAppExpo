@@ -1,19 +1,57 @@
 // ─── Design Tokens ───────────────────────────────────────────
 export const C = {
+  // Backgrounds
   bgBase:       '#FAF6EF',
   bgSurface:    '#FFFFFF',
+  heroBg:       '#014836',
+
+  // Primary — Navy
   navy:         '#071A35',
   navySoft:     '#1A3560',
+
+  // Accent — Gold
   gold:         '#B8892F',
   goldLight:    '#D4AF6A',
   goldPale:     '#F0E4C8',
+  timerAmber:   '#FDD370',
+
+  // Accent — Emerald
   emerald:      '#0F7A4F',
   emeraldPale:  '#D4EDE1',
+
+  // Secondary accents — menu & event colors
+  purple:       '#7C3AED',
+  teal:         '#0891B2',
+  green:        '#059669',
+  blue:         '#2563EB',
+  red:          '#DC2626',
+
+  // Text
   textPrimary:  '#071A35',
   textSecondary:'#6B7280',
   textMuted:    '#9CA3AF',
+
+  // Borders
   border:       'rgba(7,26,53,0.08)',
   borderStrong: 'rgba(7,26,53,0.15)',
+
+  // Radius scale
+  radius: {
+    sm: 10,
+    md: 14,
+    lg: 18,
+    xl: 24,
+  },
+
+  // Typography scale — matching DESIGN.md hierarchy
+  type: {
+    display:  { fontSize: 32, fontWeight: '700' as const, lineHeight: 1.15 },
+    headline: { fontSize: 22, fontWeight: '700' as const, lineHeight: 1.25 },
+    title:    { fontSize: 16, fontWeight: '600' as const, lineHeight: 1.3  },
+    body:     { fontSize: 14, fontWeight: '400' as const, lineHeight: 1.55 },
+    label:    { fontSize: 12, fontWeight: '500' as const, lineHeight: 1.3  },
+    caption:  { fontSize: 10, fontWeight: '500' as const, lineHeight: 1.2  },
+  },
 };
 
 // ─── Prayer IDs & Config ─────────────────────────────────────
@@ -39,7 +77,10 @@ export interface PrayerLogEntry {
 }
 
 // ─── Settings Types ─────────────────────────────────────────
-export type CalculationMethod = 'muslim_world_league' | 'egyptian' | 'umm_al_qura' | 'isna' | 'karachi';
+export type CalculationMethod =
+  | 'muslim_world_league' | 'egyptian' | 'umm_al_qura' | 'isna' | 'karachi'
+  | 'dubai' | 'qatar' | 'kuwait' | 'moonsighting_committee' | 'singapore'
+  | 'tehran' | 'north_america' | 'custom';
 export type Madhab = 'shafi' | 'hanafi';
 
 export interface AppSettings {

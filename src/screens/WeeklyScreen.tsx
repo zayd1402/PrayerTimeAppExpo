@@ -108,7 +108,7 @@ export default function WeeklyScreen() {
       ) : (
         todaysActivities.map(activity => (
           <View key={activity.id} style={styles.activityCard}>
-            <View style={[styles.activityIconWrap, { backgroundColor: activity.type === 'fasting' ? '#E8F5F0' : activity.type === 'reminder' ? '#FFF8E7' : '#EFF6FF' }]}>
+            <View style={[styles.activityIconWrap, { backgroundColor: activity.type === 'fasting' ? C.emeraldPale : activity.type === 'reminder' ? C.goldPale : C.emeraldPale }]}>
               <Ionicons name={activity.icon as any} size={22} color={activity.type === 'fasting' ? C.emerald : activity.type === 'reminder' ? C.gold : '#2563EB'} />
             </View>
             <View style={styles.activityInfo}>
@@ -136,7 +136,7 @@ export default function WeeklyScreen() {
           <Text style={styles.sunnahTitle}>Sunnah Revival — Week {currentWeek}</Text>
         </View>
         <View style={styles.sunnahContent}>
-          <View style={[styles.sunnahIconWrap, { backgroundColor: '#FFF8E7' }]}>
+          <View style={[styles.sunnahIconWrap, { backgroundColor: C.goldPale }]}>
             <Ionicons name={weeklySunnah.icon as any} size={24} color={C.gold} />
           </View>
           <View style={styles.sunnahInfo}>
@@ -172,14 +172,14 @@ export default function WeeklyScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: '#014836' },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
 
   daySelector: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 18, marginTop: 16, marginBottom: 8 },
-  dayChip: { alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14, backgroundColor: '#FFF', minWidth: 44 },
+  dayChip: { alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14, backgroundColor: C.bgSurface, minWidth: 44 },
   dayChipSelected: { backgroundColor: C.emerald },
-  dayChipToday: { backgroundColor: '#FFF8E7', borderWidth: 1, borderColor: C.gold },
+  dayChipToday: { backgroundColor: C.goldPale, borderWidth: 1, borderColor: C.gold },
   dayLabel: { fontSize: 12, fontWeight: '600', color: C.textSecondary },
   dayLabelSelected: { color: '#FFF' },
   dayLabelToday: { color: C.gold },
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 15, color: C.textSecondary, marginTop: 12, fontWeight: '500' },
   emptySub: { fontSize: 13, color: C.textMuted, marginTop: 4 },
 
-  activityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 18, padding: 16, marginHorizontal: 18, marginBottom: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  activityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 18, padding: 16, marginHorizontal: 18, marginBottom: 10},
   activityIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   activityInfo: { flex: 1, marginLeft: 14 },
   activityTitle: { fontSize: 15, fontWeight: '600', color: C.textPrimary },
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   fastToggleText: { fontSize: 12, fontWeight: '600', color: C.textSecondary },
   fastToggleTextActive: { color: '#FFF' },
 
-  sunnahRevivalCard: { backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, marginTop: 16, padding: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  sunnahRevivalCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginTop: 16, padding: 18},
   sunnahHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
   sunnahTitle: { fontSize: 14, fontWeight: '700', color: C.gold },
   sunnahContent: { flexDirection: 'row', alignItems: 'center' },
@@ -212,8 +212,8 @@ const styles = StyleSheet.create({
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
 
-  overviewCard: { backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
-  overviewItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F8F8F8' },
+  overviewCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16},
+  overviewItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
   overviewItemToday: { backgroundColor: '#F0FAF5', marginHorizontal: -16, paddingHorizontal: 16, borderRadius: 10 },
   overviewDot: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
   overviewInfo: { flex: 1, marginLeft: 12 },
@@ -221,5 +221,4 @@ const styles = StyleSheet.create({
   overviewTitleToday: { color: C.emerald, fontWeight: '600' },
   overviewDay: { fontSize: 11, color: C.textMuted, marginTop: 1 },
   todayBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: C.emerald },
-  todayBadgeText: { fontSize: 10, color: '#FFF', fontWeight: '700' },
-});
+  todayBadgeText: { fontSize: 10, color: '#FFF', fontWeight: '700' }});

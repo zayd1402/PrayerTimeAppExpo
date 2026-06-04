@@ -10,8 +10,7 @@ import { getFavoriteHadiths, toggleFavoriteHadith, setLastHadithIndex, getLastHa
 function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boolean; onToggleFav: () => void }) {
   const handleShare = async () => {
     await Share.share({
-      message: `"${hadith.english}"\n— ${hadith.source}\n\n${hadith.arabic}`,
-    });
+      message: `"${hadith.english}"\n— ${hadith.source}\n\n${hadith.arabic}`});
   };
 
   const gradeColor = hadith.grade === 'sahih' ? C.emerald : hadith.grade === 'hasan' ? C.gold : C.textMuted;
@@ -24,7 +23,7 @@ function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boo
         </View>
         <View style={styles.cardActions}>
           <TouchableOpacity onPress={onToggleFav} style={styles.actionBtn}>
-            <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? '#E53935' : C.textMuted} />
+            <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? C.red : C.textMuted} />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleShare} style={styles.actionBtn}>
             <Ionicons name="share-outline" size={20} color={C.textMuted} />
@@ -140,7 +139,7 @@ export default function HadithScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: '#014836' },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
 
@@ -149,14 +148,14 @@ const styles = StyleSheet.create({
   dailyTitle: { fontSize: 14, fontWeight: '700', color: C.gold },
 
   categories: { paddingHorizontal: 18, paddingBottom: 8 },
-  catChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#FFF', marginRight: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
+  catChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8},
   catChipActive: { backgroundColor: C.emerald },
   catLabel: { fontSize: 12, color: C.textSecondary, fontWeight: '500' },
   catLabelActive: { color: '#FFF', fontWeight: '600' },
 
   listTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 },
 
-  card: { backgroundColor: '#FFF', borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  card: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12},
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   gradeBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   gradeText: { fontSize: 10, fontWeight: '700' },
@@ -166,5 +165,4 @@ const styles = StyleSheet.create({
   english: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontStyle: 'italic' },
   meta: { flexDirection: 'row', alignItems: 'center', marginTop: 12, flexWrap: 'wrap', gap: 4 },
   metaText: { fontSize: 11, color: C.textMuted },
-  metaDot: { fontSize: 11, color: C.textMuted, marginHorizontal: 2 },
-});
+  metaDot: { fontSize: 11, color: C.textMuted, marginHorizontal: 2 }});

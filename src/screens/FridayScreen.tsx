@@ -245,37 +245,37 @@ export default function FridayScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: '#014836' },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
 
-  tabBar: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 16, margin: 18, marginBottom: 12, padding: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8, elevation: 2 },
+  tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', gap: 6 },
   tabActive: { backgroundColor: C.emerald },
   tabLabel: { fontSize: 11, color: C.textSecondary, fontWeight: '500' },
   tabLabelActive: { color: '#FFF', fontWeight: '700' },
 
-  progressCard: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, padding: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  progressCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, marginBottom: 16},
   progressItem: { flex: 1, alignItems: 'center' },
-  progressDivider: { width: 1, backgroundColor: '#F0F0F0' },
+  progressDivider: { width: 1, backgroundColor: C.border },
   progressValue: { fontSize: 20, fontWeight: 'bold', color: C.textPrimary, marginTop: 6 },
   progressLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 },
 
-  checkItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
+  checkItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
   checkItemDone: { backgroundColor: C.emeraldPale },
-  checkBox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#DDD', justifyContent: 'center', alignItems: 'center' },
+  checkBox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center' },
   checkBoxDone: { backgroundColor: C.emerald, borderColor: C.emerald },
   checkLabel: { flex: 1, fontSize: 14, fontWeight: '500', color: C.textPrimary },
   checkLabelDone: { color: C.emerald, textDecorationLine: 'line-through' },
 
-  notesCard: { backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, padding: 16, minHeight: 120 },
+  notesCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, minHeight: 120 },
   notesInput: { flex: 1, fontSize: 14, color: C.textPrimary, lineHeight: 22, minHeight: 100 },
 
   kahfIntro: { fontSize: 14, color: C.textSecondary, fontStyle: 'italic', lineHeight: 22, marginHorizontal: 18, marginBottom: 4 },
   kahfSource: { fontSize: 12, color: C.textMuted, marginHorizontal: 18, marginBottom: 16 },
-  kahfSection: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
+  kahfSection: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
   kahfSectionRead: { backgroundColor: C.emeraldPale, opacity: 0.8 },
   kahfSectionCurrent: { borderWidth: 1.5, borderColor: C.gold },
   kahfNumWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
@@ -287,12 +287,11 @@ const styles = StyleSheet.create({
   kahfTextDone: { color: C.emerald, textDecorationLine: 'line-through' },
   kahfDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  duaCard: { backgroundColor: '#FFF', borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  duaCard: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12},
   duaTimeHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   duaTimeTitle: { fontSize: 15, fontWeight: '700', color: C.textPrimary },
   duaTimeDesc: { fontSize: 13, color: C.textSecondary, lineHeight: 20 },
-  duaTimeBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FFF8E7', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'flex-start', marginTop: 12 },
+  duaTimeBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.goldPale, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'flex-start', marginTop: 12 },
   duaTimeBadgeText: { fontSize: 12, color: C.gold, fontWeight: '600' },
   recommendedDua: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  recommendedDuaText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 },
-});
+  recommendedDuaText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 }});

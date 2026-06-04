@@ -1,17 +1,10 @@
 import React from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
-
-type CalculationMethod = 
-  | 'muslimWorldLeague' | 'egyptian' | 'karachi' 
-  | 'ummAlQura' | 'dubai' | 'qatar' | 'kuwait'
-  | 'moonsightingCommittee' | 'singapore' | 'tehran'
-  | 'northAmerica' | 'custom';
-
-type Madhhab = 'shafi' | 'hanafi';
+import { C, CalculationMethod, Madhab } from '../types';
 
 interface Settings {
   method: CalculationMethod;
-  madhhab: Madhhab;
+  madhhab: Madhab;
   coordinate: { latitude: number; longitude: number };
   locationName: string;
 }
@@ -22,17 +15,17 @@ interface SettingsScreenProps {
 }
 
 const METHODS: { value: CalculationMethod; label: string }[] = [
-  { value: 'muslimWorldLeague', label: 'Muslim World League' },
+  { value: 'muslim_world_league', label: 'Muslim World League' },
   { value: 'egyptian', label: 'Egyptian' },
   { value: 'karachi', label: 'Karachi' },
-  { value: 'ummAlQura', label: 'Umm Al-Qura' },
+  { value: 'umm_al_qura', label: 'Umm Al-Qura' },
   { value: 'dubai', label: 'Dubai' },
   { value: 'qatar', label: 'Qatar' },
   { value: 'kuwait', label: 'Kuwait' },
-  { value: 'moonsightingCommittee', label: 'Moonsighting Committee' },
+  { value: 'moonsighting_committee', label: 'Moonsighting Committee' },
   { value: 'singapore', label: 'Singapore' },
   { value: 'tehran', label: 'Tehran' },
-  { value: 'northAmerica', label: 'North America' },
+  { value: 'north_america', label: 'North America' },
   { value: 'custom', label: 'Custom' },
 ];
 
@@ -60,7 +53,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <Switch
               value={autoLocation}
               onValueChange={setAutoLocation}
-              trackColor={{ true: '#01806A' }}
+              trackColor={{ true: C.emerald }}
             />
           </View>
           
@@ -136,7 +129,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <Switch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
-              trackColor={{ true: '#01806A' }}
+              trackColor={{ true: C.emerald }}
             />
           </View>
           
@@ -192,7 +185,7 @@ const styles = StyleSheet.create({
   header: {
     padding: 18,
     paddingTop: 60,
-    backgroundColor: '#014836',
+    backgroundColor: C.heroBg,
   },
   title: {
     fontSize: 22,
@@ -206,13 +199,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#888',
+    color: C.textMuted,
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: C.bgSurface,
     borderRadius: 14,
     overflow: 'hidden',
   },
@@ -223,20 +216,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: C.border,
   },
   rowLabel: {
     fontSize: 16,
-    color: '#333',
+    color: C.textPrimary,
   },
   rowSubtitle: {
     fontSize: 13,
-    color: '#888',
+    color: C.textMuted,
     marginTop: 2,
   },
   rowValue: {
     fontSize: 14,
-    color: '#888',
+    color: C.textMuted,
   },
   optionRow: {
     flexDirection: 'row',
@@ -245,27 +238,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: C.border,
   },
   optionLabel: {
     fontSize: 16,
-    color: '#333',
+    color: C.textPrimary,
   },
   optionSubtitle: {
     fontSize: 13,
-    color: '#888',
+    color: C.textMuted,
     marginTop: 2,
   },
   checkmark: {
     fontSize: 18,
-    color: '#01806A',
+    color: C.emerald,
     fontWeight: 'bold',
   },
   manualLocation: {
     padding: 16,
     gap: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
+    borderTopColor: C.border,
   },
   locationButton: {
     backgroundColor: '#E8F5F0',
@@ -275,7 +268,7 @@ const styles = StyleSheet.create({
   },
   locationButtonText: {
     fontSize: 15,
-    color: '#014836',
+    color: C.heroBg,
     fontWeight: '600',
   },
   footer: {
@@ -284,6 +277,6 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 12,
-    color: '#AAA',
+    color: C.textMuted,
   },
 });

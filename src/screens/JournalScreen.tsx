@@ -8,12 +8,12 @@ import { C, PrayerId, PRAYER_IDS } from '../types';
 import { loadPrayerJournal, addJournalEntry } from '../services/StorageService';
 
 const MOODS = [
-  { value: 'peaceful', label: 'Peaceful', icon: 'leaf-outline', color: '#0F7A4F' },
-  { value: 'grateful', label: 'Grateful', icon: 'heart-outline', color: '#E53935' },
+  { value: 'peaceful', label: 'Peaceful', icon: 'leaf-outline', color: C.emerald },
+  { value: 'grateful', label: 'Grateful', icon: 'heart-outline', color: C.red },
   { value: 'joyful', label: 'Joyful', icon: 'sunny-outline', color: '#F59E0B' },
-  { value: 'distracted', label: 'Distracted', icon: 'cloud-outline', color: '#6B7280' },
+  { value: 'distracted', label: 'Distracted', icon: 'cloud-outline', color: C.textSecondary },
   { value: 'tired', label: 'Tired', icon: 'moon-outline', color: '#4B5563' },
-  { value: 'anxious', label: 'Anxious', icon: 'rainy-outline', color: '#2563EB' },
+  { value: 'anxious', label: 'Anxious', icon: 'rainy-outline', color: C.blue },
 ] as const;
 
 const PRAYER_NAMES: Record<string, string> = {
@@ -46,8 +46,7 @@ export default function JournalScreen() {
       mood: selectedMood as any,
       reflection: reflection || undefined,
       gratitude: gratitude || undefined,
-      improvement: improvement || undefined,
-    };
+      improvement: improvement || undefined};
 
     const journal = await addJournalEntry(entry);
     setEntries(journal);
@@ -213,20 +212,20 @@ export default function JournalScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: '#014836' },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
 
-  summaryCard: { flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 18, margin: 18, marginBottom: 12, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  summaryCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16},
   summaryItem: { flex: 1, alignItems: 'center' },
-  summaryDivider: { width: 1, backgroundColor: '#F0F0F0' },
+  summaryDivider: { width: 1, backgroundColor: C.border },
   summaryValue: { fontSize: 24, fontWeight: 'bold', color: C.emerald },
   summaryLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
   sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 },
 
   prayerSelector: { paddingHorizontal: 18, paddingBottom: 8 },
-  prayerChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: '#FFF', marginRight: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 },
+  prayerChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8},
   prayerChipActive: { backgroundColor: C.emerald },
   prayerChipLabel: { fontSize: 13, color: C.textSecondary, fontWeight: '500' },
   prayerChipLabelActive: { color: '#FFF', fontWeight: '700' },
@@ -234,16 +233,16 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 14, fontWeight: '600', color: C.textPrimary, marginHorizontal: 18, marginBottom: 8, marginTop: 12 },
 
   moodGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8 },
-  moodChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, backgroundColor: '#FFF', borderWidth: 1.5, borderColor: 'transparent', marginBottom: 4 },
+  moodChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, backgroundColor: C.bgSurface, borderWidth: 1.5, borderColor: 'transparent', marginBottom: 4 },
   moodLabel: { fontSize: 12, color: C.textSecondary, fontWeight: '500' },
 
-  inputCard: { backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, marginBottom: 10, padding: 16 },
+  inputCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginBottom: 10, padding: 16 },
   textInput: { fontSize: 14, color: C.textPrimary, lineHeight: 22, minHeight: 60, textAlignVertical: 'top' },
 
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.emerald, borderRadius: 16, marginHorizontal: 18, marginTop: 8, paddingVertical: 16 },
   saveBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
 
-  entryCard: { backgroundColor: '#FFF', borderRadius: 18, marginHorizontal: 18, marginBottom: 10, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6, elevation: 2 },
+  entryCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginBottom: 10, padding: 16},
   entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   entryPrayer: { backgroundColor: C.emeraldPale, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   entryPrayerText: { fontSize: 12, fontWeight: '700', color: C.emerald },
@@ -253,5 +252,4 @@ const styles = StyleSheet.create({
   entryText: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontStyle: 'italic' },
   entryField: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F8F8F8' },
   entryFieldLabel: { fontSize: 12, fontWeight: '600', color: C.textMuted, marginBottom: 2 },
-  entryFieldText: { fontSize: 13, color: C.textSecondary, lineHeight: 20 },
-});
+  entryFieldText: { fontSize: 13, color: C.textSecondary, lineHeight: 20 }});

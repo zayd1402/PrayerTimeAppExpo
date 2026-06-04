@@ -54,9 +54,8 @@ function AccuracyBadge({ accuracy }: { accuracy: 'high' | 'medium' | 'low' | 'ca
   const colors = {
     high: { bg: '#E8F5F0', text: C.emerald, icon: 'checkmark-circle' },
     medium: { bg: '#FFF8E7', text: C.gold, icon: 'alert-circle' },
-    low: { bg: '#FEE2E2', text: '#DC2626', icon: 'warning' },
-    calibrating: { bg: '#EFF6FF', text: '#2563EB', icon: 'refresh' },
-  };
+    low: { bg: '#FEE2E2', text: C.red, icon: 'warning' },
+    calibrating: { bg: '#EFF6FF', text: C.blue, icon: 'refresh' }};
   const c = colors[accuracy];
   return (
     <View style={[accStyles.badge, { backgroundColor: c.bg }]}>
@@ -70,8 +69,7 @@ function AccuracyBadge({ accuracy }: { accuracy: 'high' | 'medium' | 'low' | 'ca
 
 const accStyles = StyleSheet.create({
   badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'center', marginTop: 12 },
-  text: { fontSize: 13, fontWeight: '600' },
-});
+  text: { fontSize: 13, fontWeight: '600' }});
 
 // ─── Calibration Overlay ─────────────────────────────────────
 function CalibrationOverlay({ visible }: { visible: boolean }) {
@@ -101,8 +99,7 @@ const calStyles = StyleSheet.create({
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(250,246,239,0.95)', justifyContent: 'center', alignItems: 'center', zIndex: 100, borderRadius: 24 },
   phone: { marginBottom: 20 },
   title: { fontSize: 18, fontWeight: 'bold', color: C.textPrimary, marginBottom: 8 },
-  desc: { fontSize: 14, color: C.textSecondary },
-});
+  desc: { fontSize: 14, color: C.textSecondary }});
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
@@ -178,8 +175,7 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
       toValue: rotation,
       useNativeDriver: true,
       friction: 8,
-      tension: 40,
-    }).start();
+      tension: 40}).start();
   }, [rotation]);
 
   const spin = rotationAnim.interpolate({ inputRange: [0, 360], outputRange: ['0deg', '360deg'] });
@@ -275,16 +271,15 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  header: { padding: 18, paddingTop: 60, backgroundColor: '#014836', alignItems: 'center' },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg, alignItems: 'center' },
   title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
   subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
 
   compassContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
   compass: {
     width: COMPASS_SIZE, height: COMPASS_SIZE, borderRadius: COMPASS_SIZE / 2,
-    backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 10,
-    borderWidth: 3, borderColor: '#F0F0F0'
+    backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center',
+    borderWidth: 3, borderColor: C.border
   },
   compassAligned: { borderColor: C.emerald, shadowColor: C.emerald, shadowOpacity: 0.2 },
   compassRing: { position: 'absolute', borderRadius: 999, borderWidth: 1, borderColor: 'rgba(0,100,80,0.08)' },
@@ -297,7 +292,7 @@ const styles = StyleSheet.create({
 
   dirMarker: { position: 'absolute', width: COMPASS_SIZE - 50, height: 24, justifyContent: 'center', alignItems: 'flex-start' },
   dirText: { fontSize: 16, fontWeight: 'bold', color: C.textSecondary },
-  dirNorth: { color: '#E53935', fontSize: 18 },
+  dirNorth: { color: C.red, fontSize: 18 },
 
   needleWrap: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
   needle: { width: 40, height: 160, justifyContent: 'center', alignItems: 'center' },
@@ -313,10 +308,9 @@ const styles = StyleSheet.create({
   alignedText: { color: '#FFF', fontSize: 14, fontWeight: '600' },
 
   infoGrid: { flexDirection: 'row', paddingHorizontal: 18, gap: 12, marginBottom: 12 },
-  infoCard: { flex: 1, backgroundColor: '#FFF', borderRadius: 16, padding: 16, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+  infoCard: { flex: 1, backgroundColor: C.bgSurface, borderRadius: 16, padding: 16, alignItems: 'center'},
   infoValue: { fontSize: 18, fontWeight: 'bold', color: C.textPrimary, marginTop: 8 },
   infoLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  howToCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#FFF', borderRadius: 16, padding: 16, marginHorizontal: 18, gap: 10 },
-  howToText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 },
-});
+  howToCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: C.bgSurface, borderRadius: 16, padding: 16, marginHorizontal: 18, gap: 10 },
+  howToText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 }});
