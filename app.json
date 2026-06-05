@@ -5,10 +5,13 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "scheme": ["prayertimeapp"],
     "splash": {
-      "backgroundColor": "#FAF6EF"
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#014836"
     },
     "ios": {
       "supportsTablet": true,
@@ -16,20 +19,28 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to calculate prayer times for your current location and find nearby mosques.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to calculate prayer times and provide timely prayer notifications.",
-        "UIBackgroundModes": ["location", "fetch"]
+        "UIBackgroundModes": ["location", "fetch", "remote-notification"]
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#014836"
+        "backgroundColor": "#014836",
+        "monochromeImage": "./assets/adaptive-icon-monochrome.png"
       },
       "package": "com.prayertime.app",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
-        "FOREGROUND_SERVICE"
-      ]
+        "FOREGROUND_SERVICE",
+        "POST_NOTIFICATIONS",
+        "SCHEDULE_EXACT_ALARM",
+        "USE_EXACT_ALARM",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
+      ],
+      "notificationIcon": "./assets/notification-icon.png",
+      "color": "#014836"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -39,6 +50,13 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow PrayerTimeApp to use your location to calculate prayer times and notify you when it's prayer time."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#014836"
         }
       ]
     ],

@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity,
-  TextInput, Animated
+  TextInput, Animated, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C } from '../types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { C } from '../types';
+import { useTheme } from '../theme/ThemeProvider';
+import { useSnackbar } from '../components/Snackbar';
+import { Chip } from '../components/Chip';
 
 const KAHF_KEY = '@prayertime:kahf_last_read';
 const KHUTBAH_KEY = '@prayertime:khutbah_notes';
@@ -34,16 +37,15 @@ const KAHF_SECTIONS = [
 ];
 
 export default function FridayScreen() {
+  const { c, type, radius } = useTheme();
+  const { show } = useSnackbar();
   const [kahfProgress, setKahfProgress] = useState(0);
   const [khutbahNotes, setKhutbahNotes] = useState('');
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
   const [activeSection, setActiveSection] = useState<'kahf' | 'checklist' | 'dua'>('checklist');
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const [kahf, khutbah, checks] = await Promise.all([
       AsyncStorage.getItem(KAHF_KEY),
       AsyncStorage.getItem(KHUTBAH_KEY),
@@ -52,6 +54,14 @@ export default function FridayScreen() {
     if (kahf) setKahfProgress(parseInt(kahf, 10));
     if (khutbah) setKhutbahNotes(khutbah);
     if (checks) setChecklist(JSON.parse(checks));
+  }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
   };
 
   const toggleCheck = async (id: string) => {
@@ -63,6 +73,7 @@ export default function FridayScreen() {
   const updateKahfProgress = async (section: number) => {
     setKahfProgress(section);
     await AsyncStorage.setItem(KAHF_KEY, String(section));
+    show({ message: `Marked section ${section} of ${KAHF_SECTIONS.length}`, variant: 'success', icon: 'book' });
   };
 
   const saveKhutbah = async (text: string) => {
@@ -74,73 +85,130 @@ export default function FridayScreen() {
   const completedChecks = Object.values(checklist).filter(Boolean).length;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Friday</Text>
-        <Text style={styles.subtitle}>{isFriday ? 'Jumu\'ah Mubarakah!' : 'Prepare for Friday'}</Text>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: c.bgBase }}
+      contentContainerStyle={{ paddingBottom: 120 }}
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.emerald} colors={[c.emerald]} />}
+    >
+      <View style={[styles.header, { backgroundColor: c.heroBg, paddingTop: 60 }]}>
+        <Text style={[type.headline, { color: c.onHero, fontSize: 22, fontWeight: '700' }]}>Friday</Text>
+        <Text style={[type.body, { color: c.onDarkMuted, marginTop: 4 }]}>
+          {isFriday ? "Jumu'ah Mubarakah!" : 'Prepare for Friday'}
+        </Text>
       </View>
 
       {/* Tab Bar */}
-      <View style={styles.tabBar}>
+      <View
+        style={[styles.tabBar, { backgroundColor: c.bgSurface, borderRadius: radius.lg, margin: 18, marginBottom: 12, padding: 4 }]}
+        accessibilityRole="tablist"
+      >
         {([
           { id: 'checklist' as const, label: 'Checklist', icon: 'checkbox-outline' },
           { id: 'kahf' as const, label: 'Al-Kahf', icon: 'book-outline' },
           { id: 'dua' as const, label: 'Dua Times', icon: 'time-outline' },
-        ]).map(tab => (
-          <TouchableOpacity
-            key={tab.id}
-            style={[styles.tab, activeSection === tab.id && styles.tabActive]}
-            onPress={() => setActiveSection(tab.id)}
-          >
-            <Ionicons name={tab.icon as any} size={16} color={activeSection === tab.id ? '#FFF' : C.textSecondary} />
-            <Text style={[styles.tabLabel, activeSection === tab.id && styles.tabLabelActive]}>{tab.label}</Text>
-          </TouchableOpacity>
-        ))}
+        ]).map(tab => {
+          const isActive = activeSection === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              style={[styles.tab, isActive && { backgroundColor: c.emerald, borderRadius: 12 }]}
+              onPress={() => setActiveSection(tab.id)}
+              accessibilityRole="tab"
+              accessibilityLabel={tab.label}
+              accessibilityState={{ selected: isActive }}
+            >
+              <Ionicons name={tab.icon as any} size={16} color={isActive ? '#FFF' : c.textSecondary} />
+              <Text style={[type.label, { color: isActive ? '#FFF' : c.textSecondary, fontWeight: isActive ? '700' : '500' }]}>
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* Progress Summary */}
-      <View style={styles.progressCard}>
+      <View style={[styles.progressCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, marginHorizontal: 18, padding: 16, marginBottom: 16 }]}>
         <View style={styles.progressItem}>
-          <Ionicons name="checkbox" size={20} color={C.emerald} />
-          <Text style={styles.progressValue}>{completedChecks}/{FRIDAY_CHECKLIST.length}</Text>
-          <Text style={styles.progressLabel}>Checklist</Text>
+          <Ionicons name="checkbox" size={20} color={c.emerald} />
+          <Text style={[type.title, { color: c.textPrimary, marginTop: 6, fontWeight: '700' }]}>{completedChecks}/{FRIDAY_CHECKLIST.length}</Text>
+          <Text style={[type.caption, { color: c.textMuted, marginTop: 2 }]}>Checklist</Text>
         </View>
-        <View style={styles.progressDivider} />
+        <View style={[styles.progressDivider, { backgroundColor: c.border }]} />
         <View style={styles.progressItem}>
-          <Ionicons name="book" size={20} color={C.gold} />
-          <Text style={styles.progressValue}>{kahfProgress}/{KAHF_SECTIONS.length}</Text>
-          <Text style={styles.progressLabel}>Al-Kahf</Text>
+          <Ionicons name="book" size={20} color={c.gold} />
+          <Text style={[type.title, { color: c.textPrimary, marginTop: 6, fontWeight: '700' }]}>{kahfProgress}/{KAHF_SECTIONS.length}</Text>
+          <Text style={[type.caption, { color: c.textMuted, marginTop: 2 }]}>Al-Kahf</Text>
         </View>
       </View>
 
       {/* Checklist Tab */}
       {activeSection === 'checklist' && (
         <>
-          <Text style={styles.sectionTitle}>Friday Preparation</Text>
+          <Text style={[type.title, { color: c.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 }]}>
+            Friday Preparation
+          </Text>
           {FRIDAY_CHECKLIST.map(item => {
             const done = checklist[item.id];
             return (
-              <TouchableOpacity key={item.id} style={[styles.checkItem, done && styles.checkItemDone]} onPress={() => toggleCheck(item.id)}>
-                <View style={[styles.checkBox, done && styles.checkBoxDone]}>
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.checkItem,
+                  {
+                    backgroundColor: done ? c.emeraldPale : c.bgSurface,
+                    borderRadius: radius.md,
+                    marginHorizontal: 18,
+                    marginBottom: 8,
+                  },
+                ]}
+                onPress={() => toggleCheck(item.id)}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: !!done }}
+                accessibilityLabel={`${item.label}${done ? ', completed' : ''}`}
+              >
+                <View
+                  style={[
+                    styles.checkBox,
+                    {
+                      borderColor: done ? c.emerald : c.borderStrong,
+                      backgroundColor: done ? c.emerald : 'transparent',
+                    },
+                  ]}
+                >
                   {done && <Ionicons name="checkmark" size={14} color="#FFF" />}
                 </View>
-                <Ionicons name={item.icon as any} size={18} color={done ? C.emerald : C.textSecondary} style={{ marginHorizontal: 12 }} />
-                <Text style={[styles.checkLabel, done && styles.checkLabelDone]}>{item.label}</Text>
+                <Ionicons name={item.icon as any} size={18} color={done ? c.emerald : c.textSecondary} style={{ marginHorizontal: 12 }} />
+                <Text
+                  style={[
+                    type.body,
+                    {
+                      flex: 1,
+                      color: done ? c.emerald : c.textPrimary,
+                      fontWeight: '500',
+                      textDecorationLine: done ? 'line-through' : 'none',
+                    },
+                  ]}
+                >
+                  {item.label}
+                </Text>
               </TouchableOpacity>
             );
           })}
 
-          {/* Khutbah Notes */}
-          <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Khutbah Notes</Text>
-          <View style={styles.notesCard}>
+          <Text style={[type.title, { color: c.textPrimary, marginTop: 24, marginBottom: 10, marginHorizontal: 18 }]}>
+            Khutbah Notes
+          </Text>
+          <View style={[styles.notesCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, marginHorizontal: 18, padding: 16, minHeight: 120 }]}>
             <TextInput
-              style={styles.notesInput}
+              style={[styles.notesInput, { color: c.textPrimary }]}
               multiline
               placeholder="Jot down insights from today's khutbah..."
-              placeholderTextColor={C.textMuted}
+              placeholderTextColor={c.textMuted}
               value={khutbahNotes}
               onChangeText={saveKhutbah}
               textAlignVertical="top"
+              accessibilityLabel="Khutbah notes"
             />
           </View>
         </>
@@ -149,11 +217,15 @@ export default function FridayScreen() {
       {/* Al-Kahf Tab */}
       {activeSection === 'kahf' && (
         <>
-          <Text style={styles.sectionTitle}>Surah Al-Kahf Reader</Text>
-          <Text style={styles.kahfIntro}>
+          <Text style={[type.title, { color: c.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 }]}>
+            Surah Al-Kahf Reader
+          </Text>
+          <Text style={[type.body, { color: c.textSecondary, fontStyle: 'italic', lineHeight: 22, marginHorizontal: 18, marginBottom: 4 }]}>
             "Whoever reads Surah Al-Kahf on Friday, a light will shine for him between the two Fridays."
           </Text>
-          <Text style={styles.kahfSource}>— Prophet Muhammad ﷺ</Text>
+          <Text style={[type.caption, { color: c.textMuted, marginHorizontal: 18, marginBottom: 16 }]}>
+            — Prophet Muhammad ﷺ
+          </Text>
 
           {KAHF_SECTIONS.map((section, index) => {
             const isRead = kahfProgress > index;
@@ -161,18 +233,48 @@ export default function FridayScreen() {
             return (
               <TouchableOpacity
                 key={index}
-                style={[styles.kahfSection, isRead && styles.kahfSectionRead, isCurrent && styles.kahfSectionCurrent]}
+                style={[
+                  styles.kahfSection,
+                  {
+                    backgroundColor: isRead ? c.emeraldPale : c.bgSurface,
+                    borderRadius: radius.md,
+                    borderWidth: isCurrent ? 1.5 : 0,
+                    borderColor: isCurrent ? c.gold : 'transparent',
+                    opacity: isRead ? 0.8 : 1,
+                    marginHorizontal: 18,
+                    marginBottom: 8,
+                  },
+                ]}
                 onPress={() => updateKahfProgress(index + 1)}
+                accessibilityRole="button"
+                accessibilityLabel={`Section ${index + 1}, Ayahs ${section.ayah}, ${section.desc}${isRead ? ', read' : isCurrent ? ', current' : ''}`}
               >
-                <View style={[styles.kahfNumWrap, isRead && styles.kahfNumWrapDone]}>
-                  <Text style={[styles.kahfNum, isRead && styles.kahfNumDone]}>{index + 1}</Text>
+                <View
+                  style={[
+                    styles.kahfNumWrap,
+                    {
+                      backgroundColor: isRead ? c.emerald : c.bgMuted,
+                      borderRadius: 10,
+                    },
+                  ]}
+                >
+                  <Text style={[type.label, { color: isRead ? '#FFF' : c.textSecondary, fontWeight: '700' }]}>{index + 1}</Text>
                 </View>
-                <View style={styles.kahfInfo}>
-                  <Text style={[styles.kahfAyah, isRead && styles.kahfTextDone]}>Ayahs {section.ayah}</Text>
-                  <Text style={styles.kahfDesc}>{section.desc}</Text>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={[
+                    type.body,
+                    {
+                      color: isRead ? c.emerald : c.textPrimary,
+                      fontWeight: '600',
+                      textDecorationLine: isRead ? 'line-through' : 'none',
+                    },
+                  ]}>
+                    Ayahs {section.ayah}
+                  </Text>
+                  <Text style={[type.caption, { color: c.textMuted, marginTop: 2 }]}>{section.desc}</Text>
                 </View>
-                {isRead && <Ionicons name="checkmark-circle" size={22} color={C.emerald} />}
-                {isCurrent && <Ionicons name="play-circle" size={22} color={C.gold} />}
+                {isRead && <Ionicons name="checkmark-circle" size={22} color={c.emerald} />}
+                {isCurrent && <Ionicons name="play-circle" size={22} color={c.gold} />}
               </TouchableOpacity>
             );
           })}
@@ -182,46 +284,48 @@ export default function FridayScreen() {
       {/* Dua Times Tab */}
       {activeSection === 'dua' && (
         <>
-          <Text style={styles.sectionTitle}>Best Times for Dua on Friday</Text>
+          <Text style={[type.title, { color: c.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 }]}>
+            Best Times for Dua on Friday
+          </Text>
 
-          <View style={styles.duaCard}>
-            <View style={styles.duaTimeHeader}>
-              <Ionicons name="sunny" size={20} color={C.gold} />
-              <Text style={styles.duaTimeTitle}>Last Hour Before Maghrib</Text>
+          <View style={[styles.duaCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, padding: 18, marginHorizontal: 18, marginBottom: 12 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <Ionicons name="sunny" size={20} color={c.gold} />
+              <Text style={[type.body, { color: c.textPrimary, fontWeight: '700' }]}>Last Hour Before Maghrib</Text>
             </View>
-            <Text style={styles.duaTimeDesc}>
+            <Text style={[type.body, { color: c.textSecondary, lineHeight: 20 }]}>
               This is the most virtuous time for dua on Friday. The Prophet ﷺ said: "There is no day more virtuous than Friday. In it is an hour when no Muslim servant asks Allah for something good except that He gives it to him."
             </Text>
-            <View style={styles.duaTimeBadge}>
-              <Ionicons name="time" size={14} color={C.gold} />
-              <Text style={styles.duaTimeBadgeText}>Between Asr and Maghrib</Text>
+            <View style={[styles.duaTimeBadge, { backgroundColor: c.goldPale }]}>
+              <Ionicons name="time" size={14} color={c.gold} />
+              <Text style={[type.label, { color: c.gold, fontWeight: '600' }]}>Between Asr and Maghrib</Text>
             </View>
           </View>
 
-          <View style={styles.duaCard}>
-            <View style={styles.duaTimeHeader}>
-              <Ionicons name="arrow-up" size={20} color={C.emerald} />
-              <Text style={styles.duaTimeTitle}>While the Imam is on the Minbar</Text>
+          <View style={[styles.duaCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, padding: 18, marginHorizontal: 18, marginBottom: 12 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <Ionicons name="arrow-up" size={20} color={c.emerald} />
+              <Text style={[type.body, { color: c.textPrimary, fontWeight: '700' }]}>While the Imam is on the Minbar</Text>
             </View>
-            <Text style={styles.duaTimeDesc}>
+            <Text style={[type.body, { color: c.textSecondary, lineHeight: 20 }]}>
               The Prophet ﷺ said: "The hour of answered dua on Friday is from when the Imam sits on the minbar until the prayer is concluded."
             </Text>
           </View>
 
-          <View style={styles.duaCard}>
-            <View style={styles.duaTimeHeader}>
-              <Ionicons name="moon" size={20} color={C.navySoft} />
-              <Text style={styles.duaTimeTitle}>After Fajr until Sunrise</Text>
+          <View style={[styles.duaCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, padding: 18, marginHorizontal: 18, marginBottom: 12 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <Ionicons name="moon" size={20} color={c.navySoft} />
+              <Text style={[type.body, { color: c.textPrimary, fontWeight: '700' }]}>After Fajr until Sunrise</Text>
             </View>
-            <Text style={styles.duaTimeDesc}>
+            <Text style={[type.body, { color: c.textSecondary, lineHeight: 20 }]}>
               Blessings descend upon those who are in the mosque from the time of Fajr on Friday.
             </Text>
           </View>
 
-          <View style={styles.duaCard}>
-            <View style={styles.duaTimeHeader}>
-              <Ionicons name="heart" size={20} color="#E53935" />
-              <Text style={styles.duaTimeTitle}>Recommended Duas</Text>
+          <View style={[styles.duaCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, padding: 18, marginHorizontal: 18, marginBottom: 12 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <Ionicons name="heart" size={20} color={c.red} />
+              <Text style={[type.body, { color: c.textPrimary, fontWeight: '700' }]}>Recommended Duas</Text>
             </View>
             {[
               'Recite Surah Al-Kahf (verses 1-10)',
@@ -230,9 +334,9 @@ export default function FridayScreen() {
               'Ask Allah for good in this life and the Hereafter',
               'Pray for your parents, family, and the Ummah',
             ].map((dua, i) => (
-              <View key={i} style={styles.recommendedDua}>
-                <Ionicons name="ellipse" size={6} color={C.emerald} style={{ marginTop: 6 }} />
-                <Text style={styles.recommendedDuaText}>{dua}</Text>
+              <View key={i} style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+                <Ionicons name="ellipse" size={6} color={c.emerald} style={{ marginTop: 6 }} />
+                <Text style={[type.body, { flex: 1, color: c.textSecondary, lineHeight: 20 }]}>{dua}</Text>
               </View>
             ))}
           </View>
@@ -243,55 +347,19 @@ export default function FridayScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
-  subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
-
-  tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
-  tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  tabActive: { backgroundColor: C.emerald },
-  tabLabel: { fontSize: 11, color: C.textSecondary, fontWeight: '500' },
-  tabLabelActive: { color: '#FFF', fontWeight: '700' },
-
-  progressCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, marginBottom: 16},
+  header: { padding: 18 },
+  tabBar: { flexDirection: 'row' },
+  tab: { flex: 1, alignItems: 'center', paddingVertical: 10, flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  progressCard: { flexDirection: 'row' },
   progressItem: { flex: 1, alignItems: 'center' },
-  progressDivider: { width: 1, backgroundColor: C.border },
-  progressValue: { fontSize: 20, fontWeight: 'bold', color: C.textPrimary, marginTop: 6 },
-  progressLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 },
-
-  checkItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
-  checkItemDone: { backgroundColor: C.emeraldPale },
-  checkBox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center' },
-  checkBoxDone: { backgroundColor: C.emerald, borderColor: C.emerald },
-  checkLabel: { flex: 1, fontSize: 14, fontWeight: '500', color: C.textPrimary },
-  checkLabelDone: { color: C.emerald, textDecorationLine: 'line-through' },
-
-  notesCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, minHeight: 120 },
-  notesInput: { flex: 1, fontSize: 14, color: C.textPrimary, lineHeight: 22, minHeight: 100 },
-
-  kahfIntro: { fontSize: 14, color: C.textSecondary, fontStyle: 'italic', lineHeight: 22, marginHorizontal: 18, marginBottom: 4 },
-  kahfSource: { fontSize: 12, color: C.textMuted, marginHorizontal: 18, marginBottom: 16 },
-  kahfSection: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
-  kahfSectionRead: { backgroundColor: C.emeraldPale, opacity: 0.8 },
-  kahfSectionCurrent: { borderWidth: 1.5, borderColor: C.gold },
-  kahfNumWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
-  kahfNumWrapDone: { backgroundColor: C.emerald },
-  kahfNum: { fontSize: 13, fontWeight: 'bold', color: C.textSecondary },
-  kahfNumDone: { color: '#FFF' },
-  kahfInfo: { flex: 1, marginLeft: 12 },
-  kahfAyah: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
-  kahfTextDone: { color: C.emerald, textDecorationLine: 'line-through' },
-  kahfDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-
-  duaCard: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12},
-  duaTimeHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  duaTimeTitle: { fontSize: 15, fontWeight: '700', color: C.textPrimary },
-  duaTimeDesc: { fontSize: 13, color: C.textSecondary, lineHeight: 20 },
-  duaTimeBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.goldPale, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'flex-start', marginTop: 12 },
-  duaTimeBadgeText: { fontSize: 12, color: C.gold, fontWeight: '600' },
-  recommendedDua: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  recommendedDuaText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 }});
+  progressDivider: { width: 1 },
+  sectionTitle: {},
+  checkItem: { flexDirection: 'row', alignItems: 'center', padding: 14 },
+  checkBox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
+  notesCard: {},
+  notesInput: { flex: 1, fontSize: 14, lineHeight: 22, minHeight: 100 },
+  kahfSection: { flexDirection: 'row', alignItems: 'center', padding: 14 },
+  kahfNumWrap: { width: 32, height: 32, justifyContent: 'center', alignItems: 'center' },
+  duaCard: {},
+  duaTimeBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'flex-start', marginTop: 12 },
+});

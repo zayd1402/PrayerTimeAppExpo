@@ -1,21 +1,35 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  Platform, StatusBar, Alert, RefreshControl, Switch
+  View, StatusBar, Alert, StyleSheet, Platform, useColorScheme as useRNColorScheme,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as NavigationBar from 'expo-navigation-bar';
+import { Ionicons } from '@expo/vector-icons';
+
+// ─── Theme & Components ──────────────────────────────────────
+import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
+import { SnackbarProvider } from './src/components/Snackbar';
+import { BottomNav } from './src/components/BottomNav';
+import { NavRail } from './src/components/NavRail';
+import { AppDrawer } from './src/components/AppDrawer';
+import { TabPager } from './src/components/TabPager';
+import { AppBar } from './src/components/AppBar';
+import { Button } from './src/components/Button';
+import { Screen } from './src/components/Screen';
+import { useBreakpoint } from './src/hooks/useBreakpoint';
 
 // ─── Types & Config ──────────────────────────────────────────
-import { C, PrayerId, PrayerTime, AppSettings, DEFAULT_SETTINGS, PRAYER_ICONS } from './src/types';
+import {
+  C, PrayerId, PrayerTime, AppSettings, DEFAULT_SETTINGS,
+  PRAYER_ICONS, TabId, DrawerItemId,
+} from './src/types';
 import {
   calculatePrayerTimes, getPrayerTimesObject, getNextPrayer, getTimeUntilNext,
-  minutesToTimeString, calculateQiblaDirection, bearingToCompassDirection
+  minutesToTimeString, calculateQiblaDirection, bearingToCompassDirection,
 } from './src/services/PrayerService';
-import { gregorianToHijri, HijriService } from './src/services/HijriService';
+import { HijriService } from './src/services/HijriService';
 import {
   loadSettings, saveSettings, markPrayer, loadPrayerLog,
-  getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData
 } from './src/services/StorageService';
 import { getCurrentLocation, DEFAULT_LOCATION } from './src/services/LocationService';
 import { schedulePrayerNotification, hasNotificationPermission } from './src/services/NotificationService';
@@ -34,24 +48,20 @@ import ZakatScreen from './src/screens/ZakatScreen';
 import JournalScreen from './src/screens/JournalScreen';
 import MosquesScreen from './src/screens/MosquesScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import { Onboarding } from './src/screens/OnboardingScreen';
 
 // ─── Utility ─────────────────────────────────────────────────
-function getDateKey(date: Date): string {
-  return date.toISOString().split('T')[0];
-}
-
+function getDateKey(date: Date): string { return date.toISOString().split('T')[0]; }
 function minutesFromMidnight(): number {
   const now = new Date();
   return now.getHours() * 60 + now.getMinutes();
 }
-
 function formatCountdown(diffMinutes: number): string {
   if (diffMinutes <= 0) return '0:00';
   const h = Math.floor(diffMinutes / 60);
   const m = diffMinutes % 60;
   return `${h}:${m.toString().padStart(2, '0')}`;
 }
-
 function getHourMinute(minutes: number): { hour: number; minute: number } {
   return {
     hour: Math.floor((minutes % 1440) / 60),
@@ -59,32 +69,47 @@ function getHourMinute(minutes: number): { hour: number; minute: number } {
   };
 }
 
-// ─── Navigation Tabs ─────────────────────────────────────────
-const NAV_TABS = [
-  { id: 'home',      label: 'Home',      icon: 'home-outline',      iconActive: 'home' },
-  { id: 'worship',   label: 'Worship',   icon: 'heart-outline',     iconActive: 'heart' },
-  { id: 'calendar',  label: 'Calendar',  icon: 'calendar-outline',  iconActive: 'calendar' },
-  { id: 'duas',      label: 'Duas',      icon: 'book-outline',      iconActive: 'book' },
-  { id: 'more',      label: 'More',      icon: 'grid-outline',      iconActive: 'grid' },
-] as const;
+// ─── Drawer screen titles ────────────────────────────────────
+const DRAWER_TITLES: Record<DrawerItemId, { title: string; subtitle?: string; variant: 'large' | 'small' }> = {
+  hadith:    { title: 'Hadith',         subtitle: '30 authentic hadiths',         variant: 'large' },
+  friday:    { title: 'Friday',         subtitle: 'Surah Al-Kahf & khutbah notes', variant: 'large' },
+  weekly:    { title: 'Weekly',         subtitle: 'Sunnah revival tracker',       variant: 'large' },
+  zakat:     { title: 'Zakat',          subtitle: 'Calculator & charity log',     variant: 'large' },
+  journal:   { title: 'Prayer Journal', subtitle: 'Reflect on your prayers',      variant: 'large' },
+  mosques:   { title: 'Nearby Mosques',                                    variant: 'large' },
+  settings:  { title: 'Settings',                                          variant: 'large' },
+};
 
-type TabId = typeof NAV_TABS[number]['id'];
-
-const MORE_MENU = [
-  { id: 'hadith', label: 'Hadith', icon: 'document-text-outline', color: C.gold },
-  { id: 'friday', label: 'Friday', icon: 'star-outline', color: C.purple },
-  { id: 'weekly', label: 'Weekly', icon: 'calendar-clear-outline', color: C.teal },
-  { id: 'qibla', label: 'Qibla', icon: 'compass-outline', color: C.emerald },
-  { id: 'zakat', label: 'Zakat', icon: 'wallet-outline', color: C.green },
-  { id: 'journal', label: 'Journal', icon: 'create-outline', color: C.blue },
-  { id: 'mosques', label: 'Mosques', icon: 'location-outline', color: C.teal },
-  { id: 'settings', label: 'Settings', icon: 'settings-outline', color: C.textSecondary },
-];
-
-// ─── Main App ────────────────────────────────────────────────
+// ─── Main App (with all providers) ───────────────────────────
 export default function App() {
+  return (
+    <SafeAreaProvider>
+      <ThemedApp />
+    </SafeAreaProvider>
+  );
+}
+
+function ThemedApp() {
+  const systemScheme = useRNColorScheme();
+  // We re-read this every render; the actual user preference comes from
+  // settings (which we load async). Until then, follow the system.
+  const [overrideScheme, setOverrideScheme] = useState<'light' | 'dark' | undefined>(undefined);
+
+  return (
+    <ThemeProvider scheme={overrideScheme}>
+      <SnackbarProvider>
+        <Shell onThemeChange={setOverrideScheme} />
+      </SnackbarProvider>
+    </ThemeProvider>
+  );
+}
+
+function Shell({ onThemeChange }: { onThemeChange: (s: 'light' | 'dark') => void }) {
+  const { c, scheme } = useTheme();
+  const { isTablet } = useBreakpoint();
   const [activeTab, setActiveTab] = useState<TabId>('home');
-  const [moreScreen, setMoreScreen] = useState<string | null>(null);
+  const [drawerScreen, setDrawerScreen] = useState<DrawerItemId | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [prayerTimes, setPrayerTimes] = useState<PrayerTime[]>([]);
   const [nextPrayer, setNextPrayer] = useState<PrayerTime | null>(null);
@@ -93,18 +118,25 @@ export default function App() {
   const [completedPrayers, setCompletedPrayers] = useState<Set<string>>(new Set());
   const [timerDisplay, setTimerDisplay] = useState('');
   const [dailyHadith, setDailyHadith] = useState<{ english: string; source: string } | null>(null);
-  const lastScheduledRef = useRef<string>(''); // Guard against redundant notification scheduling
+  const lastScheduledRef = useRef<string>('');
+  const themeAppliedRef = useRef(false);
 
   // Initialize
   useEffect(() => {
     const init = async () => {
       if (Platform.OS === 'android') {
-        await NavigationBar.setBackgroundColorAsync(C.bgBase);
-        await NavigationBar.setButtonStyleAsync('dark');
+        await NavigationBar.setBackgroundColorAsync(c.bgBase);
+        await NavigationBar.setButtonStyleAsync(scheme === 'dark' ? 'light' : 'dark');
       }
 
       const saved = await loadSettings();
       setSettings(saved);
+
+      // Apply user theme preference
+      if (saved.themePreference === 'dark') onThemeChange('dark');
+      else if (saved.themePreference === 'light') onThemeChange('light');
+      else onThemeChange('light');
+      themeAppliedRef.current = true;
 
       const loc = await getCurrentLocation();
       if (loc) {
@@ -116,13 +148,13 @@ export default function App() {
         setLocation(saved.location);
       }
 
-      // Load daily hadith
       const hadith = getDailyHadith();
       setDailyHadith({ english: hadith.english, source: hadith.source });
 
       setLoading(false);
     };
     init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Update prayer times
@@ -136,6 +168,7 @@ export default function App() {
     if (loading) return;
     const interval = setInterval(updatePrayerTimes, 60000);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings.calculationMethod, settings.madhab, location, loading]);
 
   // Timer countdown
@@ -155,13 +188,12 @@ export default function App() {
       location.latitude,
       location.longitude,
       settings.calculationMethod,
-      settings.madhab
+      settings.madhab,
     );
     setPrayerTimes(times);
     const next = getNextPrayer(times, minutesFromMidnight());
     setNextPrayer(next);
 
-    // Load completed prayers
     loadPrayerLog().then(log => {
       const todayKey = getDateKey(new Date());
       const todayLog = log[todayKey];
@@ -174,7 +206,6 @@ export default function App() {
       }
     });
 
-    // Schedule notifications — only when times actually change
     if (settings.notificationsEnabled) {
       const scheduleKey = times.map(p => `${p.id}:${p.minutes}`).join('|');
       if (scheduleKey !== lastScheduledRef.current) {
@@ -208,16 +239,18 @@ export default function App() {
     const updated = { ...settings, ...partial };
     setSettings(updated);
     await saveSettings(updated);
+    if (partial.themePreference === 'dark') onThemeChange('dark');
+    else if (partial.themePreference === 'light') onThemeChange('light');
   };
 
   // Build prayer times object for TodayScreen
   const prayerTimesObj = prayerTimes.length > 0 ? {
-    fajr: new Date(new Date().setHours(Math.floor(prayerTimes[0].minutes / 60), prayerTimes[0].minutes % 60, 0)),
+    fajr:    new Date(new Date().setHours(Math.floor(prayerTimes[0].minutes / 60), prayerTimes[0].minutes % 60, 0)),
     sunrise: new Date(new Date().setHours(Math.floor(prayerTimes[1].minutes / 60), prayerTimes[1].minutes % 60, 0)),
-    dhuhr: new Date(new Date().setHours(Math.floor(prayerTimes[2].minutes / 60), prayerTimes[2].minutes % 60, 0)),
-    asr: new Date(new Date().setHours(Math.floor(prayerTimes[3].minutes / 60), prayerTimes[3].minutes % 60, 0)),
+    dhuhr:   new Date(new Date().setHours(Math.floor(prayerTimes[2].minutes / 60), prayerTimes[2].minutes % 60, 0)),
+    asr:     new Date(new Date().setHours(Math.floor(prayerTimes[3].minutes / 60), prayerTimes[3].minutes % 60, 0)),
     maghrib: new Date(new Date().setHours(Math.floor(prayerTimes[4].minutes / 60), prayerTimes[4].minutes % 60, 0)),
-    isha: new Date(new Date().setHours(Math.floor(prayerTimes[5].minutes / 60), prayerTimes[5].minutes % 60, 0)),
+    isha:    new Date(new Date().setHours(Math.floor(prayerTimes[5].minutes / 60), prayerTimes[5].minutes % 60, 0)),
   } : {
     fajr: new Date(), sunrise: new Date(), dhuhr: new Date(),
     asr: new Date(), maghrib: new Date(), isha: new Date(),
@@ -238,31 +271,10 @@ export default function App() {
   const hijriDate = HijriService.gregorianToHijri(new Date());
   const hijriDateStr = `${hijriDate.day} ${hijriDate.monthNameArabic} ${hijriDate.year} AH`;
 
-  // ─── Render Screen ─────────────────────────────────────────
-  const renderScreen = () => {
-    if (moreScreen) {
-      switch (moreScreen) {
-        case 'hadith': return <HadithScreen />;
-        case 'friday': return <FridayScreen />;
-        case 'weekly': return <WeeklyScreen />;
-        case 'qibla': return <QiblaScreen coordinate={{ latitude: location.latitude, longitude: location.longitude }} />;
-        case 'zakat': return <ZakatScreen />;
-        case 'journal': return <JournalScreen />;
-        case 'mosques': return <MosquesScreen coordinate={{ latitude: location.latitude, longitude: location.longitude }} />;
-        case 'settings': return <SettingsScreen settings={{
-          method: settings.calculationMethod,
-          madhhab: settings.madhab === 'hanafi' ? 'hanafi' : 'shafi',
-          coordinate: { latitude: location.latitude, longitude: location.longitude },
-          locationName: location.name,
-        }} updateSettings={(u) => {
-          if (u.method) handleUpdateSettings({ calculationMethod: u.method });
-          if (u.madhhab) handleUpdateSettings({ madhab: u.madhhab });
-        }} />;
-        default: return null;
-      }
-    }
-
-    switch (activeTab) {
+  // ─── Render a tab screen ───────────────────────────────────
+  const renderTabScreen = (tab: TabId) => {
+    if (loading) return null;
+    switch (tab) {
       case 'home':
         return (
           <TodayScreen
@@ -277,131 +289,171 @@ export default function App() {
             dailyHadith={dailyHadith}
           />
         );
-      case 'worship':
-        return <WorshipScreen />;
-      case 'calendar':
-        return <CalendarScreen />;
-      case 'duas':
-        return <DuaLibraryScreen />;
-      case 'more':
-        return (
-          <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
-            <View style={styles.moreHeader}>
-              <Text style={styles.moreTitle}>More</Text>
-            </View>
-            <View style={styles.moreGrid}>
-              {MORE_MENU.map(item => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={styles.moreCard}
-                  onPress={() => setMoreScreen(item.id)}
-                >
-                  <View style={[styles.moreIconWrap, { backgroundColor: item.color + '12' }]}>
-                    <Ionicons name={item.icon as any} size={24} color={item.color} />
-                  </View>
-                  <Text style={styles.moreLabel}>{item.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </ScrollView>
-        );
-      default:
-        return null;
+      case 'worship':  return <WorshipScreen />;
+      case 'calendar': return <CalendarScreen />;
+      case 'duas':     return <DuaLibraryScreen />;
+      case 'qibla':
+        return <QiblaScreen coordinate={{ latitude: location.latitude, longitude: location.longitude }} />;
+      default: return null;
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bgBase} />
+  // ─── Render a drawer screen ───────────────────────────────
+  const renderDrawerScreen = () => {
+    if (!drawerScreen) return null;
+    const meta = DRAWER_TITLES[drawerScreen];
 
-      {/* Screen Content */}
-      <View style={styles.screenContainer}>
-        {renderScreen()}
-      </View>
+    const content = (() => {
+      switch (drawerScreen) {
+        case 'hadith':  return <HadithScreen />;
+        case 'friday':  return <FridayScreen />;
+        case 'weekly':  return <WeeklyScreen />;
+        case 'zakat':   return <ZakatScreen />;
+        case 'journal': return <JournalScreen />;
+        case 'mosques': return <MosquesScreen coordinate={{ latitude: location.latitude, longitude: location.longitude }} />;
+        case 'settings':
+          return (
+            <SettingsScreen
+              settings={{
+                method: settings.calculationMethod,
+                madhhab: settings.madhab,
+                coordinate: { latitude: location.latitude, longitude: location.longitude },
+                locationName: location.name,
+              }}
+              updateSettings={(u) => {
+                if (u.method) handleUpdateSettings({ calculationMethod: u.method });
+                if (u.madhhab) handleUpdateSettings({ madhab: u.madhhab });
+              }}
+            />
+          );
+        default: return null;
+      }
+    })();
 
-      {/* Bottom Navigation */}
-      {!moreScreen && (
-        <View style={styles.navBar}>
-          {NAV_TABS.map(tab => {
-            const isActive = activeTab === tab.id;
-            return (
-              <TouchableOpacity
-                key={tab.id}
-                style={styles.navItem}
-                onPress={() => setActiveTab(tab.id)}
-              >
-                <Ionicons
-                  name={(isActive ? tab.iconActive : tab.icon) as any}
-                  size={22}
-                  color={isActive ? C.emerald : C.textMuted}
-                />
-                <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
-                  {tab.label}
-                </Text>
-                {isActive && <View style={styles.navIndicator} />}
-              </TouchableOpacity>
-            );
-          })}
+    if (isTablet) {
+      // Tablet: drawer screen is a separate full-height pane
+      return (
+        <View style={{ flex: 1, backgroundColor: c.bgBase }}>
+          <AppBar
+            title={meta.title}
+            subtitle={meta.subtitle}
+            variant="large"
+            onBack={() => setDrawerScreen(null)}
+            backLabel="Back to main"
+          />
+          {content}
         </View>
-      )}
+      );
+    }
 
-      {/* More Screen Back Button */}
-      {moreScreen && (
-        <TouchableOpacity style={styles.backButton} onPress={() => setMoreScreen(null)}>
-          <Ionicons name="arrow-back" size={20} color="#FFF" />
-          <Text style={styles.backText}>Back</Text>
-        </TouchableOpacity>
+    return (
+      <Screen
+        title={meta.title}
+        subtitle={meta.subtitle}
+        variant={meta.variant}
+        onBack={() => setDrawerScreen(null)}
+        backLabel="Back"
+      >
+        {content}
+      </Screen>
+    );
+  };
+
+  // ─── Onboarding gate ──────────────────────────────────────
+  if (loading) {
+    return <View style={[styles.loading, { backgroundColor: c.bgBase }]} />;
+  }
+
+  if (!settings.onboardingComplete) {
+    return (
+      <Onboarding
+        onComplete={async (updates) => {
+          await handleUpdateSettings({ ...updates, onboardingComplete: true });
+        }}
+      />
+    );
+  }
+
+  // ─── Main shell ───────────────────────────────────────────
+  if (drawerScreen && isTablet) {
+    // Tablet: 2-pane (rail + drawer screen)
+    return (
+      <View style={[styles.root, { backgroundColor: c.bgBase }]}>
+        <NavRail
+          active={activeTab}
+          onChangeTab={(id) => { setActiveTab(id); setDrawerScreen(null); }}
+          onOpenDrawer={() => setDrawerOpen(true)}
+        />
+        <View style={{ flex: 1 }}>{renderDrawerScreen()}</View>
+        <AppDrawer
+          visible={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          onSelect={(id) => { setDrawerScreen(id); setDrawerOpen(false); setActiveTab('home'); }}
+        />
+      </View>
+    );
+  }
+
+  if (drawerScreen) {
+    return (
+      <View style={[styles.root, { backgroundColor: c.bgBase }]}>
+        {renderDrawerScreen()}
+        <AppDrawer
+          visible={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          onSelect={(id) => { setDrawerScreen(id); setDrawerOpen(false); }}
+        />
+      </View>
+    );
+  }
+
+  // Normal: tabs + bottom nav (or rail on tablet)
+  return (
+    <View style={[styles.root, { backgroundColor: c.bgBase }]}>
+      {isTablet ? (
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          <NavRail
+            active={activeTab}
+            onChangeTab={setActiveTab}
+            onOpenDrawer={() => setDrawerOpen(true)}
+          />
+          <View style={{ flex: 1 }}>
+            <TabPager active={TAB_INDEX[activeTab]} onIndexChange={(i) => setActiveTab(INDEX_TAB[i])}>
+              {(['home', 'worship', 'calendar', 'duas', 'qibla'] as TabId[]).map(t => (
+                <View key={t} style={{ flex: 1 }}>{renderTabScreen(t)}</View>
+              ))}
+            </TabPager>
+          </View>
+        </View>
+      ) : (
+        <>
+          <View style={{ flex: 1 }}>
+            <TabPager active={TAB_INDEX[activeTab]} onIndexChange={(i) => setActiveTab(INDEX_TAB[i])}>
+              {(['home', 'worship', 'calendar', 'duas', 'qibla'] as TabId[]).map(t => (
+                <View key={t} style={{ flex: 1 }}>{renderTabScreen(t)}</View>
+              ))}
+            </TabPager>
+          </View>
+          <BottomNav
+            active={activeTab}
+            onChange={setActiveTab}
+            onOpenDrawer={() => setDrawerOpen(true)}
+          />
+        </>
       )}
+      <AppDrawer
+        visible={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSelect={(id) => { setDrawerScreen(id); setDrawerOpen(false); }}
+      />
     </View>
   );
 }
 
+const TAB_INDEX: Record<TabId, number> = { home: 0, worship: 1, calendar: 2, duas: 3, qibla: 4 };
+const INDEX_TAB: TabId[] = ['home', 'worship', 'calendar', 'duas', 'qibla'];
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bgBase },
-  screenContainer: { flex: 1 },
-  screen: { flex: 1, backgroundColor: C.bgBase },
-  screenPadding: { paddingBottom: 100 },
-
-  // More screen
-  moreHeader: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  moreTitle: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
-  moreGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 14, gap: 10 },
-  moreCard: {
-    width: '30%',
-    backgroundColor: C.bgSurface,
-    borderRadius: 18,
-    padding: 16,
-    alignItems: 'center',
-  },
-  moreIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-  moreLabel: { fontSize: 12, fontWeight: '600', color: C.textPrimary, textAlign: 'center' },
-
-  // Navigation
-  navBar: {
-    flexDirection: 'row',
-    backgroundColor: C.bgSurface,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: C.border,
-  },
-  navItem: { flex: 1, alignItems: 'center', paddingVertical: 6, position: 'relative' },
-  navLabel: { fontSize: 10, color: C.textMuted, marginTop: 3, fontWeight: '500' },
-  navLabelActive: { color: C.emerald, fontWeight: '700' },
-  navIndicator: { position: 'absolute', top: -8, width: 4, height: 4, borderRadius: 2, backgroundColor: C.emerald },
-
-  // Back button
-  backButton: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 50 : 40,
-    left: 18,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  backText: { color: '#FFF', fontSize: 14, fontWeight: '600' },
+  root: { flex: 1 },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

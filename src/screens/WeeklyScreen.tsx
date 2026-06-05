@@ -1,16 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import {
-  StyleSheet, View, Text, ScrollView, TouchableOpacity
-} from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
+import { useTheme } from '../theme/ThemeProvider';
+import { useSnackbar } from '../components/Snackbar';
+import { EmptyState } from '../components/EmptyState';
 import { loadFastingLog, toggleFast } from '../services/StorageService';
 
 interface WeeklyActivity {
   id: string;
   title: string;
   description: string;
-  dayOfWeek: number; // 0 = Sunday
+  dayOfWeek: number;
   type: 'fasting' | 'sunnah' | 'quran' | 'dhikr' | 'charity' | 'reminder';
   icon: string;
   action?: string;
@@ -36,13 +37,25 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function WeeklyScreen() {
+  const { c, type, radius } = useTheme();
+  const { show } = useSnackbar();
   const [fastingLog, setFastingLog] = useState<Record<string, any>>({});
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
+  const [refreshing, setRefreshing] = useState(false);
   const today = new Date().getDay();
 
-  useEffect(() => {
-    loadFastingLog().then(setFastingLog);
+  const loadData = useCallback(async () => {
+    const log = await loadFastingLog();
+    setFastingLog(log);
   }, []);
+
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  };
 
   const getDateKeyForDay = (dayOfWeek: number) => {
     const now = new Date();
@@ -56,6 +69,11 @@ export default function WeeklyScreen() {
     const dateKey = getDateKeyForDay(selectedDay);
     const log = await toggleFast(dateKey, type as any);
     setFastingLog(log);
+    show({
+      message: isFastActive(type) ? 'Fast unmarked' : 'Fast marked',
+      variant: 'success',
+      icon: 'water-outline',
+    });
   };
 
   const isFastActive = (type: string) => {
@@ -65,62 +83,131 @@ export default function WeeklyScreen() {
 
   const currentWeek = Math.ceil(new Date().getDate() / 7);
   const weeklySunnah = SUNNAH_REVIVAL[(currentWeek - 1) % SUNNAH_REVIVAL.length];
-
   const todaysActivities = WEEKLY_ACTIVITIES.filter(a => a.dayOfWeek === selectedDay);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Weekly Activities</Text>
-        <Text style={styles.subtitle}>Sunnah practices throughout the week</Text>
+    <ScrollView
+      style={{ flex: 1, backgroundColor: c.bgBase }}
+      contentContainerStyle={{ paddingBottom: 120 }}
+      showsVerticalScrollIndicator={false}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.emerald} colors={[c.emerald]} />}
+    >
+      <View style={[styles.header, { backgroundColor: c.heroBg, paddingTop: 60 }]}>
+        <Text style={[type.headline, { color: c.onHero, fontSize: 22, fontWeight: '700' }]}>Weekly Activities</Text>
+        <Text style={[type.body, { color: c.onDarkMuted, marginTop: 4 }]}>Sunnah practices throughout the week</Text>
       </View>
 
       {/* Day Selector */}
-      <View style={styles.daySelector}>
+      <View
+        style={[styles.daySelector, { paddingHorizontal: 18, marginTop: 16, marginBottom: 8 }]}
+        accessibilityRole="tablist"
+        accessibilityLabel="Day of the week"
+      >
         {DAY_SHORT.map((day, index) => {
           const isSelected = index === selectedDay;
           const isToday = index === today;
           return (
             <TouchableOpacity
               key={index}
-              style={[styles.dayChip, isSelected && styles.dayChipSelected, isToday && !isSelected && styles.dayChipToday]}
+              style={[
+                styles.dayChip,
+                {
+                  backgroundColor: isSelected ? c.emerald : c.bgSurface,
+                  borderRadius: radius.md,
+                  borderWidth: isToday && !isSelected ? 1 : 0,
+                  borderColor: c.gold,
+                  minWidth: 44,
+                },
+              ]}
               onPress={() => setSelectedDay(index)}
+              accessibilityRole="tab"
+              accessibilityLabel={`${DAY_NAMES[index]}${isToday ? ', today' : ''}`}
+              accessibilityState={{ selected: isSelected }}
             >
-              <Text style={[styles.dayLabel, isSelected && styles.dayLabelSelected, isToday && !isSelected && styles.dayLabelToday]}>
+              <Text
+                style={[
+                  type.caption,
+                  {
+                    fontSize: 12,
+                    fontWeight: '600',
+                    color: isSelected ? '#FFF' : isToday ? c.gold : c.textSecondary,
+                  },
+                ]}
+              >
                 {day}
               </Text>
-              {isToday && <View style={styles.todayDot} />}
+              {isToday && <View style={[styles.todayDot, { backgroundColor: isSelected ? '#FFF' : c.gold }]} />}
             </TouchableOpacity>
           );
         })}
       </View>
 
       {/* Selected Day Name */}
-      <Text style={styles.selectedDayName}>{DAY_NAMES[selectedDay]}{selectedDay === today ? ' (Today)' : ''}</Text>
+      <Text style={[type.title, { color: c.textPrimary, marginHorizontal: 18, marginBottom: 12, fontSize: 18, fontWeight: '700' }]}>
+        {DAY_NAMES[selectedDay]}{selectedDay === today ? ' (Today)' : ''}
+      </Text>
 
       {/* Activities for Selected Day */}
       {todaysActivities.length === 0 ? (
-        <View style={styles.emptyState}>
-          <Ionicons name="calendar-outline" size={40} color={C.textMuted} />
-          <Text style={styles.emptyText}>No specific activities for {DAY_NAMES[selectedDay]}</Text>
-          <Text style={styles.emptySub}>Use this day for general worship and good deeds</Text>
+        <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+          <Ionicons name="calendar-outline" size={40} color={c.textMuted} />
+          <Text style={[type.body, { color: c.textSecondary, marginTop: 12, fontWeight: '500' }]}>
+            No specific activities for {DAY_NAMES[selectedDay]}
+          </Text>
+          <Text style={[type.caption, { color: c.textMuted, marginTop: 4 }]}>
+            Use this day for general worship and good deeds
+          </Text>
         </View>
       ) : (
         todaysActivities.map(activity => (
-          <View key={activity.id} style={styles.activityCard}>
-            <View style={[styles.activityIconWrap, { backgroundColor: activity.type === 'fasting' ? C.emeraldPale : activity.type === 'reminder' ? C.goldPale : C.emeraldPale }]}>
-              <Ionicons name={activity.icon as any} size={22} color={activity.type === 'fasting' ? C.emerald : activity.type === 'reminder' ? C.gold : '#2563EB'} />
+          <View
+            key={activity.id}
+            style={[styles.activityCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, padding: 16, marginHorizontal: 18, marginBottom: 10 }]}
+            accessibilityLabel={`${activity.title}: ${activity.description}`}
+          >
+            <View
+              style={[
+                styles.activityIconWrap,
+                {
+                  backgroundColor: activity.type === 'fasting' ? c.emeraldPale : activity.type === 'reminder' ? c.goldPale : c.emeraldPale,
+                  borderRadius: 14,
+                },
+              ]}
+            >
+              <Ionicons
+                name={activity.icon as any}
+                size={22}
+                color={activity.type === 'fasting' ? c.emerald : activity.type === 'reminder' ? c.gold : c.blue}
+              />
             </View>
-            <View style={styles.activityInfo}>
-              <Text style={styles.activityTitle}>{activity.title}</Text>
-              <Text style={styles.activityDesc}>{activity.description}</Text>
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <Text style={[type.body, { color: c.textPrimary, fontWeight: '600' }]}>{activity.title}</Text>
+              <Text style={[type.caption, { color: c.textMuted, marginTop: 2, lineHeight: 18 }]}>{activity.description}</Text>
             </View>
             {activity.type === 'fasting' && (
               <TouchableOpacity
-                style={[styles.fastToggle, isFastActive(activity.action!) && styles.fastToggleActive]}
+                style={[
+                  styles.fastToggle,
+                  {
+                    backgroundColor: isFastActive(activity.action!) ? c.emerald : c.bgMuted,
+                    borderRadius: 20,
+                  },
+                ]}
                 onPress={() => toggleFasting(activity.action!)}
+                accessibilityRole="button"
+                accessibilityLabel={`${isFastActive(activity.action!) ? 'Fasting' : 'Not fasting'} for ${activity.title}, tap to toggle`}
+                accessibilityState={{ selected: isFastActive(activity.action!) }}
               >
-                <Text style={[styles.fastToggleText, isFastActive(activity.action!) && styles.fastToggleTextActive]}>
+                <Text
+                  style={[
+                    type.caption,
+                    {
+                      fontSize: 12,
+                      fontWeight: '600',
+                      color: isFastActive(activity.action!) ? '#FFF' : c.textSecondary,
+                    },
+                  ]}
+                >
                   {isFastActive(activity.action!) ? 'Fasting' : 'Fast'}
                 </Text>
               </TouchableOpacity>
@@ -130,37 +217,55 @@ export default function WeeklyScreen() {
       )}
 
       {/* Weekly Sunnah Revival */}
-      <View style={styles.sunnahRevivalCard}>
-        <View style={styles.sunnahHeader}>
-          <Ionicons name="bulb-outline" size={18} color={C.gold} />
-          <Text style={styles.sunnahTitle}>Sunnah Revival — Week {currentWeek}</Text>
+      <View style={[styles.sunnahRevivalCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, marginHorizontal: 18, marginTop: 16, padding: 18 }]}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <Ionicons name="bulb-outline" size={18} color={c.gold} />
+          <Text style={[type.label, { color: c.gold, fontWeight: '700' }]}>Sunnah Revival — Week {currentWeek}</Text>
         </View>
-        <View style={styles.sunnahContent}>
-          <View style={[styles.sunnahIconWrap, { backgroundColor: C.goldPale }]}>
-            <Ionicons name={weeklySunnah.icon as any} size={24} color={C.gold} />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={[styles.sunnahIconWrap, { backgroundColor: c.goldPale, borderRadius: 14 }]}>
+            <Ionicons name={weeklySunnah.icon as any} size={24} color={c.gold} />
           </View>
-          <View style={styles.sunnahInfo}>
-            <Text style={styles.sunnahName}>{weeklySunnah.title}</Text>
-            <Text style={styles.sunnahDesc}>{weeklySunnah.description}</Text>
+          <View style={{ flex: 1, marginLeft: 14 }}>
+            <Text style={[type.body, { color: c.textPrimary, fontWeight: '600' }]}>{weeklySunnah.title}</Text>
+            <Text style={[type.caption, { color: c.textMuted, marginTop: 2 }]}>{weeklySunnah.description}</Text>
           </View>
         </View>
       </View>
 
       {/* Weekly Overview */}
-      <Text style={styles.sectionTitle}>Weekly Overview</Text>
-      <View style={styles.overviewCard}>
+      <Text style={[type.title, { color: c.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 }]}>
+        Weekly Overview
+      </Text>
+      <View style={[styles.overviewCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, marginHorizontal: 18, padding: 16 }]}>
         {WEEKLY_ACTIVITIES.map(activity => {
           const isTodayActivity = activity.dayOfWeek === today;
           return (
-            <View key={activity.id} style={[styles.overviewItem, isTodayActivity && styles.overviewItemToday]}>
-              <View style={styles.overviewDot}>
-                <Ionicons name={activity.icon as any} size={12} color={isTodayActivity ? '#FFF' : C.textMuted} />
+            <View
+              key={activity.id}
+              style={[
+                styles.overviewItem,
+                {
+                  borderBottomColor: c.border,
+                  backgroundColor: isTodayActivity ? c.bgPrayed : 'transparent',
+                  borderRadius: 10,
+                },
+              ]}
+            >
+              <View style={[styles.overviewDot, { backgroundColor: c.bgMuted, borderRadius: 8 }]}>
+                <Ionicons name={activity.icon as any} size={12} color={isTodayActivity ? '#FFF' : c.textMuted} />
               </View>
-              <View style={styles.overviewInfo}>
-                <Text style={[styles.overviewTitle, isTodayActivity && styles.overviewTitleToday]}>{activity.title}</Text>
-                <Text style={styles.overviewDay}>{DAY_NAMES[activity.dayOfWeek]}</Text>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={[type.body, { color: isTodayActivity ? c.emerald : c.textPrimary, fontWeight: isTodayActivity ? '600' : '500' }]}>
+                  {activity.title}
+                </Text>
+                <Text style={[type.caption, { color: c.textMuted, marginTop: 1 }]}>{DAY_NAMES[activity.dayOfWeek]}</Text>
               </View>
-              {isTodayActivity && <View style={styles.todayBadge}><Text style={styles.todayBadgeText}>Today</Text></View>}
+              {isTodayActivity && (
+                <View style={[styles.todayBadge, { backgroundColor: c.emerald }]}>
+                  <Text style={[type.caption, { color: '#FFF', fontWeight: '700', fontSize: 10 }]}>Today</Text>
+                </View>
+              )}
             </View>
           );
         })}
@@ -170,55 +275,17 @@ export default function WeeklyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#FFFFFF' },
-  subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
-
-  daySelector: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 18, marginTop: 16, marginBottom: 8 },
-  dayChip: { alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14, backgroundColor: C.bgSurface, minWidth: 44 },
-  dayChipSelected: { backgroundColor: C.emerald },
-  dayChipToday: { backgroundColor: C.goldPale, borderWidth: 1, borderColor: C.gold },
-  dayLabel: { fontSize: 12, fontWeight: '600', color: C.textSecondary },
-  dayLabelSelected: { color: '#FFF' },
-  dayLabelToday: { color: C.gold },
-  todayDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.gold, marginTop: 4 },
-
-  selectedDayName: { fontSize: 18, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginBottom: 12 },
-
-  emptyState: { alignItems: 'center', paddingVertical: 40 },
-  emptyText: { fontSize: 15, color: C.textSecondary, marginTop: 12, fontWeight: '500' },
-  emptySub: { fontSize: 13, color: C.textMuted, marginTop: 4 },
-
-  activityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 18, padding: 16, marginHorizontal: 18, marginBottom: 10},
-  activityIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  activityInfo: { flex: 1, marginLeft: 14 },
-  activityTitle: { fontSize: 15, fontWeight: '600', color: C.textPrimary },
-  activityDesc: { fontSize: 12, color: C.textMuted, marginTop: 2, lineHeight: 18 },
-  fastToggle: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F5F5F0' },
-  fastToggleActive: { backgroundColor: C.emerald },
-  fastToggleText: { fontSize: 12, fontWeight: '600', color: C.textSecondary },
-  fastToggleTextActive: { color: '#FFF' },
-
-  sunnahRevivalCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginTop: 16, padding: 18},
-  sunnahHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  sunnahTitle: { fontSize: 14, fontWeight: '700', color: C.gold },
-  sunnahContent: { flexDirection: 'row', alignItems: 'center' },
-  sunnahIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
-  sunnahInfo: { flex: 1, marginLeft: 14 },
-  sunnahName: { fontSize: 15, fontWeight: '600', color: C.textPrimary },
-  sunnahDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
-
-  overviewCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16},
-  overviewItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
-  overviewItemToday: { backgroundColor: '#F0FAF5', marginHorizontal: -16, paddingHorizontal: 16, borderRadius: 10 },
-  overviewDot: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
-  overviewInfo: { flex: 1, marginLeft: 12 },
-  overviewTitle: { fontSize: 14, fontWeight: '500', color: C.textPrimary },
-  overviewTitleToday: { color: C.emerald, fontWeight: '600' },
-  overviewDay: { fontSize: 11, color: C.textMuted, marginTop: 1 },
-  todayBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: C.emerald },
-  todayBadgeText: { fontSize: 10, color: '#FFF', fontWeight: '700' }});
+  header: { padding: 18 },
+  daySelector: { flexDirection: 'row', justifyContent: 'space-between' },
+  dayChip: { alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 },
+  todayDot: { width: 4, height: 4, borderRadius: 2, marginTop: 4 },
+  activityCard: { flexDirection: 'row', alignItems: 'center' },
+  activityIconWrap: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
+  fastToggle: { paddingHorizontal: 14, paddingVertical: 8 },
+  sunnahRevivalCard: {},
+  sunnahIconWrap: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
+  overviewCard: {},
+  overviewItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1 },
+  overviewDot: { width: 28, height: 28, justifyContent: 'center', alignItems: 'center' },
+  todayBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+});
