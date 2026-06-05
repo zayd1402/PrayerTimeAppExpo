@@ -6,13 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "scheme": ["prayertimeapp"],
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#014836"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.prayertime.app",
@@ -24,9 +18,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#014836",
-        "monochromeImage": "./assets/adaptive-icon-monochrome.png"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#014836"
       },
       "package": "com.prayertime.app",
       "permissions": [
@@ -38,12 +31,7 @@
         "USE_EXACT_ALARM",
         "RECEIVE_BOOT_COMPLETED",
         "VIBRATE"
-      ],
-      "notificationIcon": "./assets/notification-icon.png",
-      "color": "#014836"
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      ]
     },
     "plugins": [
       [
@@ -55,7 +43,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/notification-icon.png",
+          "icon": "./assets/icon.png",
           "color": "#014836"
         }
       ]

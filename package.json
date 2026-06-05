@@ -10,8 +10,12 @@
     "build:android": "expo run:android",
     "build:ios": "expo run:ios",
     "prebuild": "expo prebuild --clean",
-    "doctor": "expo-doctor",
-    "lint": "eslint ."
+    "doctor": "npx expo-doctor",
+    "lint": "eslint .",
+    "start:clear": "expo start --clear",
+    "typecheck": "tsc --noEmit",
+    "deps:check": "expo install --check",
+    "verify": "npm run deps:check && npm run doctor && npm run typecheck && npm run lint"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.0",
@@ -38,6 +42,8 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.2.0",
+    "eslint": "^9.39.1",
+    "eslint-config-expo": "^56.0.4",
     "playwright": "^1.60.0",
     "puppeteer": "^24.43.1",
     "typescript": "~6.0.3"

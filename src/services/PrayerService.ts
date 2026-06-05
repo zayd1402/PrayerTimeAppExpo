@@ -118,7 +118,7 @@ export function calculatePrayerTimes(
 
   // Time zone offset (hours from UTC, positive east)
   const tzOffset = -longitude / 15; // hours
-  const tzOff = getTimezoneOffset(date); // device timezone offset in hours
+  const tzOff = getTimezoneOffset(latitude, longitude, date); // device timezone offset in hours
 
   const asrFactor = madhab === 'hanafi' ? 2 : 1;
 

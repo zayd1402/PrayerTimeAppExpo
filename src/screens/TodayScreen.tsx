@@ -415,7 +415,7 @@ export default function TodayScreen({
         </View>
 
         {/* Daily Hadith */}
-        <DailyHadithCard hadith={dailyHadith} />
+        <DailyHadithCard hadith={dailyHadith ?? null} />
 
         {/* Hint */}
         <Text style={[type.caption, { textAlign: 'center', color: c.textMuted, marginTop: 16 }]}>

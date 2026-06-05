@@ -1,10 +1,11 @@
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
 
 // ─── Notification Config ─────────────────────────────────────
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -47,10 +48,10 @@ export async function schedulePrayerNotification(
       priority: Notifications.AndroidNotificationPriority.HIGH,
     },
     trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour,
       minute,
-      repeats: true,
-    } as any,
+    },
   });
 }
 
@@ -65,11 +66,11 @@ export async function scheduleFridayReminders(): Promise<void> {
       sound: true,
     },
     trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
       weekday: 6, // Friday (1 = Sunday in iOS, but Expo uses different)
       hour: 8,
       minute: 0,
-      repeats: true,
-    } as any,
+    },
   });
 
   // Friday pre-Maghrib dua reminder
@@ -81,11 +82,11 @@ export async function scheduleFridayReminders(): Promise<void> {
       sound: true,
     },
     trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
       weekday: 6,
       hour: 16,
       minute: 30,
-      repeats: true,
-    } as any,
+    },
   });
 }
 
@@ -100,11 +101,11 @@ export async function scheduleWeeklyReminders(): Promise<void> {
       sound: true,
     },
     trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
       weekday: 2, // Monday
       hour: 6,
       minute: 0,
-      repeats: true,
-    } as any,
+    },
   });
 
   // Thursday fasting reminder
@@ -116,11 +117,11 @@ export async function scheduleWeeklyReminders(): Promise<void> {
       sound: true,
     },
     trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
       weekday: 5, // Thursday
       hour: 6,
       minute: 0,
-      repeats: true,
-    } as any,
+    },
   });
 
   // Daily hadith notification
@@ -132,10 +133,10 @@ export async function scheduleWeeklyReminders(): Promise<void> {
       sound: true,
     },
     trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
       hour: 9,
       minute: 0,
-      repeats: true,
-    } as any,
+    },
   });
 }
 

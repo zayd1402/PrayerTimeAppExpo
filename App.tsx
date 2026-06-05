@@ -125,8 +125,7 @@ function Shell({ onThemeChange }: { onThemeChange: (s: 'light' | 'dark') => void
   useEffect(() => {
     const init = async () => {
       if (Platform.OS === 'android') {
-        await NavigationBar.setBackgroundColorAsync(c.bgBase);
-        await NavigationBar.setButtonStyleAsync(scheme === 'dark' ? 'light' : 'dark');
+        NavigationBar.NavigationBar.setStyle(scheme === 'dark' ? 'light' : 'dark');
       }
 
       const saved = await loadSettings();
@@ -232,7 +231,7 @@ function Shell({ onThemeChange }: { onThemeChange: (s: 'light' | 'dark') => void
 
   const handleTogglePrayer = (id: string) => {
     const isCompleted = completedPrayers.has(id);
-    handleMarkPrayer(id as PrayerId, isCompleted ? 'missed' : 'prayed');
+    handleMarkPrayer(id as PrayerId, isCompleted ? 'qaza' : 'prayed');
   };
 
   const handleUpdateSettings = async (partial: Partial<AppSettings>) => {

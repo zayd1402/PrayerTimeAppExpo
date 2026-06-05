@@ -3,17 +3,20 @@ import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C } from '../types';
+import { C, IslamicEvent } from '../types';
 import { useTheme } from '../theme/ThemeProvider';
 import { HijriService } from '../services/HijriService';
 import { loadPrayerLog } from '../services/StorageService';
 import { getEventsForHijriDate, ISLAMIC_EVENTS } from '../data/islamicEvents';
 
-function getDateKey(date) {
+type PrayerLogByDate = Record<string, Record<string, 'prayed' | 'qaza' | 'missed'>>;
+type EventType = IslamicEvent['type'];
+
+function getDateKey(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-const EVENT_COLORS = {
+const EVENT_COLORS: Record<EventType, string> = {
   ramadan: C.emerald,
   eid: C.gold,
   hajj: C.navySoft,
@@ -25,7 +28,7 @@ const EVENT_COLORS = {
   general: C.textSecondary,
 };
 
-const EVENT_ICONS = {
+const EVENT_ICONS: Record<EventType, string> = {
   ramadan: 'moon-outline',
   eid: 'gift-outline',
   hajj: 'airplane-outline',
@@ -46,8 +49,8 @@ const HIJRI_MONTHS = [
 export default function CalendarScreen() {
   const { c, type, radius, elevation } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [prayerLog, setPrayerLog] = useState({});
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [prayerLog, setPrayerLog] = useState<PrayerLogByDate>({});
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const year = currentDate.getFullYear();
@@ -226,7 +229,7 @@ export default function CalendarScreen() {
                       key={event.id}
                       style={[styles.eventRow, { backgroundColor: col + '12', borderRadius: 12 }]}
                     >
-                      <Ionicons name={EVENT_ICONS[event.type]} size={16} color={col} />
+                      <Ionicons name={EVENT_ICONS[event.type] as any} size={16} color={col} />
                       <View style={{ marginLeft: 10, flex: 1 }}>
                         <Text style={[type.label, { color: col, fontWeight: '600' }]}>{event.title}</Text>
                         {event.description && (
