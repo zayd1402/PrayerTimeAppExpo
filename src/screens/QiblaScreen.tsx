@@ -294,8 +294,8 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg, alignItems: 'center' },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
-  subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
+  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
 
   compassContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
   compass: {

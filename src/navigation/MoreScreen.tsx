@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bgBase },
   screenPadding: { paddingBottom: 100 },
   moreHeader: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  moreTitle: { fontSize: 26, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  moreTitle: { fontSize: 26, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   moreGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 14, gap: 10 },
   moreCard: {
     width: '30%', backgroundColor: C.bgSurface, borderRadius: 18,

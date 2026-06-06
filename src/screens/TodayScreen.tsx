@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   StyleSheet, View, Text, TouchableOpacity, ScrollView,
-  Dimensions, Alert
+  Dimensions, Alert, AccessibilityInfo
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, PrayerId, PRAYER_ICONS } from '../types';
@@ -112,17 +112,20 @@ function PrayerRing({ completed, total }: { completed: number; total: number }) 
 // ─── Prayer Row with Swipe (Reanimated + Gesture Handler) ─────
 function PrayerRow({
   prayer, time, isTrackable, isCompleted, isNext, isActive,
-  onToggle, onLongPress, index
+  onToggle, onLongPress, index, reduceMotion
 }: {
   prayer: Prayer; time: Date; isTrackable: boolean; isCompleted: boolean;
   isNext: boolean; isActive: boolean; onToggle: () => void; onLongPress: () => void;
-  index: number;
+  index: number; reduceMotion: boolean;
 }) {
   const translateX = useSharedValue(0);
   const rowScale = useSharedValue(1);
 
-  // Pulse animation for active prayer
   useEffect(() => {
+    if (reduceMotion) {
+      rowScale.value = 1;
+      return;
+    }
     if (isActive) {
       rowScale.value = withRepeat(
         withSequence(
@@ -134,7 +137,7 @@ function PrayerRow({
     } else {
       rowScale.value = withTiming(1, { duration: 300 });
     }
-  }, [isActive]);
+  }, [isActive, reduceMotion]);
 
   const swipeGesture = Gesture.Pan()
     .onUpdate((e) => {
@@ -247,6 +250,14 @@ export default function TodayScreen() {
     handleTogglePrayer: togglePrayer,
   } = usePrayerApp();
   const scrollY = useSharedValue(0);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    AccessibilityInfo.isReduceMotionEnabled().then(enabled => setReduceMotion(enabled));
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    return () => sub.remove();
+  }, []);
+
   const entries = [
     { prayer: PRAYERS[0], time: prayerTimes.fajr },
     { prayer: PRAYERS[1], time: prayerTimes.sunrise },
@@ -259,6 +270,7 @@ export default function TodayScreen() {
   const completedCount = TRACKABLE.filter(id => completedPrayers.has(id)).length;
 
   const heroStyle = useAnimatedStyle(() => {
+    if (reduceMotion) return {};
     const scale = 1 - Math.min(scrollY.value / 150, 0.08);
     const opacity = 1 - Math.min(scrollY.value / 120, 0.3);
     return {
@@ -303,7 +315,7 @@ export default function TodayScreen() {
       {/* Hero Card with Sunset Gradient */}
       <Animated.View style={[styles.heroCard, heroStyle]}>
         <LinearGradient
-          colors={['#FAF5FF', '#F3ECFF', '#FDF8FF']}
+          colors={['#FDF8F0', '#FBF0D5', '#FDF8F0']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroGradient}
@@ -363,6 +375,7 @@ export default function TodayScreen() {
               onToggle={() => handleToggle(prayer.id)}
               onLongPress={() => handleLongPress(prayer)}
               index={index}
+              reduceMotion={reduceMotion}
             />
           );
         })}
@@ -432,7 +445,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(194,122,45,0.12)',
   },
-  prayerRowWrapActive: { borderWidth: 1.5, borderColor: 'rgba(124,58,237,0.2)' },
+  prayerRowWrapActive: { borderWidth: 1.5, borderColor: 'rgba(194,122,45,0.25)' },
   prayerRowWrapCompleted: { opacity: 0.75 },
   swipeBg: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 100, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 4 },
   swipeBgDone: { backgroundColor: C.primary },
@@ -446,7 +459,7 @@ const styles = StyleSheet.create({
   prayerRowActive: { backgroundColor: C.surfaceElevated },
   prayerRowDone: { backgroundColor: '#FAFAFA' },
   prayerIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(202,138,4,0.08)', justifyContent: 'center', alignItems: 'center' },
-  prayerIconWrapActive: { backgroundColor: 'rgba(124,58,237,0.1)' },
+  prayerIconWrapActive: { backgroundColor: 'rgba(194,122,45,0.1)' },
   prayerIcon: { fontSize: 22 },
   activePulse: { position: 'absolute', width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: C.primary, opacity: 0.3 },
   prayerInfo: { flex: 1 },
@@ -454,7 +467,7 @@ const styles = StyleSheet.create({
   prayerNameNext: { color: C.primary, fontFamily: 'Jost_700Bold' },
   prayerNameDone: { color: C.textMuted, fontFamily: 'Jost_500Medium', textDecorationLine: 'line-through' },
   prayerArabic: { fontSize: 12, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 1 },
-  iqamaBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, backgroundColor: 'rgba(124,58,237,0.08)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start' },
+  iqamaBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, backgroundColor: 'rgba(194,122,45,0.08)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start' },
   iqamaText: { fontSize: 11, color: C.primary, fontFamily: 'Jost_600SemiBold' },
   prayerRight: { alignItems: 'flex-end', gap: 6 },
   prayerTimeText: { fontSize: 15, color: C.textSecondary, fontFamily: 'Jost_500Medium', fontVariant: ['tabular-nums'] },

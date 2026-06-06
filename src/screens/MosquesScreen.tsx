@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontFamily: 'BodoniModa_700Bold',
-    color: C.textPrimary,
+    color: C.goldPale,
   },
   refreshText: {
     fontSize: 14,
