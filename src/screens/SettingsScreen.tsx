@@ -177,7 +177,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F0',
+    backgroundColor: C.bgSurface,
   },
   content: {
     paddingBottom: 100,

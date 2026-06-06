@@ -95,7 +95,7 @@ export default function MosquesScreen({ coordinate }: MosquesScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F0',
+    backgroundColor: C.bgSurface,
   },
   header: {
     flexDirection: 'row',

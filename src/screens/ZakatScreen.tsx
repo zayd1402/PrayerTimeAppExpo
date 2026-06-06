@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
 
   nisabCard: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 18, marginTop: 8, padding: 16, borderRadius: 16 },
   nisabMet: { backgroundColor: C.primaryLight },
-  nisabNotMet: { backgroundColor: '#F5F5F0' },
+  nisabNotMet: { backgroundColor: C.bgSurface },
   nisabTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary },
   nisabDesc: { fontSize: 12, color: C.textSecondary, marginTop: 2 },
 
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   charityInputWrap: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16 },
   charityInput: { fontSize: 18, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border, marginBottom: 12 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
-  categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F5F5F0' },
+  categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: C.bgSurface },
   categoryChipActive: { backgroundColor: C.red },
   categoryLabel: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
   categoryLabelActive: { color: '#FFF', fontFamily: 'Jost_600SemiBold' },

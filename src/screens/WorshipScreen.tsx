@@ -80,7 +80,7 @@ function DhikrRing({ target, current, label, color, onPress }: { target: number;
   const progress = Math.min(current / target, 1);
   return (
     <TouchableOpacity style={dhikrStyles.ringWrap} onPress={onPress} activeOpacity={0.8}>
-      <View style={[dhikrStyles.ring, { borderColor: progress >= 1 ? color : '#EEE' }]}>
+      <View style={[dhikrStyles.ring, { borderColor: progress >= 1 ? color : C.border }]}>
         <Text style={[dhikrStyles.count, { color: progress >= 1 ? color : C.textPrimary }]}>{current}</Text>
         <Text style={dhikrStyles.target}>/{target}</Text>
       </View>
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.surfaceElevated, borderRadius: 16, padding: 14,
   },
   sunnahCardCompleted: { backgroundColor: C.primaryLight },
-  sunnahIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  sunnahIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   sunnahIconWrapDone: { backgroundColor: C.primary },
   sunnahRakahText: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary },
   sunnahName: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },

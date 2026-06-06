@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 14, gap: 14},
   prayerRowNext: { backgroundColor: C.bgCard },
   prayerRowActive: { backgroundColor: C.surfaceElevated },
-  prayerRowDone: { backgroundColor: '#FAFAFA' },
+  prayerRowDone: { backgroundColor: C.bgSurface },
   prayerIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(202,138,4,0.08)', justifyContent: 'center', alignItems: 'center' },
   prayerIconWrapActive: { backgroundColor: 'rgba(194,122,45,0.1)' },
   prayerIcon: { fontSize: 22 },

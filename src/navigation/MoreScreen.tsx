@@ -1,6 +1,6 @@
 // ─── MoreScreen — Grid menu + inline sub-screen rendering ─────
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
 
@@ -26,6 +26,11 @@ const MORE_MENU = [
 ];
 
 type MoreItemId = typeof MORE_MENU[number]['id'];
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const GRID_PADDING = 14;
+const GRID_GAP = 10;
+const GRID_CARD_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * 2) / 3;
 
 export default function MoreScreen() {
   const [activeScreen, setActiveScreen] = useState<MoreItemId | null>(null);
@@ -96,7 +101,7 @@ const styles = StyleSheet.create({
   moreTitle: { fontSize: 26, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   moreGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 14, gap: 10 },
   moreCard: {
-    width: '30%', backgroundColor: C.bgSurface, borderRadius: 18,
+    width: GRID_CARD_WIDTH, backgroundColor: C.bgSurface, borderRadius: 18,
     padding: 16, alignItems: 'center',
   },
   moreIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },

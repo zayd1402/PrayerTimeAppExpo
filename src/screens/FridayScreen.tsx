@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   kahfSection: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
   kahfSectionRead: { backgroundColor: C.primaryLight, opacity: 0.8 },
   kahfSectionCurrent: { borderWidth: 1.5, borderColor: C.gold },
-  kahfNumWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
+  kahfNumWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center' },
   kahfNumWrapDone: { backgroundColor: C.primary },
   kahfNum: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary },
   kahfNumDone: { color: '#FFF' },
