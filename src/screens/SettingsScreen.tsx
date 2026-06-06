@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontFamily: 'Jost_700Bold',
-    color: '#FFFFFF',
+    color: C.white,
   },
   section: {
     padding: 18,
@@ -261,14 +261,14 @@ const styles = StyleSheet.create({
     borderTopColor: C.border,
   },
   locationButton: {
-    backgroundColor: '#FDF0E8',
+    backgroundColor: C.goldPale,
     padding: 14,
     borderRadius: 10,
     alignItems: 'center',
   },
   locationButtonText: {
     fontSize: 15,
-    color: C.heroBg,
+    color: C.textPrimary,
     fontFamily: 'Jost_600SemiBold',
   },
   footer: {

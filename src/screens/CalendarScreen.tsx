@@ -228,7 +228,7 @@ export default function CalendarScreen() {
             ];
 
             const prayedDayCount = dayLog
-              ? Object.values(dayLog).filter(s => s === 'prayed').length
+              ? Object.entries(dayLog).filter(([id, s]) => id !== 'sunrise' && s === 'prayed').length
               : 0;
 
             return (

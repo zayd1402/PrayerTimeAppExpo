@@ -293,6 +293,7 @@ export default function TodayScreen() {
   };
 
   const handleLongPress = (prayer: Prayer) => {
+    if (!TRACKABLE.includes(prayer.id)) return;
     Alert.alert(
       `Mark ${prayer.name}`,
       'How did you pray?',
@@ -315,7 +316,7 @@ export default function TodayScreen() {
       {/* Hero Card with Sunset Gradient */}
       <Animated.View style={[styles.heroCard, heroStyle]}>
         <LinearGradient
-          colors={['#FDF8F0', '#FBF0D5', '#FDF8F0']}
+          colors={[C.bgBase, C.goldPale, C.bgBase]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroGradient}
