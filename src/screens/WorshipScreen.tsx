@@ -71,7 +71,7 @@ function TabBar({ active, onChange }: { active: WorshipTab; onChange: (t: Worshi
 const tabStyles = StyleSheet.create({
   container: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12 },
-  tabActive: { backgroundColor: C.coral },
+  tabActive: { backgroundColor: C.primary },
   tabLabel: { fontSize: 11, color: C.textSecondary, marginTop: 3, fontFamily: 'Jost_500Medium' },
   tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' }});
 
@@ -235,18 +235,18 @@ export default function WorshipScreen() {
           <Text style={styles.dhikrTotal}>{total}</Text>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity onPress={reset}><Text style={styles.dhikrAction}>Reset</Text></TouchableOpacity>
-            <TouchableOpacity onPress={saveSession}><Text style={[styles.dhikrAction, { color: C.coral }]}>Save</Text></TouchableOpacity>
+            <TouchableOpacity onPress={saveSession}><Text style={[styles.dhikrAction, { color: C.primary }]}>Save</Text></TouchableOpacity>
           </View>
         </View>
         <Text style={styles.dhikrSubtitle}>total dhikr today</Text>
 
         <View style={styles.dhikrRings}>
           <DhikrRing target={33} current={dhikr.subhanallah} label="SubhanAllah" color={C.gold} onPress={() => increment('subhanallah')} />
-          <DhikrRing target={33} current={dhikr.alhamdulillah} label="Alhamdulillah" color={C.coral} onPress={() => increment('alhamdulillah')} />
+          <DhikrRing target={33} current={dhikr.alhamdulillah} label="Alhamdulillah" color={C.primary} onPress={() => increment('alhamdulillah')} />
           <DhikrRing target={34} current={dhikr.allahuakbar} label="Allahu Akbar" color={C.gold} onPress={() => increment('allahuakbar')} />
         </View>
 
-        <WeeklyChart data={[dhikr.subhanallah, dhikr.alhamdulillah, dhikr.allahuakbar, 0, 0, 0, 0]} label="Today's Breakdown" color={C.coral} />
+        <WeeklyChart data={[dhikr.subhanallah, dhikr.alhamdulillah, dhikr.allahuakbar, 0, 0, 0, 0]} label="Today's Breakdown" color={C.primary} />
       </>
     );
   }
@@ -272,7 +272,7 @@ export default function WorshipScreen() {
                 style={[styles.fastCard, active && styles.fastCardActive]}
                 onPress={() => toggle(ft.type)}
               >
-                <Ionicons name={ft.icon as any} size={24} color={active ? C.coral : C.textMuted} />
+                <Ionicons name={ft.icon as any} size={24} color={active ? C.primary : C.textMuted} />
                 <Text style={[styles.fastLabel, active && styles.fastLabelActive]}>{ft.label}</Text>
                 <Text style={styles.fastDesc}>{ft.desc}</Text>
                 {active && <View style={styles.fastCheck}><Ionicons name="checkmark" size={12} color="#FFF" /></View>}
@@ -371,19 +371,19 @@ const styles = StyleSheet.create({
   sunnahCard: {
     width: (width - 56) / 2,
     backgroundColor: C.surfaceElevated, borderRadius: 16, padding: 14,
-    ...C.shadow.sm,
+    ...C.shadow,
   },
   sunnahCardCompleted: { backgroundColor: C.primaryLight },
   sunnahIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
-  sunnahIconWrapDone: { backgroundColor: C.coral },
+  sunnahIconWrapDone: { backgroundColor: C.primary },
   sunnahRakahText: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary },
   sunnahName: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
-  sunnahNameDone: { color: C.coral },
+  sunnahNameDone: { color: C.primary },
   sunnahTime: { fontSize: 11, color: C.textMuted, marginTop: 2 },
 
   // Dhikr
   dhikrHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 18, marginTop: 8 },
-  dhikrTotal: { fontSize: 56, fontFamily: 'BodoniModa_700Bold', color: C.coral },
+  dhikrTotal: { fontSize: 56, fontFamily: 'BodoniModa_700Bold', color: C.primary },
   dhikrAction: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_600SemiBold' },
   dhikrSubtitle: { fontSize: 14, color: C.textMuted, paddingHorizontal: 18, marginBottom: 16 },
   dhikrRings: { flexDirection: 'row', justifyContent: 'center', marginVertical: 12 },
@@ -394,17 +394,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceElevated,
     borderRadius: 16, padding: 16, gap: 14,
     borderWidth: 1.5, borderColor: 'transparent',
-    ...C.shadow.sm,
+    ...C.shadow,
   },
-  fastCardActive: { borderColor: C.coral, backgroundColor: C.primaryLight },
+  fastCardActive: { borderColor: C.primary, backgroundColor: C.primaryLight },
   fastLabel: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, flex: 1 },
-  fastLabelActive: { color: C.coral },
+  fastLabelActive: { color: C.primary },
   fastDesc: { fontSize: 12, color: C.textMuted, position: 'absolute', left: 54, bottom: 12 },
-  fastCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.coral, justifyContent: 'center', alignItems: 'center' },
+  fastCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center' },
   ramadanCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale,
     borderRadius: 18, padding: 18, margin: 18, marginTop: 24,
-    ...C.shadow.md,
+    ...C.shadow,
   },
   ramadanTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.gold },
   ramadanText: { fontSize: 13, color: C.textSecondary, marginTop: 2 },
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   quranSummary: {
     flexDirection: 'row', backgroundColor: C.surfaceElevated, borderRadius: 18,
     marginHorizontal: 18, padding: 20, marginTop: 8,
-    ...C.shadow.md,
+    ...C.shadow,
   },
   quranStat: { flex: 1, alignItems: 'center' },
   quranStatValue: { fontSize: 32, fontFamily: 'Jost_700Bold', color: C.gold },

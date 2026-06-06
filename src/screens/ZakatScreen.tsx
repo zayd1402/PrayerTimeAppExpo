@@ -126,7 +126,7 @@ export default function ZakatScreen() {
         <>
           {/* Nisab Status */}
           <View style={[styles.nisabCard, meetsNisab ? styles.nisabMet : styles.nisabNotMet]}>
-            <Ionicons name={meetsNisab ? 'checkmark-circle' : 'alert-circle'} size={24} color={meetsNisab ? C.coral : C.textMuted} />
+            <Ionicons name={meetsNisab ? 'checkmark-circle' : 'alert-circle'} size={24} color={meetsNisab ? C.primary : C.textMuted} />
             <View style={{ marginLeft: 12, flex: 1 }}>
               <Text style={styles.nisabTitle}>{meetsNisab ? 'Nisab Threshold Met' : 'Below Nisab Threshold'}</Text>
               <Text style={styles.nisabDesc}>
@@ -210,7 +210,7 @@ export default function ZakatScreen() {
         <>
           {/* Total */}
           <View style={styles.charityTotalCard}>
-            <Ionicons name="heart" size={28} color={C.coral} />
+            <Ionicons name="heart" size={28} color={C.primary} />
             <View style={{ marginLeft: 14 }}>
               <Text style={styles.charityTotalLabel}>Total Given</Text>
               <Text style={styles.charityTotalValue}>${charityTotal.toFixed(2)}</Text>
@@ -252,7 +252,7 @@ export default function ZakatScreen() {
               <Text style={styles.sectionTitle}>History</Text>
               {charityRecords.slice().reverse().map(record => (
                 <View key={record.id} style={styles.charityRecord}>
-                  <View style={[styles.charityDot, { backgroundColor: record.category === 'zakat' ? C.coral : record.category === 'sadaqah' ? C.coral : C.gold }]} />
+                  <View style={[styles.charityDot, { backgroundColor: record.category === 'zakat' ? C.primary : record.category === 'sadaqah' ? C.primary : C.gold }]} />
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={styles.charityRecordCat}>{record.category.charAt(0).toUpperCase() + record.category.slice(1)}</Text>
                     <Text style={styles.charityRecordDate}>{record.date}</Text>
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
 
   tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 12 },
-  tabActive: { backgroundColor: C.coral },
+  tabActive: { backgroundColor: C.primary },
   tabLabel: { fontSize: 13, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
   tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' },
 
@@ -295,14 +295,14 @@ const styles = StyleSheet.create({
 
   resultsCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8 },
   resultRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
-  resultHighlight: { borderBottomWidth: 2, borderBottomColor: C.coral },
+  resultHighlight: { borderBottomWidth: 2, borderBottomColor: C.primary },
   resultZakat: { paddingTop: 12, borderBottomWidth: 0 },
   resultLabel: { fontSize: 14, color: C.textSecondary },
   resultValue: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
-  zakatLabel: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.coral },
-  zakatValue: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.coral },
+  zakatLabel: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.primary },
+  zakatValue: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.primary },
 
-  calculateBtn: { backgroundColor: C.coral, borderRadius: 16, marginHorizontal: 18, marginTop: 16, paddingVertical: 16, alignItems: 'center' },
+  calculateBtn: { backgroundColor: C.primary, borderRadius: 16, marginHorizontal: 18, marginTop: 16, paddingVertical: 16, alignItems: 'center' },
   calculateBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Jost_700Bold' },
 
   recordCard: { backgroundColor: C.bgSurface, borderRadius: 16, marginHorizontal: 18, marginBottom: 10, padding: 16 },
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   recordBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
   recordPaid: { backgroundColor: C.primaryLight },
   recordUnpaid: { backgroundColor: C.goldPale },
-  recordBadgeText: { fontSize: 11, fontFamily: 'Jost_700Bold', color: C.coral },
+  recordBadgeText: { fontSize: 11, fontFamily: 'Jost_700Bold', color: C.primary },
   recordAmount: { fontSize: 20, fontFamily: 'Jost_700Bold', color: C.textPrimary },
   recordDetail: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 

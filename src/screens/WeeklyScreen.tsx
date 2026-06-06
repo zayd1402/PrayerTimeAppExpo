@@ -109,7 +109,7 @@ export default function WeeklyScreen() {
         todaysActivities.map(activity => (
           <View key={activity.id} style={styles.activityCard}>
             <View style={[styles.activityIconWrap, { backgroundColor: activity.type === 'fasting' ? C.primaryLight : activity.type === 'reminder' ? C.goldPale : C.primaryLight }]}>
-              <Ionicons name={activity.icon as any} size={22} color={activity.type === 'fasting' ? C.coral : activity.type === 'reminder' ? C.gold : C.warmBlue} />
+              <Ionicons name={activity.icon as any} size={22} color={activity.type === 'fasting' ? C.primary : activity.type === 'reminder' ? C.gold : C.textSecondary} />
             </View>
             <View style={styles.activityInfo}>
               <Text style={styles.activityTitle}>{activity.title}</Text>
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
 
   daySelector: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 18, marginTop: 16, marginBottom: 8 },
   dayChip: { alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14, backgroundColor: C.bgSurface, minWidth: 44 },
-  dayChipSelected: { backgroundColor: C.coral },
+  dayChipSelected: { backgroundColor: C.primary },
   dayChipToday: { backgroundColor: C.goldPale, borderWidth: 1, borderColor: C.gold },
   dayLabel: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
   dayLabelSelected: { color: '#FFF' },
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   activityTitle: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   activityDesc: { fontSize: 12, color: C.textMuted, marginTop: 2, lineHeight: 18 },
   fastToggle: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F5F5F0' },
-  fastToggleActive: { backgroundColor: C.coral },
+  fastToggleActive: { backgroundColor: C.primary },
   fastToggleText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
   fastToggleTextActive: { color: '#FFF' },
 
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   overviewDot: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
   overviewInfo: { flex: 1, marginLeft: 12 },
   overviewTitle: { fontSize: 14, fontFamily: 'Jost_500Medium', color: C.textPrimary },
-  overviewTitleToday: { color: C.coral, fontFamily: 'Jost_600SemiBold' },
+  overviewTitleToday: { color: C.primary, fontFamily: 'Jost_600SemiBold' },
   overviewDay: { fontSize: 11, color: C.textMuted, marginTop: 1 },
-  todayBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: C.coral },
+  todayBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: C.primary },
   todayBadgeText: { fontSize: 10, color: '#FFF', fontFamily: 'Jost_700Bold' }});

@@ -16,12 +16,12 @@ import { usePrayerApp } from '../context/PrayerAppContext';
 
 const MORE_MENU = [
   { id: 'hadith',  label: 'Hadith',  icon: 'document-text-outline', color: C.gold },
-  { id: 'friday',  label: 'Friday',  icon: 'star-outline',         color: C.rose },
-  { id: 'weekly',  label: 'Weekly',  icon: 'calendar-clear-outline', color: C.warmAmber },
-  { id: 'qibla',   label: 'Qibla',   icon: 'compass-outline',      color: C.coral },
+  { id: 'friday',  label: 'Friday',  icon: 'star-outline',         color: C.primaryLight },
+  { id: 'weekly',  label: 'Weekly',  icon: 'calendar-clear-outline', color: C.gold },
+  { id: 'qibla',   label: 'Qibla',   icon: 'compass-outline',      color: C.primary },
   { id: 'zakat',   label: 'Zakat',   icon: 'wallet-outline',       color: C.gold },
-  { id: 'journal', label: 'Journal', icon: 'create-outline',       color: C.warmBlue },
-  { id: 'mosques', label: 'Mosques', icon: 'location-outline',     color: C.warmAmber },
+  { id: 'journal', label: 'Journal', icon: 'create-outline',       color: C.textSecondary },
+  { id: 'mosques', label: 'Mosques', icon: 'location-outline',     color: C.gold },
   { id: 'settings',label: 'Settings',icon: 'settings-outline',     color: C.textSecondary },
 ];
 

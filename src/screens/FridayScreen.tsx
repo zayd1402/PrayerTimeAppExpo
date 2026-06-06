@@ -101,7 +101,7 @@ export default function FridayScreen() {
       {/* Progress Summary */}
       <View style={styles.progressCard}>
         <View style={styles.progressItem}>
-          <Ionicons name="checkbox" size={20} color={C.coral} />
+          <Ionicons name="checkbox" size={20} color={C.primary} />
           <Text style={styles.progressValue}>{completedChecks}/{FRIDAY_CHECKLIST.length}</Text>
           <Text style={styles.progressLabel}>Checklist</Text>
         </View>
@@ -124,7 +124,7 @@ export default function FridayScreen() {
                 <View style={[styles.checkBox, done && styles.checkBoxDone]}>
                   {done && <Ionicons name="checkmark" size={14} color="#FFF" />}
                 </View>
-                <Ionicons name={item.icon as any} size={18} color={done ? C.coral : C.textSecondary} style={{ marginHorizontal: 12 }} />
+                <Ionicons name={item.icon as any} size={18} color={done ? C.primary : C.textSecondary} style={{ marginHorizontal: 12 }} />
                 <Text style={[styles.checkLabel, done && styles.checkLabelDone]}>{item.label}</Text>
               </TouchableOpacity>
             );
@@ -171,7 +171,7 @@ export default function FridayScreen() {
                   <Text style={[styles.kahfAyah, isRead && styles.kahfTextDone]}>Ayahs {section.ayah}</Text>
                   <Text style={styles.kahfDesc}>{section.desc}</Text>
                 </View>
-                {isRead && <Ionicons name="checkmark-circle" size={22} color={C.coral} />}
+                {isRead && <Ionicons name="checkmark-circle" size={22} color={C.primary} />}
                 {isCurrent && <Ionicons name="play-circle" size={22} color={C.gold} />}
               </TouchableOpacity>
             );
@@ -200,7 +200,7 @@ export default function FridayScreen() {
 
           <View style={styles.duaCard}>
             <View style={styles.duaTimeHeader}>
-              <Ionicons name="arrow-up" size={20} color={C.coral} />
+              <Ionicons name="arrow-up" size={20} color={C.primary} />
               <Text style={styles.duaTimeTitle}>While the Imam is on the Minbar</Text>
             </View>
             <Text style={styles.duaTimeDesc}>
@@ -210,7 +210,7 @@ export default function FridayScreen() {
 
           <View style={styles.duaCard}>
             <View style={styles.duaTimeHeader}>
-              <Ionicons name="moon" size={20} color={C.warmBlue} />
+              <Ionicons name="moon" size={20} color={C.textSecondary} />
               <Text style={styles.duaTimeTitle}>After Fajr until Sunrise</Text>
             </View>
             <Text style={styles.duaTimeDesc}>
@@ -220,7 +220,7 @@ export default function FridayScreen() {
 
           <View style={styles.duaCard}>
             <View style={styles.duaTimeHeader}>
-              <Ionicons name="heart" size={20} color={C.coral} />
+              <Ionicons name="heart" size={20} color={C.primary} />
               <Text style={styles.duaTimeTitle}>Recommended Duas</Text>
             </View>
             {[
@@ -231,7 +231,7 @@ export default function FridayScreen() {
               'Pray for your parents, family, and the Ummah',
             ].map((dua, i) => (
               <View key={i} style={styles.recommendedDua}>
-                <Ionicons name="ellipse" size={6} color={C.coral} style={{ marginTop: 6 }} />
+                <Ionicons name="ellipse" size={6} color={C.primary} style={{ marginTop: 6 }} />
                 <Text style={styles.recommendedDuaText}>{dua}</Text>
               </View>
             ))}
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
 
   tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  tabActive: { backgroundColor: C.coral },
+  tabActive: { backgroundColor: C.primary },
   tabLabel: { fontSize: 11, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
   tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' },
 
@@ -266,9 +266,9 @@ const styles = StyleSheet.create({
   checkItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
   checkItemDone: { backgroundColor: C.primaryLight },
   checkBox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center' },
-  checkBoxDone: { backgroundColor: C.coral, borderColor: C.coral },
+  checkBoxDone: { backgroundColor: C.primary, borderColor: C.primary },
   checkLabel: { flex: 1, fontSize: 14, fontFamily: 'Jost_500Medium', color: C.textPrimary },
-  checkLabelDone: { color: C.coral, textDecorationLine: 'line-through' },
+  checkLabelDone: { color: C.primary, textDecorationLine: 'line-through' },
 
   notesCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, minHeight: 120 },
   notesInput: { flex: 1, fontSize: 14, color: C.textPrimary, lineHeight: 22, minHeight: 100 },
@@ -279,12 +279,12 @@ const styles = StyleSheet.create({
   kahfSectionRead: { backgroundColor: C.primaryLight, opacity: 0.8 },
   kahfSectionCurrent: { borderWidth: 1.5, borderColor: C.gold },
   kahfNumWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
-  kahfNumWrapDone: { backgroundColor: C.coral },
+  kahfNumWrapDone: { backgroundColor: C.primary },
   kahfNum: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary },
   kahfNumDone: { color: '#FFF' },
   kahfInfo: { flex: 1, marginLeft: 12 },
   kahfAyah: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
-  kahfTextDone: { color: C.coral, textDecorationLine: 'line-through' },
+  kahfTextDone: { color: C.primary, textDecorationLine: 'line-through' },
   kahfDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
   duaCard: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12},

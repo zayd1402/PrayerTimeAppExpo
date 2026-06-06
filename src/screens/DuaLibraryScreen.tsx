@@ -102,10 +102,10 @@ function DuaCounter({ target, onComplete }: { target: number; onComplete?: () =>
 const counterStyles = StyleSheet.create({
   container: { marginTop: 12 },
   track: { height: 4, backgroundColor: C.border, borderRadius: 2, marginBottom: 8 },
-  fill: { height: 4, backgroundColor: C.coral, borderRadius: 2 },
+  fill: { height: 4, backgroundColor: C.primary, borderRadius: 2 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   count: { fontSize: 13, color: C.textSecondary, fontFamily: 'Jost_600SemiBold' },
-  btn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.coral, justifyContent: 'center', alignItems: 'center' },
+  btn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center' },
   btnDone: { backgroundColor: C.textMuted }});
 
 // ─── Dua Card ────────────────────────────────────────────────
@@ -132,7 +132,7 @@ function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onTogg
           </View>
           <View style={duaStyles.headerRight}>
             <TouchableOpacity onPress={(e) => { e.stopPropagation(); onToggleFav(); }}>
-              <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? C.coral : C.textMuted} />
+              <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? C.primary : C.textMuted} />
             </TouchableOpacity>
             <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={C.textMuted} style={{ marginLeft: 8 }} />
           </View>
@@ -155,7 +155,7 @@ function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onTogg
 const duaStyles = StyleSheet.create({
   card: {
     backgroundColor: C.surfaceElevated, borderRadius: 16, padding: 16, marginBottom: 10,
-    ...C.shadow.sm,
+    ...C.shadow,
     borderWidth: 1,
     borderColor: C.border,
   },
@@ -165,7 +165,7 @@ const duaStyles = StyleSheet.create({
   title: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   source: { fontSize: 12, color: C.textMuted, marginTop: 2 },
   body: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
-  arabic: { fontSize: 18, color: C.coral, textAlign: 'right', lineHeight: 30, marginBottom: 10 },
+  arabic: { fontSize: 18, color: C.primary, textAlign: 'right', lineHeight: 30, marginBottom: 10 },
   meaning: { fontSize: 13, color: C.textSecondary, lineHeight: 20, fontStyle: 'italic' }});
 
 // ─── Category Chip ───────────────────────────────────────────
@@ -186,9 +186,9 @@ const catStyles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
     backgroundColor: C.surfaceElevated, marginRight: 8, marginBottom: 8,
-    ...C.shadow.sm,
+    ...C.shadow,
   },
-  chipActive: { backgroundColor: C.coral },
+  chipActive: { backgroundColor: C.primary },
   label: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
   labelActive: { color: '#FFF', fontFamily: 'Jost_600SemiBold' }});
 
@@ -308,14 +308,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: C.surfaceElevated, borderRadius: 14,
     margin: 18, marginBottom: 12, paddingHorizontal: 14, paddingVertical: 10, gap: 10,
-    ...C.shadow.sm,
+    ...C.shadow,
   },
   searchInput: { flex: 1, fontSize: 15, color: C.textPrimary },
 
   featuredCard: {
     backgroundColor: '#FFF8E7', borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 16,
     borderLeftWidth: 4, borderLeftColor: C.gold,
-    ...C.shadow.md,
+    ...C.shadow,
   },
   featuredHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   featuredTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },

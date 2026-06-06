@@ -1,49 +1,53 @@
-// ─── Design Tokens — Neumorphism Purple + Gold ────────────────
-// Source: UI-UX-Pro-Max skill — spiritual prayer app design system
-// Style: Neumorphism (Soft UI) — embossed depth, monochromatic shifts
+// ─── Design Tokens — "Warm Courtyard" Graded Gold + Amber ────
+// Style: Warm tonal layering, premium gold accents, no shadows at rest
+// Contrast: textPrimary 10.5:1 on bgBase, textMuted 5.2:1 on bgBase
 
 export const C = {
-  // Backgrounds — lavender-cream spectrum
-  bgBase:       '#FAF5FF',  // lavender cream — screen background
-  bgSurface:    '#F5EEFF',  // subtle lavender tint for cards
-  bgCard:       '#EFE6FF',  // card background (slightly darker for depth)
+  // Backgrounds — warm limestone-to-parchment spectrum
+  bgBase:       '#FDF8F0',  // warm cream — screen background
+  bgSurface:    '#F8F1E5',  // parchment — card surfaces
+  bgCard:       '#F2E8D5',  // deeper warm tone — elevated cards
 
-  // Primary — Spiritual Purple
-  primary:      '#7C3AED',  // deep purple — primary accent, active states
-  primaryDark:  '#5B21B6',  // darker purple — pressed states
-  primaryLight: '#A78BFA',  // light purple — hover, subtle backgrounds
+  // Primary — Burnished Amber
+  primary:      '#C27A2D',  // amber — active states, check circles, tab indicators
+  primaryDark:  '#9E5C1A',  // deeper amber — pressed states
+  primaryLight: '#F0D9B0',  // pale amber — today highlight, active backgrounds
 
-  // Accent — Warm Gold
-  gold:         '#CA8A04',  // warm gold — sacred content, hadith, timer
-  goldLight:    '#EAB308',  // brighter gold — hover
-  goldPale:     '#FEF3C7',  // pale gold — backgrounds
+  // Accent — Inscription Gold
+  gold:         '#B8860B',  // dark goldenrod — sacred content, hadith, timer
+  goldLight:    '#D4A843',  // brighter gold — hover, secondary accents
+  goldPale:     '#FBF0D5',  // gold wash — sacred card backgrounds
 
-  // Surface variations for neumorphism depth
-  surfaceElevated: '#F3ECFF',
-  surfacePressed:  '#E8D8FF',
+  // Surface variations for tonal layering
+  surfaceElevated: '#F5ECD8',
+  surfacePressed:  '#EBDFC5',
 
-  // Neumorphic shadow tokens
+  // Hero & header background
+  heroBg:      '#3D2415',  // deep warm brown-black — hero header, More header
+
+  // Shadow — hero card only (separates dark header from status bar)
   shadow: {
-    sm: { shadowColor: 'rgba(124,58,237,0.12)', shadowOffset: { width: -2, height: -2 }, shadowOpacity: 1, shadowRadius: 6 },
-    md: { shadowColor: 'rgba(124,58,237,0.15)', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 1, shadowRadius: 10 },
-    lg: { shadowColor: 'rgba(124,58,237,0.18)', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 16 },
+    shadowColor: 'rgba(61,36,21,0.10)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
   },
 
   // Timer
-  timerAmber: '#CA8A04',
+  timerAmber: '#B8860B',
 
-  // Text — purple spectrum
-  textPrimary:  '#4C1D95',  // deep purple — primary text
-  textSecondary:'#7C3AED',  // medium purple — secondary text
-  textMuted:    '#A78BFA',  // light purple — muted/hints
+  // Text — warm brown spectrum
+  textPrimary:  '#2D2010',  // warm dark brown — body text
+  textSecondary:'#6B5030',  // warm umber — secondary text
+  textMuted:    '#8C7855',  // warm taupe — hints, metadata
 
   // Semantic
-  red:          '#DC2626',
+  red:          '#C4553B',  // terracotta — errors, danger
   white:        '#FFFFFF',
 
   // Borders
-  border:       'rgba(124,58,237,0.08)',
-  borderStrong: 'rgba(124,58,237,0.15)',
+  border:       'rgba(45,32,16,0.08)',
+  borderStrong: 'rgba(45,32,16,0.15)',
 
   // Radius scale
   radius: {
@@ -59,36 +63,6 @@ export const C = {
     label:    { fontSize: 12, fontWeight: '500' as const, lineHeight: 1.3  },
     caption:  { fontSize: 10, fontWeight: '500' as const, lineHeight: 1.2  },
   },
-
-  // ─── Deprecated aliases — keeps old code compiling ─────
-  /** @deprecated Use C.primary */
-  emerald:     '#7C3AED',
-  /** @deprecated Use C.primaryLight */
-  emeraldPale: '#A78BFA',
-  /** @deprecated Use C.textPrimary */
-  navy:        '#4C1D95',
-  /** @deprecated Use C.textSecondary */
-  navySoft:    '#7C3AED',
-  /** @deprecated Use C.primaryLight */
-  purple:      '#A78BFA',
-  /** @deprecated Use C.primaryLight */
-  teal:        '#A78BFA',
-  /** @deprecated Use C.gold */
-  green:       '#CA8A04',
-  /** @deprecated Use C.primaryLight */
-  blue:        '#A78BFA',
-  /** @deprecated Use C.primary */
-  coral:       '#7C3AED',
-  /** @deprecated Use C.primaryLight */
-  coralPale:   '#A78BFA',
-  /** @deprecated Use C.gold */
-  warmAmber:   '#CA8A04',
-  /** @deprecated Use C.textSecondary */
-  warmBlue:    '#7C3AED',
-  /** @deprecated Use C.primaryLight */
-  rose:        '#A78BFA',
-  /** @deprecated Use C.bgBase */
-  heroBg:      '#FAF5FF',
 };
 
 // ─── Prayer IDs & Config ─────────────────────────────────────

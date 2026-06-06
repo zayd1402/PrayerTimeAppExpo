@@ -31,7 +31,7 @@ export default function TabNavigator() {
           height: Platform.OS === 'ios' ? 84 : 64,
           elevation: 0,
         },
-        tabBarActiveTintColor: C.coral,
+        tabBarActiveTintColor: C.primary,
         tabBarInactiveTintColor: C.textMuted,
         tabBarLabelStyle: {
           fontSize: 10,

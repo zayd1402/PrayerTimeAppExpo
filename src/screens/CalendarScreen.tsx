@@ -13,13 +13,13 @@ function getDateKey(date: Date): string {
 }
 
 const EVENT_COLORS: Record<string, string> = {
-  ramadan: C.coral,
+  ramadan: C.primary,
   eid: C.gold,
   hajj: C.gold,
   ashura: C.red,
-  mawlid: C.warmBlue,
-  laylatul_qadr: C.rose,
-  white_days: C.warmAmber,
+  mawlid: C.textSecondary,
+  laylatul_qadr: C.primaryLight,
+  white_days: C.gold,
   jumuah: C.gold,
   general: C.textSecondary};
 
@@ -216,7 +216,7 @@ const styles = StyleSheet.create({
   countdownCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16,
-    ...C.shadow.md,
+    ...C.shadow,
   },
   countdownLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   countdownTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary },
@@ -231,7 +231,7 @@ const styles = StyleSheet.create({
   calNavBtn: {
     width: 32, height: 32, borderRadius: 10, backgroundColor: C.surfaceElevated,
     justifyContent: 'center', alignItems: 'center',
-    ...C.shadow.sm,
+    ...C.shadow,
   },
 
   calWeekdays: { flexDirection: 'row', paddingHorizontal: 18, marginBottom: 8 },
@@ -245,18 +245,18 @@ const styles = StyleSheet.create({
   },
   calDayOther: { opacity: 0.4 },
   calDayToday: { backgroundColor: C.primaryLight },
-  calDaySelected: { backgroundColor: C.coral },
+  calDaySelected: { backgroundColor: C.primary },
   calDayNum: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
-  calDayNumToday: { color: C.coral, fontFamily: 'Jost_700Bold' },
+  calDayNumToday: { color: C.primary, fontFamily: 'Jost_700Bold' },
   calDayNumOther: { color: C.textMuted },
   calDayHijri: { fontSize: 10, color: C.textMuted, marginTop: 1 },
-  calDayHijriPrayed: { color: C.coral, fontFamily: 'Jost_600SemiBold' },
-  prayedDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.coral, marginTop: 2 },
+  calDayHijriPrayed: { color: C.primary, fontFamily: 'Jost_600SemiBold' },
+  prayedDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.primary, marginTop: 2 },
   eventDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 2 },
 
   detailCard: {
     backgroundColor: C.surfaceElevated, borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8,
-    ...C.shadow.md,
+    ...C.shadow,
   },
   detailDate: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary },
   detailHijri: { fontSize: 13, color: C.textMuted, marginTop: 2, marginBottom: 12 },
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
   legendCard: {
     backgroundColor: C.surfaceElevated, borderRadius: 18, marginHorizontal: 18, padding: 16,
-    ...C.shadow.sm,
+    ...C.shadow,
   },
   legendItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
   legendDot: { width: 10, height: 10, borderRadius: 5 },

@@ -13,7 +13,7 @@ function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boo
       message: `"${hadith.english}"\n— ${hadith.source}\n\n${hadith.arabic}`});
   };
 
-  const gradeColor = hadith.grade === 'sahih' ? C.coral : hadith.grade === 'hasan' ? C.gold : C.textMuted;
+  const gradeColor = hadith.grade === 'sahih' ? C.primary : hadith.grade === 'hasan' ? C.gold : C.textMuted;
 
   return (
     <View style={styles.card}>
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
 
   categories: { paddingHorizontal: 18, paddingBottom: 8 },
   catChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8},
-  catChipActive: { backgroundColor: C.coral },
+  catChipActive: { backgroundColor: C.primary },
   catLabel: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
   catLabelActive: { color: '#FFF', fontFamily: 'Jost_600SemiBold' },
 
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   gradeText: { fontSize: 10, fontFamily: 'Jost_700Bold' },
   cardActions: { flexDirection: 'row', gap: 8 },
   actionBtn: { padding: 4 },
-  arabic: { fontSize: 16, color: C.coral, textAlign: 'right', lineHeight: 26, marginBottom: 10 },
+  arabic: { fontSize: 16, color: C.primary, textAlign: 'right', lineHeight: 26, marginBottom: 10 },
   english: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontStyle: 'italic' },
   meta: { flexDirection: 'row', alignItems: 'center', marginTop: 12, flexWrap: 'wrap', gap: 4 },
   metaText: { fontSize: 11, color: C.textMuted },

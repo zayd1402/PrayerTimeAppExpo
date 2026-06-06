@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginBottom: 16,
     // Neumorphic: soft raised shadow (light top-left, dark bottom-right)
-    shadowColor: C.shadow.md.shadowColor,
+    shadowColor: C.shadow.shadowColor,
     shadowOffset: { width: -4, height: -4 },
     shadowOpacity: 1,
     shadowRadius: 12,
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
   // Prayer Row
   prayerRowWrap: { borderRadius: 18, overflow: 'hidden', marginBottom: 2 },
   prayerRowWrapNext: {
-    ...C.shadow.md,
+    ...C.shadow,
     backgroundColor: C.surfaceElevated,
     borderWidth: 1,
     borderColor: 'rgba(124,58,237,0.1)',
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   hadithCard: {
     backgroundColor: C.surfaceElevated,
     borderRadius: 18, padding: 18, marginTop: 16,
-    ...C.shadow.md,
+    ...C.shadow,
     borderWidth: 1,
     borderColor: C.border,
   },

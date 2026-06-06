@@ -56,10 +56,10 @@ function bearingToDirection(bearing: number): string {
 // ─── Accuracy Indicator ──────────────────────────────────────
 function AccuracyBadge({ accuracy }: { accuracy: 'high' | 'medium' | 'low' | 'calibrating' }) {
   const colors = {
-    high: { bg: C.primaryLight, text: C.coral, icon: 'checkmark-circle' },
+    high: { bg: C.primaryLight, text: C.primary, icon: 'checkmark-circle' },
     medium: { bg: C.goldPale, text: C.gold, icon: 'alert-circle' },
     low: { bg: C.primaryLight, text: C.red, icon: 'warning' },
-    calibrating: { bg: C.goldPale, text: C.warmBlue, icon: 'refresh' }};
+    calibrating: { bg: C.goldPale, text: C.textSecondary, icon: 'refresh' }};
   const c = colors[accuracy];
   return (
     <View style={[accStyles.badge, { backgroundColor: c.bg }]}>
@@ -275,7 +275,7 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
           <Text style={styles.infoLabel}>km to Makkah</Text>
         </View>
         <View style={styles.infoCard}>
-          <Ionicons name="location" size={20} color={C.coral} />
+          <Ionicons name="location" size={20} color={C.primary} />
           <Text style={styles.infoValue}>{coordinate.latitude.toFixed(2)}°</Text>
           <Text style={styles.infoLabel}>Your Latitude</Text>
         </View>
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center',
     borderWidth: 3, borderColor: C.border
   },
-  compassAligned: { borderColor: C.coral, shadowColor: C.coral, shadowOpacity: 0.2 },
+  compassAligned: { borderColor: C.primary, shadowColor: C.primary, shadowOpacity: 0.2 },
   compassRing: { position: 'absolute', borderRadius: 999, borderWidth: 1, borderColor: 'rgba(232,130,107,0.08)' },
   ring1: { width: COMPASS_SIZE - 40, height: COMPASS_SIZE - 40 },
   ring2: { width: COMPASS_SIZE - 80, height: COMPASS_SIZE - 80 },
@@ -318,15 +318,15 @@ const styles = StyleSheet.create({
 
   needleWrap: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
   needle: { width: 40, height: 160, justifyContent: 'center', alignItems: 'center' },
-  needleTop: { position: 'absolute', top: 0, width: 0, height: 0, borderLeftWidth: 12, borderRightWidth: 12, borderBottomWidth: 70, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: C.coral },
+  needleTop: { position: 'absolute', top: 0, width: 0, height: 0, borderLeftWidth: 12, borderRightWidth: 12, borderBottomWidth: 70, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: C.primary },
   needleBottom: { position: 'absolute', bottom: 0, width: 0, height: 0, borderLeftWidth: 12, borderRightWidth: 12, borderTopWidth: 70, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: C.border },
-  needleCenter: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.coral, justifyContent: 'center', alignItems: 'center', zIndex: 10 },
+  needleCenter: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center', zIndex: 10 },
 
   centerInfo: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
   centerDeg: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary },
   centerLabel: { fontSize: 10, color: C.textMuted, letterSpacing: 2 },
 
-  alignedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.coral, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 16 },
+  alignedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 16 },
   alignedText: { color: '#FFF', fontSize: 14, fontFamily: 'Jost_600SemiBold' },
 
   infoGrid: { flexDirection: 'row', paddingHorizontal: 18, gap: 12, marginBottom: 12 },

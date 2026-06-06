@@ -53,7 +53,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <Switch
               value={autoLocation}
               onValueChange={setAutoLocation}
-              trackColor={{ true: C.coral }}
+              trackColor={{ true: C.primary }}
             />
           </View>
           
@@ -129,7 +129,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <Switch
               value={notificationsEnabled}
               onValueChange={setNotificationsEnabled}
-              trackColor={{ true: C.coral }}
+              trackColor={{ true: C.primary }}
             />
           </View>
           
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     fontSize: 18,
-    color: C.coral,
+    color: C.primary,
     fontFamily: 'Jost_700Bold',
   },
   manualLocation: {

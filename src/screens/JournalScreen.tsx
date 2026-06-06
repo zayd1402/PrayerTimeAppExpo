@@ -8,12 +8,12 @@ import { C, PrayerId, PRAYER_IDS } from '../types';
 import { loadPrayerJournal, addJournalEntry } from '../services/StorageService';
 
 const MOODS = [
-  { value: 'peaceful', label: 'Peaceful', icon: 'leaf-outline', color: C.coral },
+  { value: 'peaceful', label: 'Peaceful', icon: 'leaf-outline', color: C.primary },
   { value: 'grateful', label: 'Grateful', icon: 'heart-outline', color: C.red },
   { value: 'joyful', label: 'Joyful', icon: 'sunny-outline', color: C.timerAmber },
   { value: 'distracted', label: 'Distracted', icon: 'cloud-outline', color: C.textSecondary },
   { value: 'tired', label: 'Tired', icon: 'moon-outline', color: C.textSecondary },
-  { value: 'anxious', label: 'Anxious', icon: 'rainy-outline', color: C.warmBlue },
+  { value: 'anxious', label: 'Anxious', icon: 'rainy-outline', color: C.textSecondary },
 ] as const;
 
 const PRAYER_NAMES: Record<string, string> = {
@@ -219,14 +219,14 @@ const styles = StyleSheet.create({
   summaryCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16},
   summaryItem: { flex: 1, alignItems: 'center' },
   summaryDivider: { width: 1, backgroundColor: C.border },
-  summaryValue: { fontSize: 24, fontFamily: 'Jost_700Bold', color: C.coral },
+  summaryValue: { fontSize: 24, fontFamily: 'Jost_700Bold', color: C.primary },
   summaryLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
   sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 },
 
   prayerSelector: { paddingHorizontal: 18, paddingBottom: 8 },
   prayerChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8},
-  prayerChipActive: { backgroundColor: C.coral },
+  prayerChipActive: { backgroundColor: C.primary },
   prayerChipLabel: { fontSize: 13, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
   prayerChipLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' },
 
@@ -239,13 +239,13 @@ const styles = StyleSheet.create({
   inputCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginBottom: 10, padding: 16 },
   textInput: { fontSize: 14, color: C.textPrimary, lineHeight: 22, minHeight: 60, textAlignVertical: 'top' },
 
-  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.coral, borderRadius: 16, marginHorizontal: 18, marginTop: 8, paddingVertical: 16 },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.primary, borderRadius: 16, marginHorizontal: 18, marginTop: 8, paddingVertical: 16 },
   saveBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Jost_700Bold' },
 
   entryCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginBottom: 10, padding: 16},
   entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   entryPrayer: { backgroundColor: C.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  entryPrayerText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.coral },
+  entryPrayerText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.primary },
   entryDate: { fontSize: 12, color: C.textMuted },
   moodBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginBottom: 10 },
   moodBadgeText: { fontSize: 11, fontFamily: 'Jost_600SemiBold' },
