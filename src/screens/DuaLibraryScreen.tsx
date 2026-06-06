@@ -155,9 +155,6 @@ function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onTogg
 const duaStyles = StyleSheet.create({
   card: {
     backgroundColor: C.surfaceElevated, borderRadius: 16, padding: 16, marginBottom: 10,
-    ...C.shadow,
-    borderWidth: 1,
-    borderColor: C.border,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerLeft: { flex: 1 },
@@ -186,7 +183,6 @@ const catStyles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
     backgroundColor: C.surfaceElevated, marginRight: 8, marginBottom: 8,
-    ...C.shadow,
   },
   chipActive: { backgroundColor: C.primary },
   label: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
@@ -302,20 +298,17 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 120 },
   header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
-  subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
+  subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Jost_400Regular", marginTop: 4 },
 
   searchWrap: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: C.surfaceElevated, borderRadius: 14,
     margin: 18, marginBottom: 12, paddingHorizontal: 14, paddingVertical: 10, gap: 10,
-    ...C.shadow,
   },
   searchInput: { flex: 1, fontSize: 15, color: C.textPrimary },
 
   featuredCard: {
-    backgroundColor: '#FFF8E7', borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 16,
-    borderLeftWidth: 4, borderLeftColor: C.gold,
-    ...C.shadow,
+    backgroundColor: C.goldPale, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 16,
   },
   featuredHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   featuredTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },

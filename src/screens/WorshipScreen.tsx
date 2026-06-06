@@ -371,7 +371,6 @@ const styles = StyleSheet.create({
   sunnahCard: {
     width: (width - 56) / 2,
     backgroundColor: C.surfaceElevated, borderRadius: 16, padding: 14,
-    ...C.shadow,
   },
   sunnahCardCompleted: { backgroundColor: C.primaryLight },
   sunnahIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
@@ -394,7 +393,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceElevated,
     borderRadius: 16, padding: 16, gap: 14,
     borderWidth: 1.5, borderColor: 'transparent',
-    ...C.shadow,
   },
   fastCardActive: { borderColor: C.primary, backgroundColor: C.primaryLight },
   fastLabel: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, flex: 1 },
@@ -404,7 +402,6 @@ const styles = StyleSheet.create({
   ramadanCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale,
     borderRadius: 18, padding: 18, margin: 18, marginTop: 24,
-    ...C.shadow,
   },
   ramadanTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.gold },
   ramadanText: { fontSize: 13, color: C.textSecondary, marginTop: 2 },
@@ -413,7 +410,6 @@ const styles = StyleSheet.create({
   quranSummary: {
     flexDirection: 'row', backgroundColor: C.surfaceElevated, borderRadius: 18,
     marginHorizontal: 18, padding: 20, marginTop: 8,
-    ...C.shadow,
   },
   quranStat: { flex: 1, alignItems: 'center' },
   quranStatValue: { fontSize: 32, fontFamily: 'Jost_700Bold', color: C.gold },

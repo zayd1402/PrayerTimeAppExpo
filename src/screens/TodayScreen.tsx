@@ -428,10 +428,9 @@ const styles = StyleSheet.create({
   // Prayer Row
   prayerRowWrap: { borderRadius: 18, overflow: 'hidden', marginBottom: 2 },
   prayerRowWrapNext: {
-    ...C.shadow,
-    backgroundColor: C.surfaceElevated,
+    backgroundColor: C.bgCard,
     borderWidth: 1,
-    borderColor: 'rgba(124,58,237,0.1)',
+    borderColor: 'rgba(194,122,45,0.12)',
   },
   prayerRowWrapActive: { borderWidth: 1.5, borderColor: 'rgba(124,58,237,0.2)' },
   prayerRowWrapCompleted: { opacity: 0.75 },
@@ -468,9 +467,6 @@ const styles = StyleSheet.create({
   hadithCard: {
     backgroundColor: C.surfaceElevated,
     borderRadius: 18, padding: 18, marginTop: 16,
-    ...C.shadow,
-    borderWidth: 1,
-    borderColor: C.border,
   },
   hadithHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   hadithTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
