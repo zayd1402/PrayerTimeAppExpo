@@ -1,69 +1,48 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Share, RefreshControl } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  StyleSheet, View, Text, ScrollView, TouchableOpacity, Share
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, Hadith } from '../types';
-import { useTheme } from '../theme/ThemeProvider';
 import { HADITHS, getDailyHadith, getHadithCategories, getHadithByCategory } from '../data/hadiths';
 import { getFavoriteHadiths, toggleFavoriteHadith, setLastHadithIndex, getLastHadithIndex } from '../services/StorageService';
-import { Chip } from '../components/Chip';
-import { SearchBar } from '../components/SearchBar';
-import { EmptyState } from '../components/EmptyState';
 
 function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boolean; onToggleFav: () => void }) {
-  const { c, type, radius } = useTheme();
   const handleShare = async () => {
     await Share.share({
-      message: `"${hadith.english}"\n— ${hadith.source}\n\n${hadith.arabic}`,
-    });
+      message: `"${hadith.english}"\n— ${hadith.source}\n\n${hadith.arabic}`});
   };
 
-  const gradeColor = hadith.grade === 'sahih' ? c.emerald : hadith.grade === 'hasan' ? c.gold : c.textMuted;
+  const gradeColor = hadith.grade === 'sahih' ? C.coral : hadith.grade === 'hasan' ? C.gold : C.textMuted;
 
   return (
-    <View
-      style={[styles.card, { backgroundColor: c.bgSurface, borderRadius: radius.lg, padding: 18, marginBottom: 12 }]}
-      accessibilityLabel={`${hadith.grade.toUpperCase()} hadith from ${hadith.source}, narrated by ${hadith.narrator}`}
-    >
+    <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <View style={[styles.gradeBadge, { backgroundColor: gradeColor + '18' }]}>
-          <Text style={[type.caption, { color: gradeColor, fontWeight: '700' }]}>{hadith.grade.toUpperCase()}</Text>
+        <View style={[styles.gradeBadge, { backgroundColor: gradeColor + '15' }]}>
+          <Text style={[styles.gradeText, { color: gradeColor }]}>{hadith.grade.toUpperCase()}</Text>
         </View>
         <View style={styles.cardActions}>
-          <TouchableOpacity
-            onPress={onToggleFav}
-            style={styles.actionBtn}
-            accessibilityRole="button"
-            accessibilityLabel={isFav ? 'Remove from favorites' : 'Add to favorites'}
-          >
-            <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? c.red : c.textMuted} />
+          <TouchableOpacity onPress={onToggleFav} style={styles.actionBtn}>
+            <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? C.red : C.textMuted} />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleShare}
-            style={styles.actionBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Share hadith"
-          >
-            <Ionicons name="share-outline" size={20} color={c.textMuted} />
+          <TouchableOpacity onPress={handleShare} style={styles.actionBtn}>
+            <Ionicons name="share-outline" size={20} color={C.textMuted} />
           </TouchableOpacity>
         </View>
       </View>
 
-      <Text style={[type.title, { color: c.emerald, fontSize: 18, lineHeight: 30, textAlign: 'right', marginBottom: 12 }]}>
-        {hadith.arabic}
-      </Text>
-      <Text style={[type.body, { color: c.textPrimary, lineHeight: 22 }]}>
-        {hadith.english}
-      </Text>
+      <Text style={styles.arabic}>{hadith.arabic}</Text>
+      <Text style={styles.english}>{hadith.english}</Text>
 
-      <View style={[styles.meta, { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: c.border }]}>
-        <Ionicons name="person-outline" size={12} color={c.textMuted} />
-        <Text style={[type.caption, { color: c.textMuted, marginLeft: 4 }]}>{hadith.narrator}</Text>
-        <Text style={[type.caption, { color: c.textMuted, marginHorizontal: 6 }]}>•</Text>
-        <Text style={[type.caption, { color: c.textMuted }]}>{hadith.source}</Text>
+      <View style={styles.meta}>
+        <Ionicons name="person-outline" size={12} color={C.textMuted} />
+        <Text style={styles.metaText}>{hadith.narrator}</Text>
+        <Text style={styles.metaDot}>•</Text>
+        <Text style={styles.metaText}>{hadith.source}</Text>
         {hadith.book && (
           <>
-            <Text style={[type.caption, { color: c.textMuted, marginHorizontal: 6 }]}>•</Text>
-            <Text style={[type.caption, { color: c.textMuted }]}>{hadith.book}</Text>
+            <Text style={styles.metaDot}>•</Text>
+            <Text style={styles.metaText}>{hadith.book}</Text>
           </>
         )}
       </View>
@@ -72,28 +51,26 @@ function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boo
 }
 
 export default function HadithScreen() {
-  const { c, type } = useTheme();
   const [dailyHadith, setDailyHadith] = useState<Hadith | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [refreshing, setRefreshing] = useState(false);
-
-  const loadFavorites = useCallback(async () => {
-    const favs = await getFavoriteHadiths();
-    setFavorites(new Set(favs));
-  }, []);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const dh = getDailyHadith();
     setDailyHadith(dh);
     loadFavorites();
-  }, [loadFavorites]);
+    loadLastIndex();
+  }, []);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadFavorites();
-    setRefreshing(false);
+  const loadFavorites = async () => {
+    const favs = await getFavoriteHadiths();
+    setFavorites(new Set(favs));
+  };
+
+  const loadLastIndex = async () => {
+    const idx = await getLastHadithIndex();
+    setCurrentIndex(idx);
   };
 
   const toggleFav = async (id: string) => {
@@ -102,77 +79,90 @@ export default function HadithScreen() {
   };
 
   const categories = getHadithCategories();
-  const displayedHadiths = (activeCategory ? getHadithByCategory(activeCategory) : HADITHS)
-    .filter(h => search === '' ||
-      h.english.toLowerCase().includes(search.toLowerCase()) ||
-      h.narrator.toLowerCase().includes(search.toLowerCase())
-    );
+  const displayedHadiths = activeCategory
+    ? getHadithByCategory(activeCategory)
+    : HADITHS;
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: c.bgBase }}
-      contentContainerStyle={{ paddingBottom: 120 }}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.emerald} colors={[c.emerald]} />}
-    >
-      <View style={{ padding: 18, paddingTop: 60, backgroundColor: c.heroBg }}>
-        <Text style={[type.headline, { color: c.onHero, fontSize: 22, fontWeight: '700' }]}>Hadith Collection</Text>
-        <Text style={[type.body, { color: c.onDarkMuted, marginTop: 4 }]}>{HADITHS.length} authentic hadiths</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Hadith Collection</Text>
+        <Text style={styles.subtitle}>{HADITHS.length} authentic hadiths</Text>
       </View>
 
+      {/* Daily Hadith */}
       {dailyHadith && (
-        <View style={{ padding: 18, paddingTop: 16 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-            <Ionicons name="sunny" size={16} color={c.gold} />
-            <Text style={[type.label, { color: c.gold, fontWeight: '700' }]}>Hadith of the Day</Text>
+        <View style={styles.dailySection}>
+          <View style={styles.dailyHeader}>
+            <Ionicons name="sunny" size={16} color={C.gold} />
+            <Text style={styles.dailyTitle}>Hadith of the Day</Text>
           </View>
           <HadithCard hadith={dailyHadith} isFav={favorites.has(dailyHadith.id)} onToggleFav={() => toggleFav(dailyHadith.id)} />
         </View>
       )}
 
-      <View style={{ paddingHorizontal: 18, marginBottom: 12 }}>
-        <SearchBar value={search} onChangeText={setSearch} placeholder="Search hadiths..." />
-      </View>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 8, gap: 8, flexDirection: 'row' }}>
-        <Chip label="All" selected={!activeCategory} onPress={() => setActiveCategory(null)} />
+      {/* Categories */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
+        <TouchableOpacity
+          style={[styles.catChip, !activeCategory && styles.catChipActive]}
+          onPress={() => setActiveCategory(null)}
+        >
+          <Text style={[styles.catLabel, !activeCategory && styles.catLabelActive]}>All</Text>
+        </TouchableOpacity>
         {categories.map(cat => (
-          <Chip
+          <TouchableOpacity
             key={cat}
-            label={cat.charAt(0).toUpperCase() + cat.slice(1)}
-            selected={activeCategory === cat}
-            onPress={() => setActiveCategory(activeCategory === cat ? null : cat)}
-          />
+            style={[styles.catChip, activeCategory === cat && styles.catChipActive]}
+            onPress={() => setActiveCategory(cat === activeCategory ? null : cat)}
+          >
+            <Text style={[styles.catLabel, activeCategory === cat && styles.catLabelActive]}>
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </Text>
+          </TouchableOpacity>
         ))}
       </ScrollView>
 
-      <View style={{ paddingHorizontal: 18, marginTop: 8 }}>
-        {displayedHadiths.length === 0 ? (
-          <EmptyState
-            icon="search-outline"
-            title="No hadiths found"
-            message="Try a different search term or category"
-          />
-        ) : (
-          displayedHadiths.map(hadith => (
-            <HadithCard
-              key={hadith.id}
-              hadith={hadith}
-              isFav={favorites.has(hadith.id)}
-              onToggleFav={() => toggleFav(hadith.id)}
-            />
-          ))
-        )}
-      </View>
+      {/* Hadith List */}
+      <Text style={styles.listTitle}>{displayedHadiths.length} Hadiths</Text>
+      {displayedHadiths.map(hadith => (
+        <HadithCard
+          key={hadith.id}
+          hadith={hadith}
+          isFav={favorites.has(hadith.id)}
+          onToggleFav={() => toggleFav(hadith.id)}
+        />
+      ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {},
+  container: { flex: 1, backgroundColor: C.bgBase },
+  content: { paddingBottom: 120 },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  title: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
+
+  dailySection: { margin: 18, marginBottom: 8 },
+  dailyHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  dailyTitle: { fontSize: 14, fontWeight: '700', color: C.gold },
+
+  categories: { paddingHorizontal: 18, paddingBottom: 8 },
+  catChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8},
+  catChipActive: { backgroundColor: C.coral },
+  catLabel: { fontSize: 12, color: C.textSecondary, fontWeight: '500' },
+  catLabelActive: { color: '#FFF', fontWeight: '600' },
+
+  listTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 },
+
+  card: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12},
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  gradeBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  cardActions: { flexDirection: 'row', gap: 4 },
-  actionBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  meta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-});
+  gradeBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
+  gradeText: { fontSize: 10, fontWeight: '700' },
+  cardActions: { flexDirection: 'row', gap: 8 },
+  actionBtn: { padding: 4 },
+  arabic: { fontSize: 16, color: C.coral, textAlign: 'right', lineHeight: 26, marginBottom: 10 },
+  english: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontStyle: 'italic' },
+  meta: { flexDirection: 'row', alignItems: 'center', marginTop: 12, flexWrap: 'wrap', gap: 4 },
+  metaText: { fontSize: 11, color: C.textMuted },
+  metaDot: { fontSize: 11, color: C.textMuted, marginHorizontal: 2 }});

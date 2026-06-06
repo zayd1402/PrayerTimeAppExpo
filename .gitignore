@@ -39,3 +39,15 @@ test-results/
 # Misc
 *.swp
 *.swo
+
+# Tooling artifacts
+.agents/
+.claude/
+.codex/
+.impeccable/
+.opencode/
+.gitnexus/
+
+# Design specs (not app code)
+DESIGN.md
+PRODUCT.md

@@ -1,34 +1,29 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, View, Text, ScrollView, TouchableOpacity, RefreshControl,
+  StyleSheet, View, Text, ScrollView, TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C, IslamicEvent } from '../types';
-import { useTheme } from '../theme/ThemeProvider';
+import { C } from '../types';
 import { HijriService } from '../services/HijriService';
 import { loadPrayerLog } from '../services/StorageService';
 import { getEventsForHijriDate, ISLAMIC_EVENTS } from '../data/islamicEvents';
-
-type PrayerLogByDate = Record<string, Record<string, 'prayed' | 'qaza' | 'missed'>>;
-type EventType = IslamicEvent['type'];
 
 function getDateKey(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-const EVENT_COLORS: Record<EventType, string> = {
-  ramadan: C.emerald,
+const EVENT_COLORS: Record<string, string> = {
+  ramadan: C.coral,
   eid: C.gold,
-  hajj: C.navySoft,
+  hajj: C.gold,
   ashura: C.red,
-  mawlid: C.blue,
-  laylatul_qadr: C.purple,
-  white_days: C.teal,
-  jumuah: C.green,
-  general: C.textSecondary,
-};
+  mawlid: C.warmBlue,
+  laylatul_qadr: C.rose,
+  white_days: C.warmAmber,
+  jumuah: C.gold,
+  general: C.textSecondary};
 
-const EVENT_ICONS: Record<EventType, string> = {
+const EVENT_ICONS: Record<string, string> = {
   ramadan: 'moon-outline',
   eid: 'gift-outline',
   hajj: 'airplane-outline',
@@ -37,41 +32,24 @@ const EVENT_ICONS: Record<EventType, string> = {
   laylatul_qadr: 'star-outline',
   white_days: 'sunny-outline',
   jumuah: 'time-outline',
-  general: 'calendar-outline',
-};
-
-const HIJRI_MONTHS = [
-  'Muharram', 'Safar', 'Rabi al-Awwal', 'Rabi al-Thani',
-  'Jumada al-Awwal', 'Jumada al-Thani', 'Rajab', 'Shaban',
-  'Ramadan', 'Shawwal', 'Dhu al-Qidah', 'Dhu al-Hijjah',
-];
+  general: 'calendar-outline'};
 
 export default function CalendarScreen() {
-  const { c, type, radius, elevation } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [prayerLog, setPrayerLog] = useState<PrayerLogByDate>({});
+  const [prayerLog, setPrayerLog] = useState<Record<string, Record<string, string>>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const today = new Date();
   const todayKey = getDateKey(today);
 
-  const loadData = useCallback(async () => {
-    const log = await loadPrayerLog();
-    setPrayerLog(log);
+  useEffect(() => {
+    loadPrayerLog().then(setPrayerLog);
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadData();
-    setRefreshing(false);
-  }, [loadData]);
-
   const grid = HijriService.getMonthGrid(year, month);
+  const hijriToday = HijriService.gregorianToHijri(today);
   const hijriCurrent = HijriService.gregorianToHijri(new Date(year, month, 15));
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
@@ -80,78 +58,69 @@ export default function CalendarScreen() {
   const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
   const hijriMonthStr = `${hijriCurrent.monthNameArabic} ${hijriCurrent.year}`;
 
+  // Countdown to next major event
+  const getNextEvent = () => {
+    const events = ISLAMIC_EVENTS.filter(e => e.type !== 'white_days');
+    // Simplified - would calculate actual dates in production
+    return events[0];
+  };
+  const nextEvent = getNextEvent();
+
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: c.bgBase }}
-      contentContainerStyle={{ paddingBottom: 120 }}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          tintColor={c.emerald}
-          colors={[c.emerald]}
-        />
-      }
-    >
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       {/* Header */}
-      <View style={[styles.header, { backgroundColor: c.heroBg, paddingTop: 60 }]}>
-        <Text style={[type.headline, { color: c.onHero, fontSize: 22, fontWeight: '700' }]}>
-          Islamic Calendar
-        </Text>
-        <Text style={[type.body, { color: c.onDarkMuted, marginTop: 4 }]}>
-          {hijriMonthStr}
-        </Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Islamic Calendar</Text>
+        <Text style={styles.subtitle}>{hijriMonthStr}</Text>
       </View>
 
+      {/* Event Countdown */}
+      {nextEvent && (
+        <View style={styles.countdownCard}>
+          <View style={styles.countdownLeft}>
+            <Ionicons name={EVENT_ICONS[nextEvent.type] as any} size={24} color={EVENT_COLORS[nextEvent.type] || C.gold} />
+            <View style={{ marginLeft: 12 }}>
+              <Text style={styles.countdownTitle}>{nextEvent.title}</Text>
+              <Text style={styles.countdownDesc}>{nextEvent.description}</Text>
+            </View>
+          </View>
+          <View style={[styles.countdownBadge, { backgroundColor: (EVENT_COLORS[nextEvent.type] || C.gold) + '15' }]}>
+            <Text style={[styles.countdownBadgeText, { color: EVENT_COLORS[nextEvent.type] || C.gold }]}>Soon</Text>
+          </View>
+        </View>
+      )}
+
       {/* Month Navigation */}
-      <View style={[styles.calHeader, { paddingHorizontal: 18 }]}>
+      <View style={styles.calHeader}>
         <View>
-          <Text style={[type.title, { color: c.textPrimary, fontSize: 18 }]}>{monthName}</Text>
-          <Text style={[type.caption, { color: c.textMuted, marginTop: 2 }]}>{hijriMonthStr}</Text>
+          <Text style={styles.calMonth}>{monthName}</Text>
+          <Text style={styles.calHijri}>{hijriMonthStr}</Text>
         </View>
         <View style={styles.calNav}>
-          <TouchableOpacity
-            style={[styles.calNavBtn, { backgroundColor: c.bgSurface, borderRadius: 10 }]}
-            onPress={prevMonth}
-            accessibilityRole="button"
-            accessibilityLabel="Previous month"
-          >
-            <Ionicons name="chevron-back" size={16} color={c.textPrimary} />
+          <TouchableOpacity style={styles.calNavBtn} onPress={prevMonth}>
+            <Ionicons name="chevron-back" size={16} color={C.textSecondary} />
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.calNavBtn, { backgroundColor: c.bgSurface, borderRadius: 10, marginLeft: 8 }]}
-            onPress={nextMonth}
-            accessibilityRole="button"
-            accessibilityLabel="Next month"
-          >
-            <Ionicons name="chevron-forward" size={16} color={c.textPrimary} />
+          <TouchableOpacity style={styles.calNavBtn} onPress={nextMonth}>
+            <Ionicons name="chevron-forward" size={16} color={C.textSecondary} />
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Weekday headers */}
-      <View style={[styles.calWeekdays, { paddingHorizontal: 18 }]}>
-        {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => (
-          <Text
-            key={d}
-            style={[type.caption, { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: c.textMuted }]}
-          >
-            {d}
-          </Text>
+      <View style={styles.calWeekdays}>
+        {['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d => (
+          <Text key={d} style={styles.calWeekday}>{d}</Text>
         ))}
       </View>
 
       {/* Calendar grid */}
-      <View style={[styles.calGrid, { paddingHorizontal: 18 }]}>
-        {grid.map((cell, idx) => {
+      <View style={styles.calGrid}>
+        {grid.map((cell, idx: number) => {
           const { gregorian, hijri, isCurrentMonth } = cell;
           const dateKey = getDateKey(gregorian);
           const isToday = dateKey === todayKey;
           const dayLog = prayerLog[dateKey];
-          const prayedCount = dayLog
-            ? Object.entries(dayLog).filter(([id, s]) => id !== 'sunrise' && s === 'prayed').length
-            : 0;
+          const prayedCount = dayLog ? Object.entries(dayLog).filter(([id, s]) => id !== 'sunrise' && s === 'prayed').length : 0;
           const isSelected = dateKey === selectedDate;
           const events = getEventsForHijriDate(hijri.day, hijri.month);
           const hasEvent = events.length > 0;
@@ -161,47 +130,29 @@ export default function CalendarScreen() {
               key={idx}
               style={[
                 styles.calDay,
-                {
-                  backgroundColor: isSelected ? c.emerald : isToday ? c.emeraldPale : 'transparent',
-                  borderRadius: 12,
-                  opacity: !isCurrentMonth ? 0.4 : 1,
-                },
+                !isCurrentMonth && styles.calDayOther,
+                isToday && styles.calDayToday,
+                isSelected && styles.calDaySelected,
               ]}
               onPress={() => setSelectedDate(dateKey === selectedDate ? null : dateKey)}
-              accessibilityRole="button"
-              accessibilityLabel={`${gregorian.toDateString()}, Hijri ${hijri.day}${prayedCount > 0 ? `, ${prayedCount} prayers logged` : ''}${hasEvent ? `, event: ${events[0].title}` : ''}`}
-              accessibilityState={{ selected: isSelected }}
             >
-              <Text
-                style={[
-                  type.body,
-                  {
-                    fontSize: 14,
-                    fontWeight: isToday || isSelected ? '700' : '600',
-                    color: isSelected ? '#FFF' : isToday ? c.emerald : c.textPrimary,
-                  },
-                ]}
-              >
+              <Text style={[
+                styles.calDayNum,
+                isToday && styles.calDayNumToday,
+                !isCurrentMonth && styles.calDayNumOther,
+              ]}>
                 {gregorian.getDate()}
               </Text>
               {isCurrentMonth && (
-                <Text
-                  style={[
-                    type.caption,
-                    {
-                      color: isSelected ? '#FFF' : prayedCount > 0 ? c.emerald : c.textMuted,
-                      fontWeight: prayedCount > 0 ? '600' : '400',
-                    },
-                  ]}
-                >
+                <Text style={[styles.calDayHijri, prayedCount > 0 && styles.calDayHijriPrayed]}>
                   {hijri.day}
                 </Text>
               )}
-              {prayedCount >= 5 && isCurrentMonth && (
-                <View style={[styles.prayedDot, { backgroundColor: isSelected ? '#FFF' : c.emerald }]} />
+              {prayedCount >= 5 && (
+                <View style={styles.prayedDot} />
               )}
               {hasEvent && isCurrentMonth && (
-                <View style={[styles.eventDot, { backgroundColor: isSelected ? '#FFF' : EVENT_COLORS[events[0].type] || c.gold }]} />
+                <View style={[styles.eventDot, { backgroundColor: EVENT_COLORS[events[0].type] || C.gold }]} />
               )}
             </TouchableOpacity>
           );
@@ -210,8 +161,8 @@ export default function CalendarScreen() {
 
       {/* Selected Date Details */}
       {selectedDate && (
-        <View style={[styles.detailCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, marginHorizontal: 18, padding: 18, marginTop: 8 }]}>
-          <Text style={[type.title, { color: c.textPrimary }]}>
+        <View style={styles.detailCard}>
+          <Text style={styles.detailDate}>
             {new Date(selectedDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </Text>
           {(() => {
@@ -219,32 +170,20 @@ export default function CalendarScreen() {
             const events = getEventsForHijriDate(selectedHijri.day, selectedHijri.month);
             return (
               <>
-                <Text style={[type.caption, { color: c.textMuted, marginTop: 2, marginBottom: 12 }]}>
+                <Text style={styles.detailHijri}>
                   {selectedHijri.day} {selectedHijri.monthNameArabic} {selectedHijri.year} AH
                 </Text>
-                {events.map(event => {
-                  const col = EVENT_COLORS[event.type] || c.gold;
-                  return (
-                    <View
-                      key={event.id}
-                      style={[styles.eventRow, { backgroundColor: col + '12', borderRadius: 12 }]}
-                    >
-                      <Ionicons name={EVENT_ICONS[event.type] as any} size={16} color={col} />
-                      <View style={{ marginLeft: 10, flex: 1 }}>
-                        <Text style={[type.label, { color: col, fontWeight: '600' }]}>{event.title}</Text>
-                        {event.description && (
-                          <Text style={[type.caption, { color: c.textMuted, marginTop: 1 }]}>
-                            {event.description}
-                          </Text>
-                        )}
-                      </View>
+                {events.map(event => (
+                  <View key={event.id} style={[styles.eventRow, { backgroundColor: (EVENT_COLORS[event.type] || C.gold) + '10' }]}>
+                    <Ionicons name={EVENT_ICONS[event.type] as any} size={16} color={EVENT_COLORS[event.type] || C.gold} />
+                    <View style={{ marginLeft: 10, flex: 1 }}>
+                      <Text style={[styles.eventTitle, { color: EVENT_COLORS[event.type] || C.gold }]}>{event.title}</Text>
+                      <Text style={styles.eventDesc}>{event.description}</Text>
                     </View>
-                  );
-                })}
+                  </View>
+                ))}
                 {events.length === 0 && (
-                  <Text style={[type.caption, { color: c.textMuted, fontStyle: 'italic' }]}>
-                    No special events on this day
-                  </Text>
+                  <Text style={styles.noEvent}>No special events on this day</Text>
                 )}
               </>
             );
@@ -252,18 +191,14 @@ export default function CalendarScreen() {
         </View>
       )}
 
-      {/* Events Legend */}
-      <Text style={[type.title, { color: c.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 }]}>
-        Islamic Events
-      </Text>
-      <View style={[styles.legendCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, marginHorizontal: 18, padding: 16 }]}>
+      {/* Islamic Events Legend */}
+      <Text style={styles.sectionTitle}>Islamic Events</Text>
+      <View style={styles.legendCard}>
         {ISLAMIC_EVENTS.filter(e => e.type !== 'white_days').map(event => (
-          <View key={event.id} style={[styles.legendItem, { borderBottomColor: c.border }]}>
-            <View style={[styles.legendDot, { backgroundColor: EVENT_COLORS[event.type] || c.gold }]} />
-            <Text style={[type.body, { flex: 1, color: c.textPrimary, marginLeft: 10 }]}>{event.title}</Text>
-            <Text style={[type.caption, { color: c.textMuted }]}>
-              {event.hijriDate.day} {HIJRI_MONTHS[event.hijriDate.month - 1] || ''}
-            </Text>
+          <View key={event.id} style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: EVENT_COLORS[event.type] || C.gold }]} />
+            <Text style={styles.legendText}>{event.title}</Text>
+            <Text style={styles.legendHijri}>{event.hijriDate.day} {['Muharram','Safar','Rabi al-Awwal','Rabi al-Thani','Jumada al-Awwal','Jumada al-Thani','Rajab','Shaban','Ramadan','Shawwal','Dhu al-Qidah','Dhu al-Hijjah'][event.hijriDate.month - 1] || ''}</Text>
           </View>
         ))}
       </View>
@@ -272,18 +207,52 @@ export default function CalendarScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { padding: 18 },
-  calHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  calNav: { flexDirection: 'row' },
-  calNavBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
-  calWeekdays: { flexDirection: 'row', marginBottom: 8 },
-  calGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  calDay: { width: `${100 / 7}%`, aspectRatio: 1, justifyContent: 'center', alignItems: 'center', marginBottom: 4 },
-  prayedDot: { width: 4, height: 4, borderRadius: 2, marginTop: 2 },
+  container: { flex: 1, backgroundColor: C.bgBase },
+  content: { paddingBottom: 120 },
+  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  title: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
+
+  countdownCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: C.bgSurface, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16},
+  countdownLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  countdownTitle: { fontSize: 15, fontWeight: '700', color: C.textPrimary },
+  countdownDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  countdownBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
+  countdownBadgeText: { fontSize: 12, fontWeight: '700' },
+
+  calHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, marginBottom: 12 },
+  calMonth: { fontSize: 18, fontWeight: '700', color: C.textPrimary },
+  calHijri: { fontSize: 13, color: C.textMuted, marginTop: 2 },
+  calNav: { flexDirection: 'row', gap: 8 },
+  calNavBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center'},
+
+  calWeekdays: { flexDirection: 'row', paddingHorizontal: 18, marginBottom: 8 },
+  calWeekday: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: C.textMuted },
+
+  calGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 18 },
+  calDay: { width: `${100 / 7}%`, aspectRatio: 1, justifyContent: 'center', alignItems: 'center', borderRadius: 12, marginBottom: 4 },
+  calDayOther: { opacity: 0.4 },
+  calDayToday: { backgroundColor: C.coralPale },
+  calDaySelected: { backgroundColor: C.coral },
+  calDayNum: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
+  calDayNumToday: { color: C.coral, fontWeight: '700' },
+  calDayNumOther: { color: C.textMuted },
+  calDayHijri: { fontSize: 10, color: C.textMuted, marginTop: 1 },
+  calDayHijriPrayed: { color: C.coral, fontWeight: '600' },
+  prayedDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.coral, marginTop: 2 },
   eventDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 2 },
-  detailCard: {},
-  eventRow: { flexDirection: 'row', alignItems: 'center', padding: 12, marginBottom: 8 },
-  legendCard: {},
-  legendItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1 },
+
+  detailCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8},
+  detailDate: { fontSize: 16, fontWeight: '700', color: C.textPrimary },
+  detailHijri: { fontSize: 13, color: C.textMuted, marginTop: 2, marginBottom: 12 },
+  eventRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8 },
+  eventTitle: { fontSize: 14, fontWeight: '600' },
+  eventDesc: { fontSize: 12, color: C.textMuted, marginTop: 1 },
+  noEvent: { fontSize: 13, color: C.textMuted, fontStyle: 'italic' },
+
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
+  legendCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16},
+  legendItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
-});
+  legendText: { flex: 1, fontSize: 14, color: C.textPrimary, marginLeft: 10 },
+  legendHijri: { fontSize: 12, color: C.textMuted }});

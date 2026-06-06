@@ -1,126 +1,87 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Linking, Platform, RefreshControl } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
+import * as Location from 'expo-location';
 import { C } from '../types';
-import { useTheme } from '../theme/ThemeProvider';
-import { useSnackbar } from '../components/Snackbar';
-import { EmptyState } from '../components/EmptyState';
-import { Button } from '../components/Button';
 
-interface Coordinate { latitude: number; longitude: number; }
-interface Mosque { id: string; name: string; address: string; distance?: string; }
-interface MosquesScreenProps { coordinate: Coordinate; }
+interface Coordinate {
+  latitude: number;
+  longitude: number;
+}
 
-// Demo data; in production this would query a Places API
-const DEMO_MOSQUES: Mosque[] = [
-  { id: '1', name: 'Masjid Al-Hussein',  address: '123 William St, Sydney NSW',     distance: '0.5 km' },
-  { id: '2', name: 'Sydney Mosque',      address: '200 George St, Sydney NSW',     distance: '1.2 km' },
-  { id: '3', name: 'Lakemba Mosque',     address: '45 Railway St, Lakemba NSW',    distance: '8.5 km' },
-  { id: '4', name: 'Five Dock Mosque',   address: '100 Great North Rd, Five Dock NSW', distance: '12 km' },
-  { id: '5', name: 'Auburn Mosque',      address: '88 Burwood Rd, Auburn NSW',     distance: '15 km' },
-];
+interface Mosque {
+  id: string;
+  name: string;
+  address: string;
+  distance?: string;
+}
+
+interface MosquesScreenProps {
+  coordinate: Coordinate;
+}
 
 export default function MosquesScreen({ coordinate }: MosquesScreenProps) {
-  const { c, type, radius } = useTheme();
-  const { show } = useSnackbar();
   const [mosques, setMosques] = useState<Mosque[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
 
-  const searchMosques = useCallback(async () => {
+  useEffect(() => {
+    searchMosques();
+  }, []);
+
+  async function searchMosques() {
     try {
       setLoading(true);
-      // Simulated network delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setMosques(DEMO_MOSQUES);
-    } catch {
-      show({ message: 'Unable to search mosques', variant: 'error', icon: 'alert-circle' });
+      // Using foursquare API placeholder - in production, use Places API
+      const demoMosques: Mosque[] = [
+        { id: '1', name: 'Masjid Al-Hussein', address: '123 William St, Sydney NSW', distance: '0.5 km' },
+        { id: '2', name: 'Sydney Mosque', address: '200 George St, Sydney NSW', distance: '1.2 km' },
+        { id: '3', name: 'Lakemba Mosque', address: '45 Railway St, Lakemba NSW', distance: '8.5 km' },
+        { id: '4', name: 'Fivedock Mosque', address: '100 Great North Rd, Five Dock NSW', distance: '12 km' },
+        { id: '5', name: ' Aubury Mosque', address: '88 Burwood Rd, Auburn NSW', distance: '15 km' },
+      ];
+      setMosques(demoMosques);
+    } catch (error) {
+      Alert.alert('Error', 'Unable to search mosques');
     } finally {
       setLoading(false);
     }
-  }, [show]);
+  }
 
-  useEffect(() => { searchMosques(); }, [searchMosques]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await searchMosques();
-    setRefreshing(false);
-  };
-
-  const openInMaps = async (mosque: Mosque) => {
-    const query = encodeURIComponent(mosque.name);
-    const lat = coordinate.latitude;
-    const lng = coordinate.longitude;
-    const url = Platform.select({
-      ios: `https://maps.apple.com/?q=${query}`,
-      android: `geo:${lat},${lng}?q=${query}`,
-      default: `https://www.google.com/maps/search/?api=1&query=${query}`,
-    })!;
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      } else {
-        show({ message: 'No maps app installed', variant: 'error' });
-      }
-    } catch {
-      show({ message: 'Could not open maps', variant: 'error' });
-    }
-  };
+  function openInMaps(mosque: Mosque) {
+    // Open in Apple Maps / Google Maps
+    const url = `https://maps.apple.com/?q=${encodeURIComponent(mosque.name)}&ll=${coordinate.latitude},${coordinate.longitude}`;
+    // In a full implementation, use Linking.openURL(url)
+  }
 
   return (
-    <View style={{ flex: 1, backgroundColor: c.bgBase }}>
-      <View style={[styles.header, { backgroundColor: c.heroBg, paddingTop: 60 }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={[type.headline, { color: c.onHero, fontSize: 22, fontWeight: '700' }]}>Nearby Mosques</Text>
-          <Text style={[type.body, { color: c.onDarkMuted, marginTop: 4 }]}>Find a place to pray</Text>
-        </View>
-        <TouchableOpacity
-          onPress={onRefresh}
-          accessibilityRole="button"
-          accessibilityLabel="Refresh mosque list"
-          style={[styles.refreshBtn, { backgroundColor: 'rgba(255,255,255,0.12)' }]}
-        >
-          <Ionicons name="refresh" size={20} color={c.onHero} />
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Nearby Mosques</Text>
+        <TouchableOpacity onPress={searchMosques}>
+          <Text style={styles.refreshText}>↻ Refresh</Text>
         </TouchableOpacity>
       </View>
 
       {loading ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={[type.body, { color: c.textSecondary }]}>Searching nearby...</Text>
+        <View style={styles.loading}>
+          <Text style={styles.loadingText}>Searching nearby...</Text>
         </View>
-      ) : mosques.length === 0 ? (
-        <EmptyState
-          icon="location-outline"
-          title="No mosques found nearby"
-          message="Try expanding your search or check back later"
-        />
       ) : (
         <FlatList
           data={mosques}
-          keyExtractor={item => item.id}
-          contentContainerStyle={{ padding: 18, gap: 12 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.emerald} colors={[c.emerald]} />}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[styles.mosqueCard, { backgroundColor: c.bgSurface, borderRadius: radius.lg, padding: 16 }]}
-              onPress={() => openInMaps(item)}
-              accessibilityRole="button"
-              accessibilityLabel={`${item.name}, ${item.address}, ${item.distance || 'distance unknown'}, tap to open in maps`}
-            >
-              <View style={[styles.mosqueIcon, { backgroundColor: c.emeraldPale, borderRadius: 25 }]}>
-                <Ionicons name="location" size={24} color={c.emerald} />
+            <TouchableOpacity style={styles.mosqueCard} onPress={() => openInMaps(item)}>
+              <View style={styles.mosqueIcon}>
+                <Text style={styles.mosqueIconText}>🕌</Text>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[type.body, { color: c.textPrimary, fontWeight: '600' }]}>{item.name}</Text>
-                <Text style={[type.caption, { color: c.textMuted, marginTop: 2 }]} numberOfLines={1}>
-                  {item.address}
-                </Text>
+              <View style={styles.mosqueInfo}>
+                <Text style={styles.mosqueName}>{item.name}</Text>
+                <Text style={styles.mosqueAddress}>{item.address}</Text>
               </View>
               {item.distance && (
-                <View style={[styles.distanceTag, { backgroundColor: c.emeraldPale, borderRadius: 12 }]}>
-                  <Text style={[type.caption, { color: c.emerald, fontWeight: '600' }]}>{item.distance}</Text>
+                <View style={styles.distanceTag}>
+                  <Text style={styles.distanceText}>{item.distance}</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -132,9 +93,81 @@ export default function MosquesScreen({ coordinate }: MosquesScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', padding: 18 },
-  refreshBtn: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  mosqueCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  mosqueIcon: { width: 50, height: 50, alignItems: 'center', justifyContent: 'center' },
-  distanceTag: { paddingHorizontal: 10, paddingVertical: 5 },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F0',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 18,
+    paddingTop: 60,
+    backgroundColor: C.heroBg,
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'PlayfairDisplay_700Bold',
+    color: C.textPrimary,
+  },
+  refreshText: {
+    fontSize: 14,
+    color: C.textSecondary,
+  },
+  loading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: C.textSecondary,
+  },
+  list: {
+    padding: 18,
+    gap: 12,
+  },
+  mosqueCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.bgSurface,
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+  },
+  mosqueIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: C.coralPale,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  mosqueIconText: {
+    fontSize: 24,
+  },
+  mosqueInfo: {
+    flex: 1,
+  },
+  mosqueName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: C.textPrimary,
+  },
+  mosqueAddress: {
+    fontSize: 13,
+    color: C.textMuted,
+    marginTop: 2,
+  },
+  distanceTag: {
+    backgroundColor: C.coralPale,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  distanceText: {
+    fontSize: 12,
+    color: C.textSecondary,
+    fontWeight: '600',
+  },
 });
