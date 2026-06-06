@@ -93,14 +93,14 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bgBase },
   screenPadding: { paddingBottom: 100 },
   moreHeader: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  moreTitle: { fontSize: 26, fontFamily: 'PlayfairDisplay_700Bold', color: C.textPrimary },
+  moreTitle: { fontSize: 26, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
   moreGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 14, gap: 10 },
   moreCard: {
     width: '30%', backgroundColor: C.bgSurface, borderRadius: 18,
     padding: 16, alignItems: 'center',
   },
   moreIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
-  moreLabel: { fontSize: 12, fontWeight: '600', color: C.textPrimary, textAlign: 'center' },
+  moreLabel: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, textAlign: 'center' },
   backButton: {
     position: 'absolute', zIndex: 10,
     top: Platform.OS === 'ios' ? 50 : 40,
@@ -108,5 +108,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(58,44,26,0.55)',
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
   },
-  backText: { color: '#FFF', fontSize: 14, fontWeight: '600' },
+  backText: { color: '#FFF', fontSize: 14, fontFamily: 'Jost_600SemiBold' },
 });

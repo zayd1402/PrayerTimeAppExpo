@@ -7,10 +7,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
-  PlayfairDisplay_400Regular, PlayfairDisplay_500Medium,
-  PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold,
-} from '@expo-google-fonts/playfair-display';
-import { Inter_300Light, Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+  BodoniModa_400Regular, BodoniModa_500Medium,
+  BodoniModa_600SemiBold, BodoniModa_700Bold,
+} from '@expo-google-fonts/bodoni-moda';
+import { Jost_300Light, Jost_400Regular, Jost_500Medium, Jost_600SemiBold, Jost_700Bold } from '@expo-google-fonts/jost';
 
 import { C } from './src/types';
 import { PrayerAppProvider } from './src/context/PrayerAppContext';
@@ -20,10 +20,10 @@ SplashScreen.preventAutoHideAsync();
 
 export default function App() {
   const [fontsLoaded] = useFonts({
-    PlayfairDisplay_400Regular, PlayfairDisplay_500Medium,
-    PlayfairDisplay_600SemiBold, PlayfairDisplay_700Bold,
-    Inter_300Light, Inter_400Regular, Inter_500Medium,
-    Inter_600SemiBold, Inter_700Bold,
+    BodoniModa_400Regular, BodoniModa_500Medium,
+    BodoniModa_600SemiBold, BodoniModa_700Bold,
+    Jost_300Light, Jost_400Regular, Jost_500Medium,
+    Jost_600SemiBold, Jost_700Bold,
   });
 
   React.useEffect(() => {

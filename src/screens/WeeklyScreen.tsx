@@ -108,7 +108,7 @@ export default function WeeklyScreen() {
       ) : (
         todaysActivities.map(activity => (
           <View key={activity.id} style={styles.activityCard}>
-            <View style={[styles.activityIconWrap, { backgroundColor: activity.type === 'fasting' ? C.coralPale : activity.type === 'reminder' ? C.goldPale : C.coralPale }]}>
+            <View style={[styles.activityIconWrap, { backgroundColor: activity.type === 'fasting' ? C.primaryLight : activity.type === 'reminder' ? C.goldPale : C.primaryLight }]}>
               <Ionicons name={activity.icon as any} size={22} color={activity.type === 'fasting' ? C.coral : activity.type === 'reminder' ? C.gold : C.warmBlue} />
             </View>
             <View style={styles.activityInfo}>
@@ -173,52 +173,52 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: C.textPrimary },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
   subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
 
   daySelector: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 18, marginTop: 16, marginBottom: 8 },
   dayChip: { alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14, backgroundColor: C.bgSurface, minWidth: 44 },
   dayChipSelected: { backgroundColor: C.coral },
   dayChipToday: { backgroundColor: C.goldPale, borderWidth: 1, borderColor: C.gold },
-  dayLabel: { fontSize: 12, fontWeight: '600', color: C.textSecondary },
+  dayLabel: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
   dayLabelSelected: { color: '#FFF' },
   dayLabelToday: { color: C.gold },
   todayDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.gold, marginTop: 4 },
 
-  selectedDayName: { fontSize: 18, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginBottom: 12 },
+  selectedDayName: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginBottom: 12 },
 
   emptyState: { alignItems: 'center', paddingVertical: 40 },
-  emptyText: { fontSize: 15, color: C.textSecondary, marginTop: 12, fontWeight: '500' },
+  emptyText: { fontSize: 15, color: C.textSecondary, marginTop: 12, fontFamily: 'Jost_500Medium' },
   emptySub: { fontSize: 13, color: C.textMuted, marginTop: 4 },
 
   activityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 18, padding: 16, marginHorizontal: 18, marginBottom: 10},
   activityIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   activityInfo: { flex: 1, marginLeft: 14 },
-  activityTitle: { fontSize: 15, fontWeight: '600', color: C.textPrimary },
+  activityTitle: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   activityDesc: { fontSize: 12, color: C.textMuted, marginTop: 2, lineHeight: 18 },
   fastToggle: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F5F5F0' },
   fastToggleActive: { backgroundColor: C.coral },
-  fastToggleText: { fontSize: 12, fontWeight: '600', color: C.textSecondary },
+  fastToggleText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
   fastToggleTextActive: { color: '#FFF' },
 
   sunnahRevivalCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginTop: 16, padding: 18},
   sunnahHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  sunnahTitle: { fontSize: 14, fontWeight: '700', color: C.gold },
+  sunnahTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
   sunnahContent: { flexDirection: 'row', alignItems: 'center' },
   sunnahIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   sunnahInfo: { flex: 1, marginLeft: 14 },
-  sunnahName: { fontSize: 15, fontWeight: '600', color: C.textPrimary },
+  sunnahName: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   sunnahDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
 
   overviewCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16},
   overviewItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
   overviewItemToday: { backgroundColor: '#FFF5F0', marginHorizontal: -16, paddingHorizontal: 16, borderRadius: 10 },
   overviewDot: { width: 28, height: 28, borderRadius: 8, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
   overviewInfo: { flex: 1, marginLeft: 12 },
-  overviewTitle: { fontSize: 14, fontWeight: '500', color: C.textPrimary },
-  overviewTitleToday: { color: C.coral, fontWeight: '600' },
+  overviewTitle: { fontSize: 14, fontFamily: 'Jost_500Medium', color: C.textPrimary },
+  overviewTitleToday: { color: C.coral, fontFamily: 'Jost_600SemiBold' },
   overviewDay: { fontSize: 11, color: C.textMuted, marginTop: 1 },
   todayBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: C.coral },
-  todayBadgeText: { fontSize: 10, color: '#FFF', fontWeight: '700' }});
+  todayBadgeText: { fontSize: 10, color: '#FFF', fontFamily: 'Jost_700Bold' }});

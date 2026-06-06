@@ -210,7 +210,7 @@ export default function ZakatScreen() {
         <>
           {/* Total */}
           <View style={styles.charityTotalCard}>
-            <Ionicons name="heart" size={28} color="#E53935" />
+            <Ionicons name="heart" size={28} color={C.coral} />
             <View style={{ marginLeft: 14 }}>
               <Text style={styles.charityTotalLabel}>Total Given</Text>
               <Text style={styles.charityTotalValue}>${charityTotal.toFixed(2)}</Text>
@@ -252,7 +252,7 @@ export default function ZakatScreen() {
               <Text style={styles.sectionTitle}>History</Text>
               {charityRecords.slice().reverse().map(record => (
                 <View key={record.id} style={styles.charityRecord}>
-                  <View style={[styles.charityDot, { backgroundColor: record.category === 'zakat' ? C.coral : record.category === 'sadaqah' ? '#E53935' : C.gold }]} />
+                  <View style={[styles.charityDot, { backgroundColor: record.category === 'zakat' ? C.coral : record.category === 'sadaqah' ? C.coral : C.gold }]} />
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     <Text style={styles.charityRecordCat}>{record.category.charAt(0).toUpperCase() + record.category.slice(1)}</Text>
                     <Text style={styles.charityRecordDate}>{record.date}</Text>
@@ -272,65 +272,65 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: C.textPrimary },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
   subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
 
   tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 12 },
   tabActive: { backgroundColor: C.coral },
-  tabLabel: { fontSize: 13, color: C.textSecondary, fontWeight: '500' },
-  tabLabelActive: { color: '#FFF', fontWeight: '700' },
+  tabLabel: { fontSize: 13, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
+  tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' },
 
   nisabCard: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 18, marginTop: 8, padding: 16, borderRadius: 16 },
-  nisabMet: { backgroundColor: C.coralPale },
+  nisabMet: { backgroundColor: C.primaryLight },
   nisabNotMet: { backgroundColor: '#F5F5F0' },
-  nisabTitle: { fontSize: 15, fontWeight: '700', color: C.textPrimary },
+  nisabTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary },
   nisabDesc: { fontSize: 12, color: C.textSecondary, marginTop: 2 },
 
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 18, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 18, marginBottom: 10 },
 
   inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, marginHorizontal: 18, marginBottom: 8, paddingHorizontal: 14, paddingVertical: 12 },
   inputLabel: { flex: 1, fontSize: 14, color: C.textPrimary },
-  input: { width: 100, fontSize: 15, color: C.textPrimary, textAlign: 'right', fontWeight: '600' },
+  input: { width: 100, fontSize: 15, color: C.textPrimary, textAlign: 'right', fontFamily: 'Jost_600SemiBold' },
 
   resultsCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8 },
   resultRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
   resultHighlight: { borderBottomWidth: 2, borderBottomColor: C.coral },
   resultZakat: { paddingTop: 12, borderBottomWidth: 0 },
   resultLabel: { fontSize: 14, color: C.textSecondary },
-  resultValue: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
-  zakatLabel: { fontSize: 16, fontWeight: '700', color: C.coral },
-  zakatValue: { fontSize: 18, fontWeight: 'bold', color: C.coral },
+  resultValue: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
+  zakatLabel: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.coral },
+  zakatValue: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.coral },
 
   calculateBtn: { backgroundColor: C.coral, borderRadius: 16, marginHorizontal: 18, marginTop: 16, paddingVertical: 16, alignItems: 'center' },
-  calculateBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+  calculateBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Jost_700Bold' },
 
   recordCard: { backgroundColor: C.bgSurface, borderRadius: 16, marginHorizontal: 18, marginBottom: 10, padding: 16 },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   recordDate: { fontSize: 13, color: C.textMuted },
   recordBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  recordPaid: { backgroundColor: C.coralPale },
+  recordPaid: { backgroundColor: C.primaryLight },
   recordUnpaid: { backgroundColor: C.goldPale },
-  recordBadgeText: { fontSize: 11, fontWeight: '700', color: C.coral },
-  recordAmount: { fontSize: 20, fontWeight: 'bold', color: C.textPrimary },
+  recordBadgeText: { fontSize: 11, fontFamily: 'Jost_700Bold', color: C.coral },
+  recordAmount: { fontSize: 20, fontFamily: 'Jost_700Bold', color: C.textPrimary },
   recordDetail: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
   charityTotalCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginTop: 8, padding: 18},
   charityTotalLabel: { fontSize: 13, color: C.textMuted },
-  charityTotalValue: { fontSize: 28, fontWeight: 'bold', color: C.red, marginTop: 2 },
+  charityTotalValue: { fontSize: 28, fontFamily: 'Jost_700Bold', color: C.red, marginTop: 2 },
 
   charityInputWrap: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16 },
-  charityInput: { fontSize: 18, fontWeight: '600', color: C.textPrimary, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border, marginBottom: 12 },
+  charityInput: { fontSize: 18, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border, marginBottom: 12 },
   categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: '#F5F5F0' },
   categoryChipActive: { backgroundColor: C.red },
-  categoryLabel: { fontSize: 12, color: C.textSecondary, fontWeight: '500' },
-  categoryLabelActive: { color: '#FFF', fontWeight: '600' },
+  categoryLabel: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
+  categoryLabelActive: { color: '#FFF', fontFamily: 'Jost_600SemiBold' },
   addCharityBtn: { backgroundColor: C.red, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
-  addCharityText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
+  addCharityText: { color: '#FFF', fontSize: 15, fontFamily: 'Jost_700Bold' },
 
   charityRecord: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, marginHorizontal: 18, marginBottom: 8, padding: 14 },
   charityDot: { width: 10, height: 10, borderRadius: 5 },
-  charityRecordCat: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
+  charityRecordCat: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   charityRecordDate: { fontSize: 12, color: C.textMuted, marginTop: 1 },
-  charityRecordAmount: { fontSize: 16, fontWeight: 'bold', color: C.textPrimary }});
+  charityRecordAmount: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary }});

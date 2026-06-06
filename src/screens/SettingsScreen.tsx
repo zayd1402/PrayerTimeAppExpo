@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: 'bold',
+    fontFamily: 'Jost_700Bold',
     color: '#FFFFFF',
   },
   section: {
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: 'Jost_600SemiBold',
     color: C.textMuted,
     marginBottom: 10,
     textTransform: 'uppercase',
@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
   checkmark: {
     fontSize: 18,
     color: C.coral,
-    fontWeight: 'bold',
+    fontFamily: 'Jost_700Bold',
   },
   manualLocation: {
     padding: 16,
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   locationButtonText: {
     fontSize: 15,
     color: C.heroBg,
-    fontWeight: '600',
+    fontFamily: 'Jost_600SemiBold',
   },
   footer: {
     padding: 40,

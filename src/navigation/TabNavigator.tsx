@@ -35,7 +35,7 @@ export default function TabNavigator() {
         tabBarInactiveTintColor: C.textMuted,
         tabBarLabelStyle: {
           fontSize: 10,
-          fontFamily: 'Inter_500Medium',
+          fontFamily: 'Jost_500Medium',
           marginTop: 2,
         },
       }}
@@ -45,7 +45,7 @@ export default function TabNavigator() {
         component={TodayScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => <TabIcon name="home-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <TabIcon name="home" color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -53,7 +53,7 @@ export default function TabNavigator() {
         component={WorshipScreen}
         options={{
           tabBarLabel: 'Worship',
-          tabBarIcon: ({ color, size }) => <TabIcon name="heart-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <TabIcon name="heart" color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -61,7 +61,7 @@ export default function TabNavigator() {
         component={CalendarScreen}
         options={{
           tabBarLabel: 'Calendar',
-          tabBarIcon: ({ color, size }) => <TabIcon name="calendar-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <TabIcon name="calendar" color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -69,7 +69,7 @@ export default function TabNavigator() {
         component={DuaLibraryScreen}
         options={{
           tabBarLabel: 'Duas',
-          tabBarIcon: ({ color, size }) => <TabIcon name="book-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <TabIcon name="book" color={color} size={size} />,
         }}
       />
       <Tab.Screen
@@ -77,7 +77,7 @@ export default function TabNavigator() {
         component={MoreScreen}
         options={{
           tabBarLabel: 'More',
-          tabBarIcon: ({ color, size }) => <TabIcon name="grid-outline" color={color} size={size} />,
+          tabBarIcon: ({ color, size }) => <TabIcon name="grid" color={color} size={size} />,
         }}
       />
     </Tab.Navigator>

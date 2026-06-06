@@ -358,5 +358,5 @@ export async function addJournalEntry(entry: PrayerJournalEntry): Promise<Record
 // ─── Clear All Data ──────────────────────────────────────────
 export async function clearAllData(): Promise<void> {
   const keys = Object.values(KEYS);
-  await AsyncStorage.multiRemove(keys);
+  await Promise.all(keys.map(key => AsyncStorage.removeItem(key)));
 }

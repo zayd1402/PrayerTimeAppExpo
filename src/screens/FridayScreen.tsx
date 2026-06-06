@@ -220,7 +220,7 @@ export default function FridayScreen() {
 
           <View style={styles.duaCard}>
             <View style={styles.duaTimeHeader}>
-              <Ionicons name="heart" size={20} color="#E53935" />
+              <Ionicons name="heart" size={20} color={C.coral} />
               <Text style={styles.duaTimeTitle}>Recommended Duas</Text>
             </View>
             {[
@@ -246,28 +246,28 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: C.textPrimary },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
   subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
 
   tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', gap: 6 },
   tabActive: { backgroundColor: C.coral },
-  tabLabel: { fontSize: 11, color: C.textSecondary, fontWeight: '500' },
-  tabLabelActive: { color: '#FFF', fontWeight: '700' },
+  tabLabel: { fontSize: 11, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
+  tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' },
 
   progressCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, marginBottom: 16},
   progressItem: { flex: 1, alignItems: 'center' },
   progressDivider: { width: 1, backgroundColor: C.border },
-  progressValue: { fontSize: 20, fontWeight: 'bold', color: C.textPrimary, marginTop: 6 },
+  progressValue: { fontSize: 20, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 6 },
   progressLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 },
 
   checkItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
-  checkItemDone: { backgroundColor: C.coralPale },
+  checkItemDone: { backgroundColor: C.primaryLight },
   checkBox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center' },
   checkBoxDone: { backgroundColor: C.coral, borderColor: C.coral },
-  checkLabel: { flex: 1, fontSize: 14, fontWeight: '500', color: C.textPrimary },
+  checkLabel: { flex: 1, fontSize: 14, fontFamily: 'Jost_500Medium', color: C.textPrimary },
   checkLabelDone: { color: C.coral, textDecorationLine: 'line-through' },
 
   notesCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, minHeight: 120 },
@@ -276,22 +276,22 @@ const styles = StyleSheet.create({
   kahfIntro: { fontSize: 14, color: C.textSecondary, fontStyle: 'italic', lineHeight: 22, marginHorizontal: 18, marginBottom: 4 },
   kahfSource: { fontSize: 12, color: C.textMuted, marginHorizontal: 18, marginBottom: 16 },
   kahfSection: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
-  kahfSectionRead: { backgroundColor: C.coralPale, opacity: 0.8 },
+  kahfSectionRead: { backgroundColor: C.primaryLight, opacity: 0.8 },
   kahfSectionCurrent: { borderWidth: 1.5, borderColor: C.gold },
   kahfNumWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
   kahfNumWrapDone: { backgroundColor: C.coral },
-  kahfNum: { fontSize: 13, fontWeight: 'bold', color: C.textSecondary },
+  kahfNum: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary },
   kahfNumDone: { color: '#FFF' },
   kahfInfo: { flex: 1, marginLeft: 12 },
-  kahfAyah: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
+  kahfAyah: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   kahfTextDone: { color: C.coral, textDecorationLine: 'line-through' },
   kahfDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
   duaCard: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12},
   duaTimeHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  duaTimeTitle: { fontSize: 15, fontWeight: '700', color: C.textPrimary },
+  duaTimeTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary },
   duaTimeDesc: { fontSize: 13, color: C.textSecondary, lineHeight: 20 },
   duaTimeBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.goldPale, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'flex-start', marginTop: 12 },
-  duaTimeBadgeText: { fontSize: 12, color: C.gold, fontWeight: '600' },
+  duaTimeBadgeText: { fontSize: 12, color: C.gold, fontFamily: 'Jost_600SemiBold' },
   recommendedDua: { flexDirection: 'row', gap: 10, marginTop: 8 },
   recommendedDuaText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 }});

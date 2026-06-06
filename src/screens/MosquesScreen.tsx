@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'BodoniModa_700Bold',
     color: C.textPrimary,
   },
   refreshText: {
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: C.coralPale,
+    backgroundColor: C.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   },
   mosqueName: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'Jost_600SemiBold',
     color: C.textPrimary,
   },
   mosqueAddress: {
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   distanceTag: {
-    backgroundColor: C.coralPale,
+    backgroundColor: C.primaryLight,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
@@ -168,6 +168,6 @@ const styles = StyleSheet.create({
   distanceText: {
     fontSize: 12,
     color: C.textSecondary,
-    fontWeight: '600',
+    fontFamily: 'Jost_600SemiBold',
   },
 });

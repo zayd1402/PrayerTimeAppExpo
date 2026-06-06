@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity,
-  Animated, TextInput, Alert, Dimensions
+  TextInput, Alert, Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
@@ -72,8 +72,8 @@ const tabStyles = StyleSheet.create({
   container: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12 },
   tabActive: { backgroundColor: C.coral },
-  tabLabel: { fontSize: 11, color: C.textSecondary, marginTop: 3, fontWeight: '500' },
-  tabLabelActive: { color: '#FFF', fontWeight: '700' }});
+  tabLabel: { fontSize: 11, color: C.textSecondary, marginTop: 3, fontFamily: 'Jost_500Medium' },
+  tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' }});
 
 // ─── Dhikr Ring ──────────────────────────────────────────────
 function DhikrRing({ target, current, label, color, onPress }: { target: number; current: number; label: string; color: string; onPress: () => void }) {
@@ -97,9 +97,9 @@ function DhikrRing({ target, current, label, color, onPress }: { target: number;
 const dhikrStyles = StyleSheet.create({
   ringWrap: { alignItems: 'center', marginHorizontal: 8 },
   ring: { width: 80, height: 80, borderRadius: 40, borderWidth: 4, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
-  count: { fontSize: 22, fontWeight: 'bold' },
+  count: { fontSize: 22, fontFamily: 'Jost_700Bold' },
   target: { fontSize: 12, color: C.textMuted },
-  label: { fontSize: 12, color: C.textSecondary, fontWeight: '600' },
+  label: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_600SemiBold' },
   completedBadge: { position: 'absolute', top: 0, right: 0, width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }});
 
 // ─── Weekly Chart ────────────────────────────────────────────
@@ -125,7 +125,7 @@ function WeeklyChart({ data, label, color }: { data: number[]; label: string; co
 
 const chartStyles = StyleSheet.create({
   container: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 16, marginHorizontal: 18, marginBottom: 12 },
-  title: { fontSize: 14, fontWeight: '700', color: C.textPrimary, marginBottom: 12 },
+  title: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 12 },
   bars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 80 },
   barWrap: { alignItems: 'center', flex: 1 },
   barTrack: { width: 8, height: 60, backgroundColor: C.border, borderRadius: 4, justifyContent: 'flex-end', overflow: 'hidden' },
@@ -241,7 +241,7 @@ export default function WorshipScreen() {
         <Text style={styles.dhikrSubtitle}>total dhikr today</Text>
 
         <View style={styles.dhikrRings}>
-          <DhikrRing target={33} current={dhikr.subhanallah} label="SubhanAllah" color="#4A90D9" onPress={() => increment('subhanallah')} />
+          <DhikrRing target={33} current={dhikr.subhanallah} label="SubhanAllah" color={C.gold} onPress={() => increment('subhanallah')} />
           <DhikrRing target={33} current={dhikr.alhamdulillah} label="Alhamdulillah" color={C.coral} onPress={() => increment('alhamdulillah')} />
           <DhikrRing target={34} current={dhikr.allahuakbar} label="Allahu Akbar" color={C.gold} onPress={() => increment('allahuakbar')} />
         </View>
@@ -362,51 +362,61 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: C.textPrimary },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
   subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginTop: 18, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 18, marginBottom: 10 },
 
   // Sunnah
   sunnahGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 10 },
   sunnahCard: {
     width: (width - 56) / 2,
-    backgroundColor: C.bgSurface, borderRadius: 16, padding: 14
+    backgroundColor: C.surfaceElevated, borderRadius: 16, padding: 14,
+    ...C.shadow.sm,
   },
-  sunnahCardCompleted: { backgroundColor: C.coralPale },
+  sunnahCardCompleted: { backgroundColor: C.primaryLight },
   sunnahIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   sunnahIconWrapDone: { backgroundColor: C.coral },
-  sunnahRakahText: { fontSize: 13, fontWeight: 'bold', color: C.textSecondary },
-  sunnahName: { fontSize: 14, fontWeight: '600', color: C.textPrimary },
+  sunnahRakahText: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary },
+  sunnahName: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   sunnahNameDone: { color: C.coral },
   sunnahTime: { fontSize: 11, color: C.textMuted, marginTop: 2 },
 
   // Dhikr
   dhikrHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 18, marginTop: 8 },
-  dhikrTotal: { fontSize: 56, fontWeight: 'bold', color: C.coral },
-  dhikrAction: { fontSize: 14, color: C.textMuted, fontWeight: '600' },
+  dhikrTotal: { fontSize: 56, fontFamily: 'BodoniModa_700Bold', color: C.coral },
+  dhikrAction: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_600SemiBold' },
   dhikrSubtitle: { fontSize: 14, color: C.textMuted, paddingHorizontal: 18, marginBottom: 16 },
   dhikrRings: { flexDirection: 'row', justifyContent: 'center', marginVertical: 12 },
 
   // Fasting
   fastGrid: { paddingHorizontal: 18, gap: 10 },
   fastCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceElevated,
     borderRadius: 16, padding: 16, gap: 14,
-    borderWidth: 1.5, borderColor: 'transparent'
+    borderWidth: 1.5, borderColor: 'transparent',
+    ...C.shadow.sm,
   },
-  fastCardActive: { borderColor: C.coral, backgroundColor: C.coralPale },
-  fastLabel: { fontSize: 15, fontWeight: '600', color: C.textPrimary, flex: 1 },
+  fastCardActive: { borderColor: C.coral, backgroundColor: C.primaryLight },
+  fastLabel: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, flex: 1 },
   fastLabelActive: { color: C.coral },
   fastDesc: { fontSize: 12, color: C.textMuted, position: 'absolute', left: 54, bottom: 12 },
   fastCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.coral, justifyContent: 'center', alignItems: 'center' },
-  ramadanCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale, borderRadius: 18, padding: 18, margin: 18, marginTop: 24 },
-  ramadanTitle: { fontSize: 15, fontWeight: '700', color: C.gold },
+  ramadanCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale,
+    borderRadius: 18, padding: 18, margin: 18, marginTop: 24,
+    ...C.shadow.md,
+  },
+  ramadanTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.gold },
   ramadanText: { fontSize: 13, color: C.textSecondary, marginTop: 2 },
 
   // Quran
-  quranSummary: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 20, marginTop: 8 },
+  quranSummary: {
+    flexDirection: 'row', backgroundColor: C.surfaceElevated, borderRadius: 18,
+    marginHorizontal: 18, padding: 20, marginTop: 8,
+    ...C.shadow.md,
+  },
   quranStat: { flex: 1, alignItems: 'center' },
-  quranStatValue: { fontSize: 32, fontWeight: 'bold', color: C.gold },
+  quranStatValue: { fontSize: 32, fontFamily: 'Jost_700Bold', color: C.gold },
   quranStatLabel: { fontSize: 12, color: C.textMuted, marginTop: 4 },
   quranDivider: { width: 1, backgroundColor: C.border, marginHorizontal: 12 },
   quranInputWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 18, marginTop: 16, gap: 10 },

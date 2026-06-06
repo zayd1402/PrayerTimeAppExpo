@@ -45,12 +45,12 @@ interface TodayScreenProps {
 }
 
 const PRAYERS: Prayer[] = [
-  { id: 'fajr', name: 'Fajr', arabicName: 'الفجر', icon: 'sunny-outline' },
-  { id: 'sunrise', name: 'Sunrise', arabicName: 'الشروق', icon: 'partly-sunny-outline' },
-  { id: 'dhuhr', name: 'Dhuhr', arabicName: 'الظهر', icon: 'sun-outline' },
-  { id: 'asr', name: 'Asr', arabicName: 'العصر', icon: 'cloud-outline' },
-  { id: 'maghrib', name: 'Maghrib', arabicName: 'المغرب', icon: 'moon-outline' },
-  { id: 'isha', name: 'Isha', arabicName: 'العشاء', icon: 'moon-outline' },
+  { id: 'fajr', name: 'Fajr', arabicName: 'الفجر', icon: PRAYER_ICONS.fajr.icon },
+  { id: 'sunrise', name: 'Sunrise', arabicName: 'الشروق', icon: PRAYER_ICONS.sunrise.icon },
+  { id: 'dhuhr', name: 'Dhuhr', arabicName: 'الظهر', icon: PRAYER_ICONS.dhuhr.icon },
+  { id: 'asr', name: 'Asr', arabicName: 'العصر', icon: PRAYER_ICONS.asr.icon },
+  { id: 'maghrib', name: 'Maghrib', arabicName: 'المغرب', icon: PRAYER_ICONS.maghrib.icon },
+  { id: 'isha', name: 'Isha', arabicName: 'العشاء', icon: PRAYER_ICONS.isha.icon },
 ];
 
 const TRACKABLE = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
@@ -126,8 +126,8 @@ function PrayerRow({
     if (isActive) {
       rowScale.value = withRepeat(
         withSequence(
-          withTiming(1.03, { duration: 1200 }),
-          withTiming(1, { duration: 1200 })
+          withTiming(1.008, { duration: 2000 }),
+          withTiming(1, { duration: 2000 })
         ),
         -1, true
       );
@@ -187,7 +187,7 @@ function PrayerRow({
           ]}
         >
           <View style={[styles.prayerIconWrap, isActive && styles.prayerIconWrapActive]}>
-            <Ionicons name={prayer.icon as any} size={22} color={isActive ? C.coral : C.textSecondary} />
+            <Ionicons name={(isActive ? PRAYER_ICONS[prayer.id as PrayerId].iconActive : prayer.icon) as any} size={22} color={isActive ? C.primary : C.textSecondary} />
             {isActive && <View style={styles.activePulse} />}
           </View>
 
@@ -198,7 +198,7 @@ function PrayerRow({
             <Text style={styles.prayerArabic}>{prayer.arabicName}</Text>
             {iqamaCountdown && (
               <View style={styles.iqamaBadge}>
-                <Ionicons name="time-outline" size={10} color={C.coral} />
+                <Ionicons name="time-outline" size={10} color={C.primary} />
                 <Text style={styles.iqamaText}>Iqama in {iqamaCountdown}</Text>
               </View>
             )}
@@ -303,7 +303,7 @@ export default function TodayScreen() {
       {/* Hero Card with Sunset Gradient */}
       <Animated.View style={[styles.heroCard, heroStyle]}>
         <LinearGradient
-          colors={['#FCE4C9', '#FDF0E0', '#FFF5EB']}
+          colors={['#FAF5FF', '#F3ECFF', '#FDF8FF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.heroGradient}
@@ -381,87 +381,101 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { padding: 18, paddingBottom: 120 },
 
-  // Hero
+  // Hero — Neumorphic
   heroCard: {
     borderRadius: 24,
     marginBottom: 16,
-    shadowColor: '#D4A03C',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
+    // Neumorphic: soft raised shadow (light top-left, dark bottom-right)
+    shadowColor: C.shadow.md.shadowColor,
+    shadowOffset: { width: -4, height: -4 },
+    shadowOpacity: 1,
     shadowRadius: 12,
-    elevation: 4,
+    elevation: 8,
     overflow: 'hidden',
   },
   heroGradient: {
     padding: 24,
+    // Makes the top-left shadow "light" visible
+    backgroundColor: C.bgCard,
   },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   heroLeft: { flex: 1 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
-  locationText: { color: C.textSecondary, fontSize: 13, fontFamily: 'Inter_500Medium' },
-  nextPrayerText: { color: C.textPrimary, fontSize: 34, fontFamily: 'PlayfairDisplay_700Bold' },
-  nextPrayerTime: { color: C.textSecondary, fontSize: 14, fontFamily: 'Inter_400Regular', marginTop: 2 },
-  timerText: { color: C.coral, fontSize: 38, fontFamily: 'PlayfairDisplay_700Bold', marginTop: 12, fontVariant: ['tabular-nums'] },
+  locationText: { color: C.textSecondary, fontSize: 13, fontFamily: 'Jost_500Medium' },
+  nextPrayerText: { color: C.textPrimary, fontSize: 34, fontFamily: 'BodoniModa_700Bold' },
+  nextPrayerTime: { color: C.textSecondary, fontSize: 14, fontFamily: 'Jost_400Regular', marginTop: 2 },
+  timerText: { color: C.gold, fontSize: 38, fontFamily: 'BodoniModa_700Bold', marginTop: 12, fontVariant: ['tabular-nums'] },
   progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, gap: 12 },
-  progressBar: { flex: 1, height: 6, backgroundColor: 'rgba(212,160,60,0.15)', borderRadius: 3 },
+  progressBar: { flex: 1, height: 6, backgroundColor: 'rgba(202,138,4,0.15)', borderRadius: 3 },
   progressFill: { height: '100%', backgroundColor: C.gold, borderRadius: 3 },
-  progressText: { color: C.textPrimary, fontSize: 14, fontFamily: 'Inter_700Bold', fontVariant: ['tabular-nums'] },
+  progressText: { color: C.textPrimary, fontSize: 14, fontFamily: 'Jost_700Bold', fontVariant: ['tabular-nums'] },
 
   // Ring
   ringContainer: { justifyContent: 'center', alignItems: 'center' },
-  ringBg: { position: 'absolute', backgroundColor: 'rgba(212,160,60,0.1)' },
+  ringBg: { position: 'absolute', backgroundColor: 'rgba(202,138,4,0.1)' },
   ringSvg: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
   ringTrack: { position: 'absolute' },
   ringFill: { position: 'absolute' },
-  ringText: { color: C.textPrimary, fontSize: 14, fontFamily: 'Inter_700Bold' },
+  ringText: { color: C.textPrimary, fontSize: 14, fontFamily: 'Jost_700Bold' },
 
   // Hijri
   hijriRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16 },
-  hijriText: { textAlign: 'center', color: C.textSecondary, fontSize: 14, fontFamily: 'Inter_500Medium' },
+  hijriText: { textAlign: 'center', color: C.textSecondary, fontSize: 14, fontFamily: 'Jost_500Medium' },
 
   // Prayer List
   prayerList: { gap: 10 },
 
   // Prayer Row
   prayerRowWrap: { borderRadius: 18, overflow: 'hidden', marginBottom: 2 },
-  prayerRowWrapNext: { shadowColor: C.coral, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 8},
-  prayerRowWrapActive: { borderWidth: 1.5, borderColor: 'rgba(232,130,107,0.3)' },
+  prayerRowWrapNext: {
+    ...C.shadow.md,
+    backgroundColor: C.surfaceElevated,
+    borderWidth: 1,
+    borderColor: 'rgba(124,58,237,0.1)',
+  },
+  prayerRowWrapActive: { borderWidth: 1.5, borderColor: 'rgba(124,58,237,0.2)' },
   prayerRowWrapCompleted: { opacity: 0.75 },
   swipeBg: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 100, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 4 },
-  swipeBgDone: { backgroundColor: C.coral },
+  swipeBgDone: { backgroundColor: C.primary },
   swipeBgUndo: { backgroundColor: C.textMuted },
-  swipeText: { color: '#FFF', fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  swipeText: { color: '#FFF', fontSize: 12, fontFamily: 'Jost_600SemiBold' },
   prayerRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.bgSurface, borderRadius: 18,
+    backgroundColor: C.surfaceElevated, borderRadius: 18,
     paddingHorizontal: 16, paddingVertical: 14, gap: 14},
-  prayerRowNext: { backgroundColor: '#FFF5F0' },
-  prayerRowActive: { backgroundColor: '#FDE8E2' },
+  prayerRowNext: { backgroundColor: C.bgCard },
+  prayerRowActive: { backgroundColor: C.surfaceElevated },
   prayerRowDone: { backgroundColor: '#FAFAFA' },
-  prayerIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#F5F5F0', justifyContent: 'center', alignItems: 'center' },
-  prayerIconWrapActive: { backgroundColor: 'rgba(232,130,107,0.12)' },
+  prayerIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(202,138,4,0.08)', justifyContent: 'center', alignItems: 'center' },
+  prayerIconWrapActive: { backgroundColor: 'rgba(124,58,237,0.1)' },
   prayerIcon: { fontSize: 22 },
-  activePulse: { position: 'absolute', width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: C.coral, opacity: 0.4 },
+  activePulse: { position: 'absolute', width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: C.primary, opacity: 0.3 },
   prayerInfo: { flex: 1 },
-  prayerName: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: C.textPrimary },
-  prayerNameNext: { color: C.coral, fontFamily: 'Inter_700Bold' },
-  prayerNameDone: { color: C.textMuted, fontFamily: 'Inter_500Medium', textDecorationLine: 'line-through' },
-  prayerArabic: { fontSize: 12, color: C.textMuted, fontFamily: 'Inter_400Regular', marginTop: 1 },
-  iqamaBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, backgroundColor: 'rgba(232,130,107,0.08)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start' },
-  iqamaText: { fontSize: 11, color: C.coral, fontFamily: 'Inter_600SemiBold' },
+  prayerName: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
+  prayerNameNext: { color: C.primary, fontFamily: 'Jost_700Bold' },
+  prayerNameDone: { color: C.textMuted, fontFamily: 'Jost_500Medium', textDecorationLine: 'line-through' },
+  prayerArabic: { fontSize: 12, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 1 },
+  iqamaBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, backgroundColor: 'rgba(124,58,237,0.08)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start' },
+  iqamaText: { fontSize: 11, color: C.primary, fontFamily: 'Jost_600SemiBold' },
   prayerRight: { alignItems: 'flex-end', gap: 6 },
-  prayerTimeText: { fontSize: 15, color: C.textSecondary, fontFamily: 'Inter_500Medium', fontVariant: ['tabular-nums'] },
-  prayerTimeNext: { color: C.coral, fontFamily: 'Inter_700Bold' },
+  prayerTimeText: { fontSize: 15, color: C.textSecondary, fontFamily: 'Jost_500Medium', fontVariant: ['tabular-nums'] },
+  prayerTimeNext: { color: C.primary, fontFamily: 'Jost_700Bold' },
   checkCircle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center' },
-  checkCircleDone: { backgroundColor: C.coral, borderColor: C.coral },
+  checkCircleDone: { backgroundColor: C.primary, borderColor: C.primary },
   checkEmpty: { width: 10, height: 10, borderRadius: 5 },
 
   // Hadith Card
-  hadithCard: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginTop: 16 },
+  hadithCard: {
+    backgroundColor: C.surfaceElevated,
+    borderRadius: 18, padding: 18, marginTop: 16,
+    ...C.shadow.md,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
   hadithHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  hadithTitle: { fontSize: 14, fontFamily: 'Inter_700Bold', color: C.gold },
-  hadithText: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontFamily: 'Inter_400Regular', fontStyle: 'italic' },
-  hadithSource: { fontSize: 12, color: C.textMuted, marginTop: 8, textAlign: 'right', fontFamily: 'Inter_500Medium' },
+  hadithTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
+  hadithText: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontFamily: 'Jost_400Regular', fontStyle: 'italic' },
+  hadithSource: { fontSize: 12, color: C.textMuted, marginTop: 8, textAlign: 'right', fontFamily: 'Jost_500Medium' },
 
   // Hint
-  hintText: { textAlign: 'center', color: C.textMuted, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 16 }});
+  hintText: { textAlign: 'center', color: C.textMuted, fontSize: 12, fontFamily: 'Jost_400Regular', marginTop: 16 }});

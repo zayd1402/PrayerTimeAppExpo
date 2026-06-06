@@ -12,13 +12,13 @@ Notifications.setNotificationHandler({
 });
 
 export async function hasNotificationPermission(): Promise<boolean> {
-  const { status } = await Notifications.getPermissionsAsync();
-  return status === 'granted';
+  const result = await Notifications.getPermissionsAsync();
+  return (result as any).granted === true;
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === 'granted';
+  const result = await Notifications.requestPermissionsAsync();
+  return (result as any).granted === true;
 }
 
 // ─── Prayer Notifications ────────────────────────────────────

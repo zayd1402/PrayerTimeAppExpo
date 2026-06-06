@@ -1,46 +1,56 @@
-// ─── Design Tokens — Light Gold Sunset ──────────────────────
+// ─── Design Tokens — Neumorphism Purple + Gold ────────────────
+// Source: UI-UX-Pro-Max skill — spiritual prayer app design system
+// Style: Neumorphism (Soft UI) — embossed depth, monochromatic shifts
+
 export const C = {
-  // Backgrounds — warm cream tones
-  bgBase:       '#FDF8F3',  // warm cream base
-  bgSurface:    '#FFFFFF',  // white
-  heroBg:       '#FCE4C9',  // soft peach gold — hero card gradient start
+  // Backgrounds — lavender-cream spectrum
+  bgBase:       '#FAF5FF',  // lavender cream — screen background
+  bgSurface:    '#F5EEFF',  // subtle lavender tint for cards
+  bgCard:       '#EFE6FF',  // card background (slightly darker for depth)
+
+  // Primary — Spiritual Purple
+  primary:      '#7C3AED',  // deep purple — primary accent, active states
+  primaryDark:  '#5B21B6',  // darker purple — pressed states
+  primaryLight: '#A78BFA',  // light purple — hover, subtle backgrounds
 
   // Accent — Warm Gold
-  gold:         '#D4A03C',  // warm gold accent
-  goldLight:    '#E8C97A',  // light gold
-  goldPale:     '#F5E6CC',  // pale gold
+  gold:         '#CA8A04',  // warm gold — sacred content, hadith, timer
+  goldLight:    '#EAB308',  // brighter gold — hover
+  goldPale:     '#FEF3C7',  // pale gold — backgrounds
 
-  // Accent — Warm Coral (replaces green/emerald for active states)
-  coral:        '#E8826B',  // warm coral — primary active accent
-  coralPale:    '#FDE8E2',  // pale coral background
+  // Surface variations for neumorphism depth
+  surfaceElevated: '#F3ECFF',
+  surfacePressed:  '#E8D8FF',
+
+  // Neumorphic shadow tokens
+  shadow: {
+    sm: { shadowColor: 'rgba(124,58,237,0.12)', shadowOffset: { width: -2, height: -2 }, shadowOpacity: 1, shadowRadius: 6 },
+    md: { shadowColor: 'rgba(124,58,237,0.15)', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 1, shadowRadius: 10 },
+    lg: { shadowColor: 'rgba(124,58,237,0.18)', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 1, shadowRadius: 16 },
+  },
 
   // Timer
-  timerAmber:   '#E8A045',  // warm amber for countdown display
+  timerAmber: '#CA8A04',
 
-  // Secondary accents
-  warmAmber:    '#E8A87C',  // soft amber
-  rose:         '#E8B4B8',  // soft rose
-  warmBlue:     '#8BA4C7',  // muted warm blue
-  red:          '#DC2626',  // keep — it's a semantic color
+  // Text — purple spectrum
+  textPrimary:  '#4C1D95',  // deep purple — primary text
+  textSecondary:'#7C3AED',  // medium purple — secondary text
+  textMuted:    '#A78BFA',  // light purple — muted/hints
 
-  // Text — warm browns (no cold navy)
-  textPrimary:  '#3D2C1A',  // warm dark brown
-  textSecondary:'#8B7355',  // warm medium brown
-  textMuted:    '#B8A088',  // warm muted brown
+  // Semantic
+  red:          '#DC2626',
+  white:        '#FFFFFF',
 
-  // Borders — warm tones
-  border:       '#EDE0D4',  // warm cream border
-  borderStrong: '#DCC8B8',  // stronger warm border
+  // Borders
+  border:       'rgba(124,58,237,0.08)',
+  borderStrong: 'rgba(124,58,237,0.15)',
 
   // Radius scale
   radius: {
-    sm: 10,
-    md: 14,
-    lg: 18,
-    xl: 24,
+    sm: 12, md: 14, lg: 16, xl: 24,
   },
 
-  // Typography scale — matching DESIGN.md hierarchy
+  // Typography scale
   type: {
     display:  { fontSize: 32, fontWeight: '700' as const, lineHeight: 1.15 },
     headline: { fontSize: 22, fontWeight: '700' as const, lineHeight: 1.25 },
@@ -50,25 +60,35 @@ export const C = {
     caption:  { fontSize: 10, fontWeight: '500' as const, lineHeight: 1.2  },
   },
 
-  // ─── Deprecated aliases (migrate to the names above) ─────
-  // These exist so the app doesn't break mid-migration.
-  // Once all source files use coral/coralPale, remove these.
-  /** @deprecated Use C.coral instead */
-  emerald:     '#E8826B',
-  /** @deprecated Use C.coralPale instead */
-  emeraldPale: '#FDE8E2',
-  /** @deprecated Use C.textPrimary instead */
-  navy:        '#3D2C1A',
-  /** @deprecated Use C.textSecondary instead */
-  navySoft:    '#8B7355',
-  /** @deprecated Use C.rose instead */
-  purple:      '#E8B4B8',
-  /** @deprecated Use C.warmAmber instead */
-  teal:        '#E8A87C',
-  /** @deprecated Use C.gold instead */
-  green:       '#D4A03C',
-  /** @deprecated Use C.warmBlue instead */
-  blue:        '#8BA4C7',
+  // ─── Deprecated aliases — keeps old code compiling ─────
+  /** @deprecated Use C.primary */
+  emerald:     '#7C3AED',
+  /** @deprecated Use C.primaryLight */
+  emeraldPale: '#A78BFA',
+  /** @deprecated Use C.textPrimary */
+  navy:        '#4C1D95',
+  /** @deprecated Use C.textSecondary */
+  navySoft:    '#7C3AED',
+  /** @deprecated Use C.primaryLight */
+  purple:      '#A78BFA',
+  /** @deprecated Use C.primaryLight */
+  teal:        '#A78BFA',
+  /** @deprecated Use C.gold */
+  green:       '#CA8A04',
+  /** @deprecated Use C.primaryLight */
+  blue:        '#A78BFA',
+  /** @deprecated Use C.primary */
+  coral:       '#7C3AED',
+  /** @deprecated Use C.primaryLight */
+  coralPale:   '#A78BFA',
+  /** @deprecated Use C.gold */
+  warmAmber:   '#CA8A04',
+  /** @deprecated Use C.textSecondary */
+  warmBlue:    '#7C3AED',
+  /** @deprecated Use C.primaryLight */
+  rose:        '#A78BFA',
+  /** @deprecated Use C.bgBase */
+  heroBg:      '#FAF5FF',
 };
 
 // ─── Prayer IDs & Config ─────────────────────────────────────
@@ -81,16 +101,16 @@ export interface PrayerTime {
   arabic: string;
   icon: string;
   iconActive: string;
-  time: string;       // "5:17 AM"
-  minutes: number;   // minutes from midnight
+  time: string;
+  minutes: number;
   status: 'upcoming' | 'active' | 'passed';
 }
 
 export interface PrayerLogEntry {
-  date: string;           // "2026-05-15"
+  date: string;
   prayerId: PrayerId;
   status: 'prayed' | 'qaza' | 'missed';
-  time?: string;          // actual time prayed
+  time?: string;
 }
 
 // ─── Settings Types ─────────────────────────────────────────
@@ -105,13 +125,9 @@ export interface AppSettings {
   madhab: Madhab;
   notificationsEnabled: boolean;
   fajrAlarmEnabled: boolean;
-  fajrAlarmMinutes: number;   // minutes before
+  fajrAlarmMinutes: number;
   iqamaCountdownEnabled: boolean;
-  location: {
-    latitude: number;
-    longitude: number;
-    name: string;
-  } | null;
+  location: { latitude: number; longitude: number; name: string } | null;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -276,7 +292,7 @@ export interface WeeklyActivity {
   id: string;
   title: string;
   description: string;
-  dayOfWeek: number; // 0 = Sunday, 6 = Saturday
+  dayOfWeek: number;
   type: 'fasting' | 'sunnah' | 'quran' | 'dhikr' | 'charity' | 'reminder';
   isEnabled: boolean;
 }

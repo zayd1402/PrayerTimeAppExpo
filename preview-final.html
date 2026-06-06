@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>PrayerTimeApp — Final Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #F5F0EB; display: flex; justify-content: center; min-height: 100vh; padding: 20px; font-family: 'Inter', sans-serif; }
+.phone {
+  width: 390px; height: 844px; background: #FDF8F3; border-radius: 44px;
+  overflow: hidden; position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+  display: flex; flex-direction: column;
+}
+/* Status Bar */
+.status-bar { padding: 12px 24px 4px; display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: #3D2C1A; }
+/* Screen Content */
+.screen-content { flex: 1; overflow-y: auto; padding: 0 18px; display: none; }
+.screen-content.active { display: block; }
+/* Hero Card */
+.hero-card {
+  background: linear-gradient(135deg, #FCE4C9 0%, #FDF0E0 50%, #FFF5EB 100%);
+  border-radius: 24px; padding: 24px; margin-bottom: 16px; margin-top: 16px;
+  box-shadow: 0 4px 12px rgba(212,160,60,0.12);
+}
+.hero-top { display: flex; justify-content: space-between; align-items: flex-start; }
+.hero-left { flex: 1; }
+.location-row { display: flex; align-items: center; gap: 4px; margin-bottom: 6px; }
+.location-icon { font-size: 14px; color: #8B7355; }
+.location-text { font-size: 13px; color: #8B7355; font-weight: 500; }
+.next-prayer-name { font-size: 34px; font-family: 'Playfair Display', serif; font-weight: 700; color: #3D2C1A; }
+.next-prayer-time { font-size: 14px; color: #8B7355; margin-top: 2px; }
+.timer-display { font-size: 38px; font-family: 'Playfair Display', serif; font-weight: 700; color: #E8826B; margin-top: 12px; font-variant-numeric: tabular-nums; }
+.progress-row { display: flex; align-items: center; margin-top: 16px; gap: 12px; }
+.progress-bar { flex: 1; height: 6px; background: rgba(212,160,60,0.15); border-radius: 3px; }
+.progress-fill { height: 100%; width: 60%; background: #D4A03C; border-radius: 3px; }
+.progress-text { font-size: 14px; color: #3D2C1A; font-weight: 700; }
+/* Prayer Ring */
+.ring { width: 58px; height: 58px; border-radius: 29px; border: 5px solid; position: relative; display: flex; align-items: center; justify-content: center; }
+.ring-track { border-color: rgba(212,160,60,0.15); }
+.ring-fill { position: absolute; border-color: #D4A03C; border-top-color: #D4A03C; border-right-color: #D4A03C; transform: rotate(126deg); }
+.ring-text { font-size: 14px; font-weight: 700; color: #3D2C1A; }
+/* Hijri Date */
+.hijri-row { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 16px; }
+.hijri-text { font-size: 14px; color: #8B7355; font-weight: 500; }
+/* Prayer List */
+.prayer-list { display: flex; flex-direction: column; gap: 10px; }
+.prayer-row {
+  display: flex; align-items: center; background: #FFFFFF; border-radius: 18px;
+  padding: 14px 16px; gap: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  position: relative; overflow: hidden;
+}
+.prayer-row.next { background: #FFF5F0; box-shadow: 0 0 0 1.5px rgba(232,130,107,0.3); }
+.prayer-row.done { opacity: 0.75; }
+.prayer-icon-wrap { width: 44px; height: 44px; border-radius: 14px; background: #F5F5F0; display: flex; align-items: center; justify-content: center; }
+.prayer-icon-wrap.active { background: rgba(232,130,107,0.12); }
+.prayer-icon { font-size: 22px; }
+.prayer-info { flex: 1; }
+.prayer-name { font-size: 16px; font-weight: 600; color: #3D2C1A; }
+.prayer-name.next { color: #E8826B; font-weight: 700; }
+.prayer-name.done { color: #B8A088; text-decoration: line-through; }
+.prayer-arabic { font-size: 12px; color: #B8A088; margin-top: 1px; }
+.prayer-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.prayer-time { font-size: 15px; color: #8B7355; font-weight: 500; font-variant-numeric: tabular-nums; }
+.prayer-time.next { color: #E8826B; font-weight: 700; }
+.check-circle { width: 24px; height: 24px; border-radius: 12px; border: 2px solid #DCC8B8; display: flex; align-items: center; justify-content: center; }
+.check-circle.done { background: #E8826B; border-color: #E8826B; }
+/* Daily Hadith */
+.hadith-card { background: #FFFFFF; border-radius: 18px; padding: 18px; margin-top: 16px; }
+.hadith-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.hadith-title { font-size: 14px; font-weight: 700; color: #D4A03C; }
+.hadith-text { font-size: 14px; color: #3D2C1A; line-height: 22px; font-style: italic; }
+.hadith-source { font-size: 12px; color: #B8A088; margin-top: 8px; text-align: right; }
+/* Bottom Tabs */
+.bottom-tabs {
+  display: flex; background: #FFFFFF; border-top: 1px solid #EDE0D4;
+  padding: 6px 0 24px; margin-top: auto;
+}
+.tab-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0; cursor: pointer; border: none; background: none; }
+.tab-item.active .tab-label { color: #E8826B; font-weight: 700; }
+.tab-label { font-size: 10px; color: #B8A088; font-weight: 500; }
+.tab-icon { font-size: 22px; color: #B8A088; }
+.tab-item.active .tab-icon { color: #E8826B; }
+.tab-indicator { width: 4px; height: 4px; border-radius: 2px; background: #E8826B; margin-top: 2px; }
+/* Section Headers */
+.section-header { padding: 60px 0 8px; }
+.section-title { font-size: 32px; font-family: 'Playfair Display', serif; font-weight: 700; color: #3D2C1A; }
+.section-subtitle { font-size: 14px; color: #8B7355; margin-top: 4px; }
+/* Calendar Grid */
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 12px; }
+.cal-day { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 12px; font-size: 13px; color: #3D2C1A; background: #FFFFFF; }
+.cal-day.today { background: rgba(232,130,107,0.12); color: #E8826B; font-weight: 700; }
+.cal-day.active { background: #E8826B; color: #FFFFFF; }
+.cal-day.other-month { color: #DCC8B8; }
+.cal-day-name { font-size: 11px; color: #B8A088; font-weight: 600; text-align: center; padding: 8px 0; }
+.cal-event-dot { width: 4px; height: 4px; border-radius: 2px; margin-top: 2px; }
+/* Worship Tabs */
+.worship-tabs { display: flex; gap: 8px; margin: 12px 0; }
+.worship-tab { flex: 1; padding: 10px; border-radius: 14px; background: #FFFFFF; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.worship-tab.active { background: #E8826B; }
+.worship-tab.active .worship-tab-label { color: #FFFFFF; }
+.worship-tab-label { font-size: 13px; color: #8B7355; font-weight: 600; }
+/* Worship Stats */
+.worship-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.stat-card { background: #FFFFFF; border-radius: 18px; padding: 16px; text-align: center; }
+.stat-value { font-size: 22px; font-weight: 700; color: #3D2C1A; }
+.stat-label { font-size: 12px; color: #B8A088; font-weight: 500; margin-top: 4px; }
+/* Dua Categories */
+.dua-cats { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; }
+.dua-cat { white-space: nowrap; padding: 8px 16px; border-radius: 16px; background: #FFFFFF; border: none; cursor: pointer; font-size: 13px; color: #8B7355; font-weight: 500; }
+.dua-cat.active { background: #E8826B; color: #FFFFFF; }
+.dua-item { background: #FFFFFF; border-radius: 18px; padding: 16px; margin-top: 10px; }
+.dua-title { font-size: 16px; font-weight: 700; color: #3D2C1A; }
+.dua-arabic { font-size: 20px; color: #3D2C1A; margin-top: 8px; line-height: 1.8; }
+.dua-meaning { font-size: 14px; color: #8B7355; margin-top: 6px; line-height: 1.5; }
+/* More Grid */
+.more-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 16px; }
+.more-card { background: #FFFFFF; border-radius: 18px; padding: 16px; text-align: center; border: none; cursor: pointer; }
+.more-icon-wrap { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+.more-label { font-size: 12px; font-weight: 600; color: #3D2C1A; text-align: center; }
+/* Qibla */
+.qibla-compass { width: 240px; height: 240px; border-radius: 120px; background: #FFFFFF; border: 3px solid #EDE0D4; margin: 30px auto; position: relative; display: flex; align-items: center; justify-content: center; }
+.qibla-needle { width: 4px; height: 100px; background: #E8826B; border-radius: 2px; position: absolute; transform: rotate(-45deg); transform-origin: bottom center; bottom: 50%; }
+.qibla-label { text-align: center; font-size: 14px; color: #8B7355; }
+.qibla-dir { font-size: 24px; font-weight: 700; color: #3D2C1A; text-align: center; }
+/* Scrollbar */
+.screen-content::-webkit-scrollbar { width: 0; }
+/* Tab buttons */
+.tab-buttons { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+.tab-btn { padding: 8px 18px; border-radius: 16px; background: #FFFFFF; border: none; cursor: pointer; font-size: 13px; color: #8B7355; font-weight: 500; }
+.tab-btn.active { background: #E8826B; color: #FFFFFF; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="status-bar">
+    <span>9:41</span>
+    <span>🔋 100%</span>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <div class="screen-content active" data-screen="home" id="screen-home">
+    <div class="hero-card">
+      <div class="hero-top">
+        <div class="hero-left">
+          <div class="location-row">
+            <span class="location-icon">📍</span>
+            <span class="location-text">Sydney, Australia</span>
+          </div>
+          <div class="next-prayer-name">Maghrib</div>
+          <div class="next-prayer-time">at 5:02 PM</div>
+        </div>
+        <div style="width:58px;height:58px;border-radius:29px;border:5px solid rgba(212,160,60,0.15);display:flex;align-items:center;justify-content:center;position:relative">
+          <div style="position:absolute;width:58px;height:58px;border-radius:29px;border:5px solid #D4A03C;border-top-color:#D4A03C;border-right-color:#D4A03C;transform:rotate(126deg)"></div>
+          <span style="font-size:14px;font-weight:700;color:#3D2C1A">3/5</span>
+        </div>
+      </div>
+      <div class="timer-display">1:23</div>
+      <div class="progress-row">
+        <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+        <span class="progress-text">3/5</span>
+      </div>
+    </div>
+
+    <div class="hijri-row">
+      <span>📅</span>
+      <span class="hijri-text">19 Dhul Qadah 1447 AH</span>
+    </div>
+
+    <div class="prayer-list">
+      <div class="prayer-row done">
+        <div class="prayer-icon-wrap"><span class="prayer-icon">🌅</span></div>
+        <div class="prayer-info">
+          <div class="prayer-name done">Fajr</div>
+          <div class="prayer-arabic">الفجر</div>
+        </div>
+        <div class="prayer-right">
+          <div class="prayer-time" style="color:#B8A088">4:32 AM</div>
+          <div class="check-circle done"><span style="color:#FFF;font-size:12px">✓</span></div>
+        </div>
+      </div>
+      <div class="prayer-row done">
+        <div class="prayer-icon-wrap"><span class="prayer-icon">🌤</span></div>
+        <div class="prayer-info">
+          <div class="prayer-name done">Sunrise</div>
+          <div class="prayer-arabic">الشروق</div>
+        </div>
+        <div class="prayer-right">
+          <div class="prayer-time" style="color:#B8A088">6:12 AM</div>
+        </div>
+      </div>
+      <div class="prayer-row done">
+        <div class="prayer-icon-wrap"><span class="prayer-icon">☀️</span></div>
+        <div class="prayer-info">
+          <div class="prayer-name done">Dhuhr</div>
+          <div class="prayer-arabic">الظهر</div>
+        </div>
+        <div class="prayer-right">
+          <div class="prayer-time" style="color:#B8A088">12:04 PM</div>
+          <div class="check-circle done"><span style="color:#FFF;font-size:12px">✓</span></div>
+        </div>
+      </div>
+      <div class="prayer-row done">
+        <div class="prayer-icon-wrap"><span class="prayer-icon">⛅</span></div>
+        <div class="prayer-info">
+          <div class="prayer-name done">Asr</div>
+          <div class="prayer-arabic">العصر</div>
+        </div>
+        <div class="prayer-right">
+          <div class="prayer-time" style="color:#B8A088">3:48 PM</div>
+          <div class="check-circle done"><span style="color:#FFF;font-size:12px">✓</span></div>
+        </div>
+      </div>
+      <div class="prayer-row next" style="border:1.5px solid rgba(232,130,107,0.3);">
+        <div class="prayer-icon-wrap active"><span class="prayer-icon" style="color:#E8826B">🌆</span></div>
+        <div class="prayer-info">
+          <div class="prayer-name next">Maghrib</div>
+          <div class="prayer-arabic">المغرب</div>
+        </div>
+        <div class="prayer-right">
+          <div class="prayer-time next">5:02 PM</div>
+          <div class="check-circle"></div>
+        </div>
+      </div>
+      <div class="prayer-row">
+        <div class="prayer-icon-wrap"><span class="prayer-icon">🌙</span></div>
+        <div class="prayer-info">
+          <div class="prayer-name">Isha</div>
+          <div class="prayer-arabic">العشاء</div>
+        </div>
+        <div class="prayer-right">
+          <div class="prayer-time">7:30 PM</div>
+          <div class="check-circle"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="hadith-card">
+      <div class="hadith-header">
+        <span>📖</span>
+        <span class="hadith-title">Hadith of the Day</span>
+      </div>
+      <div class="hadith-text">"The prayer is the pillar of the religion. Whoever establishes it has established the religion, and whoever destroys it has destroyed the religion."</div>
+      <div class="hadith-source">— Al-Bayhaqi</div>
+    </div>
+    <div style="text-align:center;color:#B8A088;font-size:12px;margin:16px 0 24px">Swipe right to mark • Long press for options</div>
+  </div>
+
+  <!-- WORSHIP SCREEN -->
+  <div class="screen-content" data-screen="worship" id="screen-worship">
+    <div class="section-header">
+      <div class="section-title">Worship</div>
+      <div class="section-subtitle">Track your daily devotion</div>
+    </div>
+    <div class="worship-tabs">
+      <button class="worship-tab active" onclick="setActiveTab(this)">
+        <span style="font-size:18px;color:#FFF">❤️</span>
+        <span class="worship-tab-label" style="color:#FFF">Overview</span>
+      </button>
+      <button class="worship-tab" onclick="setActiveTab(this)">
+        <span style="font-size:18px">🕋</span>
+        <span class="worship-tab-label">Dhikr</span>
+      </button>
+      <button class="worship-tab" onclick="setActiveTab(this)">
+        <span style="font-size:18px">🌙</span>
+        <span class="worship-tab-label">Fasting</span>
+      </button>
+    </div>
+    <div class="worship-stats">
+      <div class="stat-card">
+        <div class="stat-value">92%</div>
+        <div class="stat-label">Prayer Score</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">45</div>
+        <div class="stat-label">Day Streak</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Quran (pages)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Dhikr Rings</div>
+      </div>
+    </div>
+    <div style="background:#FFFFFF;border-radius:18px;padding:16px;margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;color:#3D2C1A;margin-bottom:12px">This Week</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;height:80px">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="width:24px;height:70%;background:#E8826B;border-radius:6px"></div>
+          <span style="font-size:10px;color:#B8A088">S</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="width:24px;height:85%;background:#E8826B;border-radius:6px"></div>
+          <span style="font-size:10px;color:#B8A088">M</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="width:24px;height:60%;background:#E8826B;border-radius:6px"></div>
+          <span style="font-size:10px;color:#B8A088">T</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="width:24px;height:90%;background:#D4A03C;border-radius:6px"></div>
+          <span style="font-size:10px;color:#B8A088">W</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="width:24px;height:75%;background:#D4A03C;border-radius:6px"></div>
+          <span style="font-size:10px;color:#B8A088">T</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="width:24px;height:50%;background:#E8A87C;border-radius:6px"></div>
+          <span style="font-size:10px;color:#B8A088">F</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+          <div style="width:24px;height:40%;background:#E8A87C;border-radius:6px"></div>
+          <span style="font-size:10px;color:#B8A088">S</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALENDAR SCREEN -->
+  <div class="screen-content" data-screen="calendar" id="screen-calendar">
+    <div class="section-header">
+      <div class="section-title">Calendar</div>
+      <div class="section-subtitle">Dhul Qadah 1447 AH</div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+      <button style="background:none;border:none;font-size:18px;cursor:pointer;color:#3D2C1A">‹</button>
+      <span style="font-size:16px;font-weight:600;color:#3D2C1A">June 2026</span>
+      <button style="background:none;border:none;font-size:18px;cursor:pointer;color:#3D2C1A">›</button>
+    </div>
+    <div class="cal-grid">
+      <span class="cal-day-name">Sun</span>
+      <span class="cal-day-name">Mon</span>
+      <span class="cal-day-name">Tue</span>
+      <span class="cal-day-name">Wed</span>
+      <span class="cal-day-name">Thu</span>
+      <span class="cal-day-name">Fri</span>
+      <span class="cal-day-name">Sat</span>
+      <div class="cal-day other-month">31</div>
+      <div class="cal-day">1</div>
+      <div class="cal-day">2</div>
+      <div class="cal-day">3</div>
+      <div class="cal-day">4</div>
+      <div class="cal-day today">5</div>
+      <div class="cal-day">6</div>
+      <div class="cal-day">7</div>
+      <div class="cal-day">8</div>
+      <div class="cal-day">9</div>
+      <div class="cal-day">10</div>
+      <div class="cal-day">11</div>
+      <div class="cal-day">12</div>
+      <div class="cal-day" style="position:relative">
+        13
+        <div style="width:4px;height:4px;border-radius:2px;background:#D4A03C;margin-top:2px"></div>
+      </div>
+      <div class="cal-day">14</div>
+      <div class="cal-day active">15</div>
+      <div class="cal-day">16</div>
+      <div class="cal-day">17</div>
+      <div class="cal-day">18</div>
+      <div class="cal-day">19</div>
+      <div class="cal-day" style="position:relative">
+        20
+        <div style="width:4px;height:4px;border-radius:2px;background:#E8826B;margin-top:2px"></div>
+      </div>
+      <div class="cal-day">21</div>
+      <div class="cal-day">22</div>
+      <div class="cal-day">23</div>
+      <div class="cal-day">24</div>
+      <div class="cal-day">25</div>
+      <div class="cal-day">26</div>
+      <div class="cal-day">27</div>
+      <div class="cal-day">28</div>
+      <div class="cal-day">29</div>
+      <div class="cal-day">30</div>
+    </div>
+  </div>
+
+  <!-- DUAS SCREEN -->
+  <div class="screen-content" data-screen="duas" id="screen-duas">
+    <div class="section-header">
+      <div class="section-title">Duas</div>
+      <div class="section-subtitle">Daily supplications</div>
+    </div>
+    <div class="dua-cats">
+      <button class="dua-cat active" onclick="setActiveDua(this)">Featured</button>
+      <button class="dua-cat" onclick="setActiveDua(this)">Morning</button>
+      <button class="dua-cat" onclick="setActiveDua(this)">Evening</button>
+      <button class="dua-cat" onclick="setActiveDua(this)">Sleep</button>
+      <button class="dua-cat" onclick="setActiveDua(this)">Travel</button>
+    </div>
+    <div class="dua-item">
+      <div class="dua-title">Dua for Entering the Mosque</div>
+      <div class="dua-arabic">بِسْمِ اللَّهِ وَالصَّلَاةُ وَالسَّلَامُ عَلَى رَسُولِ اللَّهِ</div>
+      <div class="dua-meaning">"In the name of Allah, and peace and blessings be upon the Messenger of Allah. O Allah, open for me the doors of Your mercy."</div>
+    </div>
+    <div class="dua-item">
+      <div class="dua-title">Dua for Leaving the Mosque</div>
+      <div class="dua-arabic">بِسْمِ اللَّهِ وَالصَّلَاةُ وَالسَّلَامُ عَلَى رَسُولِ اللَّهِ</div>
+      <div class="dua-meaning">"In the name of Allah, and peace and blessings be upon the Messenger of Allah. O Allah, I ask You of Your bounty."</div>
+    </div>
+  </div>
+
+  <!-- MORE SCREEN -->
+  <div class="screen-content" data-screen="more" id="screen-more" style="padding-top:0">
+    <div style="padding:60px 18px 8px;background:#FCE4C9;margin:0 -18px">
+      <div style="font-size:26px;font-family:'Playfair Display',serif;font-weight:700;color:#3D2C1A">More</div>
+    </div>
+    <div class="more-grid">
+      <button class="more-card">
+        <div class="more-icon-wrap" style="background:rgba(212,160,60,0.07)"><span style="font-size:24px;color:#D4A03C">📄</span></div>
+        <div class="more-label">Hadith</div>
+      </button>
+      <button class="more-card">
+        <div class="more-icon-wrap" style="background:rgba(232,180,184,0.07)"><span style="font-size:24px;color:#E8B4B8">⭐</span></div>
+        <div class="more-label">Friday</div>
+      </button>
+      <button class="more-card">
+        <div class="more-icon-wrap" style="background:rgba(232,168,124,0.07)"><span style="font-size:24px;color:#E8A87C">📅</span></div>
+        <div class="more-label">Weekly</div>
+      </button>
+      <button class="more-card">
+        <div class="more-icon-wrap" style="background:rgba(232,130,107,0.07)"><span style="font-size:24px;color:#E8826B">🧭</span></div>
+        <div class="more-label">Qibla</div>
+      </button>
+      <button class="more-card">
+        <div class="more-icon-wrap" style="background:rgba(212,160,60,0.07)"><span style="font-size:24px;color:#D4A03C">💰</span></div>
+        <div class="more-label">Zakat</div>
+      </button>
+      <button class="more-card">
+        <div class="more-icon-wrap" style="background:rgba(139,164,199,0.07)"><span style="font-size:24px;color:#8BA4C7">✏️</span></div>
+        <div class="more-label">Journal</div>
+      </button>
+      <button class="more-card">
+        <div class="more-icon-wrap" style="background:rgba(232,168,124,0.07)"><span style="font-size:24px;color:#E8A87C">📍</span></div>
+        <div class="more-label">Mosques</div>
+      </button>
+      <button class="more-card">
+        <div class="more-icon-wrap" style="background:rgba(184,160,136,0.07)"><span style="font-size:24px;color:#B8A088">⚙️</span></div>
+        <div class="more-label">Settings</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- QIBLA SCREEN -->
+  <div class="screen-content" data-screen="qibla" id="screen-qibla">
+    <div class="section-header">
+      <div class="section-title">Qibla</div>
+      <div class="section-subtitle">Find the direction of Makkah</div>
+    </div>
+    <div class="qibla-compass">
+      <div style="font-size:14px;position:absolute;top:20px;color:#E8826B;font-weight:700">N</div>
+      <div style="font-size:14px;position:absolute;bottom:20px;color:#B8A088">S</div>
+      <div style="font-size:14px;position:absolute;left:20px;color:#B8A088">W</div>
+      <div style="font-size:14px;position:absolute;right:20px;color:#B8A088">E</div>
+      <div class="qibla-needle"></div>
+      <div style="width:8px;height:8px;border-radius:4px;background:#E8826B;z-index:2"></div>
+    </div>
+    <div class="qibla-dir">296° NW</div>
+    <div class="qibla-label">Qibla direction from Sydney, AU</div>
+    <div style="text-align:center;margin-top:12px;background:#FFFFFF;border-radius:18px;padding:12px;color:#3D2C1A;font-size:14px">
+      ✅ Aligned — your phone is facing the Qibla
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div class="bottom-tabs">
+    <button class="tab-item active" data-tab="home" onclick="switchScreen('home')">
+      <span class="tab-icon" style="color:#E8826B">🏠</span>
+      <span class="tab-label" style="color:#E8826B;font-weight:700">Home</span>
+      <div class="tab-indicator"></div>
+    </button>
+    <button class="tab-item" data-tab="worship" onclick="switchScreen('worship')">
+      <span class="tab-icon">❤️</span>
+      <span class="tab-label">Worship</span>
+    </button>
+    <button class="tab-item" data-tab="calendar" onclick="switchScreen('calendar')">
+      <span class="tab-icon">📅</span>
+      <span class="tab-label">Calendar</span>
+    </button>
+    <button class="tab-item" data-tab="duas" onclick="switchScreen('duas')">
+      <span class="tab-icon">📖</span>
+      <span class="tab-label">Duas</span>
+    </button>
+    <button class="tab-item" data-tab="more" onclick="switchScreen('more')">
+      <span class="tab-icon">🔲</span>
+      <span class="tab-label">More</span>
+    </button>
+  </div>
+</div>
+
+<script>
+function switchScreen(id) {
+  document.querySelectorAll('.screen-content').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-tab="${id}"]`).classList.add('active');
+}
+function setActiveTab(el) {
+  el.closest('.worship-tabs').querySelectorAll('.worship-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const isActive = el.classList.contains('active');
+  el.querySelector('.worship-tab-label').style.color = isActive ? '#FFF' : '#8B7355';
+}
+function setActiveDua(el) {
+  el.closest('.dua-cats').querySelectorAll('.dua-cat').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>

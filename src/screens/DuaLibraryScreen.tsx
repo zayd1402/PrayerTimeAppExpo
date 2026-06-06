@@ -1,8 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity,
-  TextInput, Animated, Dimensions
+  TextInput, Dimensions
 } from 'react-native';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withTiming, interpolate
+} from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { C, Dua, DUA_CATEGORIES, DuaCategory } from '../types';
 import { getFavoriteDuas, toggleFavoriteDua, isFavoriteDua } from '../services/StorageService';
@@ -101,18 +104,23 @@ const counterStyles = StyleSheet.create({
   track: { height: 4, backgroundColor: C.border, borderRadius: 2, marginBottom: 8 },
   fill: { height: 4, backgroundColor: C.coral, borderRadius: 2 },
   row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  count: { fontSize: 13, color: C.textSecondary, fontWeight: '600' },
+  count: { fontSize: 13, color: C.textSecondary, fontFamily: 'Jost_600SemiBold' },
   btn: { width: 32, height: 32, borderRadius: 16, backgroundColor: C.coral, justifyContent: 'center', alignItems: 'center' },
   btnDone: { backgroundColor: C.textMuted }});
 
 // ─── Dua Card ────────────────────────────────────────────────
 function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onToggleFav: () => void }) {
   const [expanded, setExpanded] = useState(false);
-  const heightAnim = useRef(new Animated.Value(0)).current;
+  const heightAnim = useSharedValue(0);
 
   useEffect(() => {
-    Animated.timing(heightAnim, { toValue: expanded ? 1 : 0, duration: 250, useNativeDriver: false }).start();
+    heightAnim.value = withTiming(expanded ? 1 : 0, { duration: 250 });
   }, [expanded]);
+
+  const animatedBodyStyle = useAnimatedStyle(() => ({
+    height: interpolate(heightAnim.value, [0, 1], [0, 280]),
+    opacity: heightAnim.value,
+  }));
 
   return (
     <View style={duaStyles.card}>
@@ -124,7 +132,7 @@ function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onTogg
           </View>
           <View style={duaStyles.headerRight}>
             <TouchableOpacity onPress={(e) => { e.stopPropagation(); onToggleFav(); }}>
-              <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? '#E53935' : C.textMuted} />
+              <Ionicons name={isFav ? 'heart' : 'heart-outline'} size={20} color={isFav ? C.coral : C.textMuted} />
             </TouchableOpacity>
             <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={C.textMuted} style={{ marginLeft: 8 }} />
           </View>
@@ -132,24 +140,29 @@ function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onTogg
       </TouchableOpacity>
 
       {expanded && (
-        <View style={duaStyles.body}>
+        <Animated.View style={[duaStyles.body, animatedBodyStyle]}>
           <Text style={duaStyles.arabic}>{dua.arabic}</Text>
           <Text style={duaStyles.meaning}>{dua.meaning}</Text>
           {dua.repeatCount && dua.repeatCount > 1 && (
             <DuaCounter target={dua.repeatCount} />
           )}
-        </View>
+        </Animated.View>
       )}
     </View>
   );
 }
 
 const duaStyles = StyleSheet.create({
-  card: { backgroundColor: C.bgSurface, borderRadius: 16, padding: 16, marginBottom: 10},
+  card: {
+    backgroundColor: C.surfaceElevated, borderRadius: 16, padding: 16, marginBottom: 10,
+    ...C.shadow.sm,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   headerLeft: { flex: 1 },
   headerRight: { flexDirection: 'row', alignItems: 'center' },
-  title: { fontSize: 15, fontWeight: '600', color: C.textPrimary },
+  title: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   source: { fontSize: 12, color: C.textMuted, marginTop: 2 },
   body: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
   arabic: { fontSize: 18, color: C.coral, textAlign: 'right', lineHeight: 30, marginBottom: 10 },
@@ -169,10 +182,15 @@ function CategoryChip({ cat, active, onPress }: { cat: typeof DUA_CATEGORIES[0];
 }
 
 const catStyles = StyleSheet.create({
-  chip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8, marginBottom: 8},
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: C.surfaceElevated, marginRight: 8, marginBottom: 8,
+    ...C.shadow.sm,
+  },
   chipActive: { backgroundColor: C.coral },
-  label: { fontSize: 12, color: C.textSecondary, fontWeight: '500' },
-  labelActive: { color: '#FFF', fontWeight: '600' }});
+  label: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
+  labelActive: { color: '#FFF', fontFamily: 'Jost_600SemiBold' }});
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function DuaLibraryScreen() {
@@ -283,18 +301,27 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'PlayfairDisplay_700Bold', color: C.textPrimary },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
   subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
 
-  searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, margin: 18, marginBottom: 12, paddingHorizontal: 14, paddingVertical: 10, gap: 10 },
+  searchWrap: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: C.surfaceElevated, borderRadius: 14,
+    margin: 18, marginBottom: 12, paddingHorizontal: 14, paddingVertical: 10, gap: 10,
+    ...C.shadow.sm,
+  },
   searchInput: { flex: 1, fontSize: 15, color: C.textPrimary },
 
-  featuredCard: { backgroundColor: '#FFF8E7', borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: C.gold },
+  featuredCard: {
+    backgroundColor: '#FFF8E7', borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 16,
+    borderLeftWidth: 4, borderLeftColor: C.gold,
+    ...C.shadow.md,
+  },
   featuredHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  featuredTitle: { fontSize: 14, fontWeight: '700', color: C.gold },
+  featuredTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
   featuredArabic: { fontSize: 16, color: C.textPrimary, textAlign: 'right', lineHeight: 26, marginBottom: 10 },
   featuredMeaning: { fontSize: 13, color: C.textSecondary, lineHeight: 20, fontStyle: 'italic' },
   featuredSource: { fontSize: 12, color: C.textMuted, marginTop: 8, textAlign: 'right' },
 
   categories: { paddingHorizontal: 18, paddingBottom: 8 },
-  listTitle: { fontSize: 16, fontWeight: '700', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 }});
+  listTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 }});
