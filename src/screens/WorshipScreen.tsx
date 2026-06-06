@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: 120 },
   header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
-  subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
+  subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Jost_400Regular", marginTop: 4 },
   sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 18, marginBottom: 10 },
 
   // Sunnah

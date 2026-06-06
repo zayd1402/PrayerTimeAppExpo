@@ -5,7 +5,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
 import { HijriService } from '../services/HijriService';
-import { loadPrayerLog } from '../services/StorageService';
+import { loadPrayerLog, getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData } from '../services/StorageService';
 import { getEventsForHijriDate, ISLAMIC_EVENTS } from '../data/islamicEvents';
 
 function getDateKey(date: Date): string {
@@ -38,6 +38,10 @@ export default function CalendarScreen() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [prayerLog, setPrayerLog] = useState<Record<string, Record<string, string>>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [streak, setStreak] = useState(0);
+  const [totalPrayers, setTotalPrayers] = useState(0);
+  const [onTimeRate, setOnTimeRate] = useState(0);
+  const [heatmapData, setHeatmapData] = useState<Record<string, number>>({});
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -45,8 +49,21 @@ export default function CalendarScreen() {
   const todayKey = getDateKey(today);
 
   useEffect(() => {
-    loadPrayerLog().then(setPrayerLog);
-  }, []);
+    loadPrayerLog().then(log => {
+      setPrayerLog(log);
+    });
+    Promise.all([
+      getStreak(),
+      getTotalPrayers(),
+      getOnTimeRate(),
+      getHeatmapData(2),
+    ]).then(([s, t, o, h]) => {
+      setStreak(s);
+      setTotalPrayers(t);
+      setOnTimeRate(o);
+      setHeatmapData(h);
+    });
+  }, [selectedDate]);
 
   const grid = HijriService.getMonthGrid(year, month);
   const hijriToday = HijriService.gregorianToHijri(today);
@@ -54,14 +71,17 @@ export default function CalendarScreen() {
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+  const jumpToToday = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(todayKey);
+  };
 
+  const isCurrentMonthToday = year === today.getFullYear() && month === today.getMonth();
   const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
   const hijriMonthStr = `${hijriCurrent.monthNameArabic} ${hijriCurrent.year}`;
 
-  // Countdown to next major event
   const getNextEvent = () => {
     const events = ISLAMIC_EVENTS.filter(e => e.type !== 'white_days');
-    // Simplified - would calculate actual dates in production
     return events[0];
   };
   const nextEvent = getNextEvent();
@@ -90,6 +110,25 @@ export default function CalendarScreen() {
         </View>
       )}
 
+      {/* Streak Summary */}
+      <View style={styles.streakCard}>
+        <View style={styles.streakItem}>
+          <Ionicons name="flame-outline" size={18} color={C.primary} />
+          <Text style={styles.streakValue}>{streak}</Text>
+          <Text style={styles.streakLabel}>day streak</Text>
+        </View>
+        <View style={styles.streakDivider} />
+        <View style={styles.streakItem}>
+          <Text style={styles.streakValue}>{totalPrayers}</Text>
+          <Text style={styles.streakLabel}>total prayers</Text>
+        </View>
+        <View style={styles.streakDivider} />
+        <View style={styles.streakItem}>
+          <Text style={styles.streakValue}>{onTimeRate}%</Text>
+          <Text style={styles.streakLabel}>on time</Text>
+        </View>
+      </View>
+
       {/* Month Navigation */}
       <View style={styles.calHeader}>
         <View>
@@ -97,6 +136,12 @@ export default function CalendarScreen() {
           <Text style={styles.calHijri}>{hijriMonthStr}</Text>
         </View>
         <View style={styles.calNav}>
+          {!isCurrentMonthToday && (
+            <TouchableOpacity style={styles.todayBtn} onPress={jumpToToday}>
+              <Ionicons name="today-outline" size={13} color={C.white} />
+              <Text style={styles.todayBtnText}>Today</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.calNavBtn} onPress={prevMonth}>
             <Ionicons name="chevron-back" size={16} color={C.textSecondary} />
           </TouchableOpacity>
@@ -108,7 +153,7 @@ export default function CalendarScreen() {
 
       {/* Weekday headers */}
       <View style={styles.calWeekdays}>
-        {['SUN','MON','TUE','WED','THU','FRI','SAT'].map(d => (
+        {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
           <Text key={d} style={styles.calWeekday}>{d}</Text>
         ))}
       </View>
@@ -124,21 +169,29 @@ export default function CalendarScreen() {
           const isSelected = dateKey === selectedDate;
           const events = getEventsForHijriDate(hijri.day, hijri.month);
           const hasEvent = events.length > 0;
+          const heatLevel = isCurrentMonth ? (heatmapData[dateKey] || 0) : 0;
+
+          const heatBg = heatLevel >= 5 ? C.primaryLight
+            : heatLevel >= 3 ? C.goldPale
+            : heatLevel >= 1 ? C.bgCard
+            : C.surfaceElevated;
 
           return (
             <TouchableOpacity
               key={idx}
               style={[
                 styles.calDay,
+                { backgroundColor: isToday ? C.primaryLight : isSelected ? C.primary : heatBg },
                 !isCurrentMonth && styles.calDayOther,
-                isToday && styles.calDayToday,
                 isSelected && styles.calDaySelected,
+                heatLevel >= 5 && isCurrentMonth && !isToday && !isSelected && styles.calDayFull,
               ]}
               onPress={() => setSelectedDate(dateKey === selectedDate ? null : dateKey)}
             >
               <Text style={[
                 styles.calDayNum,
                 isToday && styles.calDayNumToday,
+                isSelected && { color: C.white },
                 !isCurrentMonth && styles.calDayNumOther,
               ]}>
                 {gregorian.getDate()}
@@ -147,9 +200,6 @@ export default function CalendarScreen() {
                 <Text style={[styles.calDayHijri, prayedCount > 0 && styles.calDayHijriPrayed]}>
                   {hijri.day}
                 </Text>
-              )}
-              {prayedCount >= 5 && (
-                <View style={styles.prayedDot} />
               )}
               {hasEvent && isCurrentMonth && (
                 <View style={[styles.eventDot, { backgroundColor: EVENT_COLORS[events[0].type] || C.gold }]} />
@@ -168,11 +218,61 @@ export default function CalendarScreen() {
           {(() => {
             const selectedHijri = HijriService.gregorianToHijri(new Date(selectedDate));
             const events = getEventsForHijriDate(selectedHijri.day, selectedHijri.month);
+            const dayLog = prayerLog[selectedDate];
+            const PRAYER_LIST = [
+              { id: 'fajr', name: 'Fajr', icon: 'sunny-outline' },
+              { id: 'dhuhr', name: 'Dhuhr', icon: 'sun-outline' },
+              { id: 'asr', name: 'Asr', icon: 'cloud-outline' },
+              { id: 'maghrib', name: 'Maghrib', icon: 'sunset-outline' },
+              { id: 'isha', name: 'Isha', icon: 'moon-outline' },
+            ];
+
+            const prayedDayCount = dayLog
+              ? Object.values(dayLog).filter(s => s === 'prayed').length
+              : 0;
+
             return (
               <>
                 <Text style={styles.detailHijri}>
                   {selectedHijri.day} {selectedHijri.monthNameArabic} {selectedHijri.year} AH
                 </Text>
+
+                {dayLog && (
+                  <>
+                    <Text style={styles.detailSectionTitle}>Prayer Activity</Text>
+                    <View style={styles.prayerBreakdown}>
+                      {PRAYER_LIST.map(p => {
+                        const status = dayLog[p.id] as string | undefined;
+                        const isPrayed = status === 'prayed';
+                        const isQaza = status === 'qaza';
+                        const isMissed = status === 'missed';
+                        return (
+                          <View key={p.id} style={styles.prayerStatusRow}>
+                            <Ionicons name={p.icon as any} size={16} color={isPrayed ? C.primary : C.textMuted} />
+                            <Text style={[styles.prayerStatusName, isPrayed && styles.prayerStatusNameDone]}>{p.name}</Text>
+                            <View style={[
+                              styles.prayerStatusBadge,
+                              isPrayed && styles.prayerStatusBadgePrayed,
+                              isQaza && styles.prayerStatusBadgeQaza,
+                              isMissed && styles.prayerStatusBadgeMissed,
+                            ]}>
+                              <Text style={[
+                                styles.prayerStatusBadgeText,
+                                isPrayed && styles.prayerStatusBadgeTextPrayed,
+                              ]}>
+                                {isPrayed ? 'Prayed' : isQaza ? 'Qaza' : isMissed ? 'Missed' : '—'}
+                              </Text>
+                            </View>
+                          </View>
+                        );
+                      })}
+                    </View>
+                    <Text style={styles.prayerSummary}>
+                      {prayedDayCount} of 5 completed
+                    </Text>
+                  </>
+                )}
+
                 {events.map(event => (
                   <View key={event.id} style={[styles.eventRow, { backgroundColor: (EVENT_COLORS[event.type] || C.gold) + '10' }]}>
                     <Ionicons name={EVENT_ICONS[event.type] as any} size={16} color={EVENT_COLORS[event.type] || C.gold} />
@@ -182,8 +282,8 @@ export default function CalendarScreen() {
                     </View>
                   </View>
                 ))}
-                {events.length === 0 && (
-                  <Text style={styles.noEvent}>No special events on this day</Text>
+                {events.length === 0 && !dayLog && (
+                  <Text style={styles.noEvent}>No prayers tracked for this day</Text>
                 )}
               </>
             );
@@ -210,13 +310,12 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
-  subtitle: { fontSize: 14, color: C.textSecondary, fontFamily: "Inter_400Regular", marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
+  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
 
   countdownCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16,
-    ...C.shadow,
   },
   countdownLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   countdownTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary },
@@ -224,14 +323,29 @@ const styles = StyleSheet.create({
   countdownBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   countdownBadgeText: { fontSize: 12, fontFamily: 'Jost_700Bold' },
 
+  streakCard: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
+    backgroundColor: C.goldPale, borderRadius: 16, marginHorizontal: 18, marginBottom: 14,
+    paddingVertical: 12, paddingHorizontal: 8,
+  },
+  streakItem: { alignItems: 'center', flex: 1 },
+  streakValue: { fontSize: 20, fontFamily: 'Jost_700Bold', color: C.textPrimary },
+  streakLabel: { fontSize: 11, fontFamily: 'Jost_500Medium', color: C.textMuted, marginTop: 1 },
+  streakDivider: { width: 1, height: 28, backgroundColor: C.border },
+
   calHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, marginBottom: 12 },
   calMonth: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.textPrimary },
   calHijri: { fontSize: 13, color: C.textMuted, marginTop: 2 },
-  calNav: { flexDirection: 'row', gap: 8 },
+  calNav: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  todayBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: C.primary, borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 6, marginRight: 4,
+  },
+  todayBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.white },
   calNavBtn: {
     width: 32, height: 32, borderRadius: 10, backgroundColor: C.surfaceElevated,
     justifyContent: 'center', alignItems: 'center',
-    ...C.shadow,
   },
 
   calWeekdays: { flexDirection: 'row', paddingHorizontal: 18, marginBottom: 8 },
@@ -241,34 +355,45 @@ const styles = StyleSheet.create({
   calDay: {
     width: `${100 / 7}%`, aspectRatio: 1, justifyContent: 'center', alignItems: 'center',
     borderRadius: 12, marginBottom: 4,
-    backgroundColor: C.surfaceElevated,
   },
-  calDayOther: { opacity: 0.4 },
-  calDayToday: { backgroundColor: C.primaryLight },
-  calDaySelected: { backgroundColor: C.primary },
+  calDayOther: { opacity: 0.3 },
+  calDayToday: { borderWidth: 2, borderColor: C.primary },
+  calDayFull: { borderWidth: 1.5, borderColor: C.primary },
+  calDaySelected: {},
   calDayNum: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
-  calDayNumToday: { color: C.primary, fontFamily: 'Jost_700Bold' },
+  calDayNumToday: { color: C.textPrimary, fontFamily: 'Jost_700Bold' },
   calDayNumOther: { color: C.textMuted },
   calDayHijri: { fontSize: 10, color: C.textMuted, marginTop: 1 },
   calDayHijriPrayed: { color: C.primary, fontFamily: 'Jost_600SemiBold' },
-  prayedDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.primary, marginTop: 2 },
   eventDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 2 },
 
   detailCard: {
     backgroundColor: C.surfaceElevated, borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8,
-    ...C.shadow,
   },
   detailDate: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary },
-  detailHijri: { fontSize: 13, color: C.textMuted, marginTop: 2, marginBottom: 12 },
+  detailHijri: { fontSize: 13, color: C.textMuted, marginTop: 2, marginBottom: 14 },
+  detailSectionTitle: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary, marginBottom: 8 },
+
+  prayerBreakdown: { marginBottom: 8 },
+  prayerStatusRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 10 },
+  prayerStatusName: { flex: 1, fontSize: 14, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
+  prayerStatusNameDone: { color: C.textPrimary, fontFamily: 'Jost_600SemiBold' },
+  prayerStatusBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10, backgroundColor: C.border },
+  prayerStatusBadgePrayed: { backgroundColor: C.primaryLight },
+  prayerStatusBadgeQaza: { backgroundColor: C.goldPale },
+  prayerStatusBadgeMissed: { backgroundColor: 'rgba(196,85,59,0.12)' },
+  prayerStatusBadgeText: { fontSize: 11, fontFamily: 'Jost_600SemiBold', color: C.textMuted },
+  prayerStatusBadgeTextPrayed: { color: C.primary },
+  prayerSummary: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.primary, marginTop: 2, marginBottom: 12 },
+
   eventRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8 },
   eventTitle: { fontSize: 14, fontFamily: 'Jost_600SemiBold' },
   eventDesc: { fontSize: 12, color: C.textMuted, marginTop: 1 },
-  noEvent: { fontSize: 13, color: C.textMuted, fontStyle: 'italic' },
+  noEvent: { fontSize: 13, color: C.textMuted, fontStyle: 'italic', marginTop: 6 },
 
   sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
   legendCard: {
     backgroundColor: C.surfaceElevated, borderRadius: 18, marginHorizontal: 18, padding: 16,
-    ...C.shadow,
   },
   legendItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: C.border },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
