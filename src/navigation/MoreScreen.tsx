@@ -48,13 +48,14 @@ export default function MoreScreen() {
         case 'journal': return <JournalScreen />;
         case 'mosques': return <MosquesScreen coordinate={{ latitude: ctx.location.latitude, longitude: ctx.location.longitude }} />;
         case 'settings':return <SettingsScreen settings={{
-          method: ctx.settings.calculationMethod,
-          madhhab: ctx.settings.madhab === 'hanafi' ? 'hanafi' : 'shafi',
-          coordinate: { latitude: ctx.location.latitude, longitude: ctx.location.longitude },
-          locationName: ctx.location.name,
+          ...ctx.settings,
+          location: ctx.location.latitude ? {
+            latitude: ctx.location.latitude,
+            longitude: ctx.location.longitude,
+            name: ctx.location.name,
+          } : null,
         }} updateSettings={(u) => {
-          if (u.method) ctx.handleUpdateSettings({ calculationMethod: u.method });
-          if (u.madhhab) ctx.handleUpdateSettings({ madhab: u.madhhab });
+          ctx.handleUpdateSettings(u);
         }} />;
         default: return null;
       }

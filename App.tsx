@@ -14,6 +14,7 @@ import { Jost_300Light, Jost_400Regular, Jost_500Medium, Jost_600SemiBold, Jost_
 
 import { C } from './src/types';
 import { PrayerAppProvider } from './src/context/PrayerAppContext';
+import { ThemeProvider } from './src/context/ThemeContext';
 import TabNavigator from './src/navigation/TabNavigator';
 
 SplashScreen.preventAutoHideAsync();
@@ -39,11 +40,13 @@ export default function App() {
   return (
     <GestureHandlerRootView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={C.bgBase} />
-      <NavigationContainer>
-        <PrayerAppProvider>
-          <TabNavigator />
-        </PrayerAppProvider>
-      </NavigationContainer>
+      <ThemeProvider>
+        <NavigationContainer>
+          <PrayerAppProvider>
+            <TabNavigator />
+          </PrayerAppProvider>
+        </NavigationContainer>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

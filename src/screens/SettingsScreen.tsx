@@ -1,17 +1,12 @@
-import React from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
-import { C, CalculationMethod, Madhab } from '../types';
-
-interface Settings {
-  method: CalculationMethod;
-  madhhab: Madhab;
-  coordinate: { latitude: number; longitude: number };
-  locationName: string;
-}
+import React, { useCallback } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
+import * as StoreReview from 'expo-store-review';
+import { C, CalculationMethod, Madhab, AppSettings } from '../types';
+import { getCurrentLocation } from '../services/LocationService';
 
 interface SettingsScreenProps {
-  settings: Settings;
-  updateSettings: (updates: Partial<Settings>) => void;
+  settings: AppSettings;
+  updateSettings: (updates: Partial<AppSettings>) => void;
 }
 
 const METHODS: { value: CalculationMethod; label: string }[] = [
@@ -29,60 +24,70 @@ const METHODS: { value: CalculationMethod; label: string }[] = [
   { value: 'custom', label: 'Custom' },
 ];
 
+const FAJR_ALARM_OPTIONS = [5, 10, 15, 20, 30];
+
 export default function SettingsScreen({ settings, updateSettings }: SettingsScreenProps) {
-  const [notificationsEnabled, setNotificationsEnabled] = React.useState(true);
-  const [autoLocation, setAutoLocation] = React.useState(true);
+  const handleLocationDetect = useCallback(async () => {
+    const loc = await getCurrentLocation();
+    if (loc) {
+      updateSettings({ location: loc });
+      Alert.alert('Location Updated', `Set to ${loc.name}`);
+    } else {
+      Alert.alert('Location Failed', 'Could not detect location. Please try again or enter manually.');
+    }
+  }, [updateSettings]);
+
+  const handleRateApp = useCallback(async () => {
+    if (await StoreReview.hasAction()) {
+      await StoreReview.requestReview();
+    }
+  }, []);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Settings</Text>
       </View>
 
-      {/* Location Section */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Location</Text>
-        
         <View style={styles.card}>
           <View style={styles.row}>
             <View>
               <Text style={styles.rowLabel}>Auto-detect location</Text>
-              <Text style={styles.rowSubtitle}>{settings.locationName}</Text>
+              <Text style={styles.rowSubtitle}>{settings.location?.name || 'Not set'}</Text>
             </View>
             <Switch
-              value={autoLocation}
-              onValueChange={setAutoLocation}
+              value={!!settings.location}
+              onValueChange={() => {
+                if (settings.location) {
+                  updateSettings({ location: null });
+                } else {
+                  handleLocationDetect();
+                }
+              }}
               trackColor={{ true: C.primary }}
             />
           </View>
-          
-          {!autoLocation && (
-            <View style={styles.manualLocation}>
-              <TouchableOpacity style={styles.locationButton}>
-                <Text style={styles.locationButtonText}>📍 Use Current Location</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.locationButton}>
-                <Text style={styles.locationButtonText}>🔍 Enter Manually</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+
+          <TouchableOpacity style={styles.row} onPress={handleLocationDetect}>
+            <Text style={styles.rowLabel}>📍 Use Current Location</Text>
+            <Text style={styles.rowValue}>→</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
-      {/* Calculation Method */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Calculation Method</Text>
-        
+        <Text style={styles.sectionTitle}>Prayer Time Calculations</Text>
         <View style={styles.card}>
           {METHODS.map(method => (
             <TouchableOpacity
               key={method.value}
               style={styles.optionRow}
-              onPress={() => updateSettings({ method: method.value })}
+              onPress={() => updateSettings({ calculationMethod: method.value })}
             >
               <Text style={styles.optionLabel}>{method.label}</Text>
-              {settings.method === method.value && (
+              {settings.calculationMethod === method.value && (
                 <Text style={styles.checkmark}>✓</Text>
               )}
             </TouchableOpacity>
@@ -90,77 +95,96 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
         </View>
       </View>
 
-      {/* Madhhab Selection */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Madhhab (School of Thought)</Text>
-        
         <View style={styles.card}>
           <TouchableOpacity
             style={styles.optionRow}
-            onPress={() => updateSettings({ madhhab: 'shafi' })}
+            onPress={() => updateSettings({ madhab: 'shafi' })}
           >
             <View>
               <Text style={styles.optionLabel}>Shafi</Text>
               <Text style={styles.optionSubtitle}>Standard Asr time</Text>
             </View>
-            {settings.madhhab === 'shafi' && <Text style={styles.checkmark}>✓</Text>}
+            {settings.madhab === 'shafi' && <Text style={styles.checkmark}>✓</Text>}
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={styles.optionRow}
-            onPress={() => updateSettings({ madhhab: 'hanafi' })}
+            onPress={() => updateSettings({ madhab: 'hanafi' })}
           >
             <View>
               <Text style={styles.optionLabel}>Hanafi</Text>
               <Text style={styles.optionSubtitle}>Later Asr time</Text>
             </View>
-            {settings.madhhab === 'hanafi' && <Text style={styles.checkmark}>✓</Text>}
+            {settings.madhab === 'hanafi' && <Text style={styles.checkmark}>✓</Text>}
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Notifications */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Notifications</Text>
-        
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Prayer alerts</Text>
+            <Text style={styles.rowLabel}>Prayer time alerts</Text>
             <Switch
-              value={notificationsEnabled}
-              onValueChange={setNotificationsEnabled}
+              value={settings.notificationsEnabled}
+              onValueChange={v => updateSettings({ notificationsEnabled: v })}
               trackColor={{ true: C.primary }}
             />
           </View>
-          
+
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Pre-azan reminder</Text>
-            <Text style={styles.rowValue}>15 min before</Text>
+            <Text style={styles.rowLabel}>Fajr alarm</Text>
+            <Switch
+              value={settings.fajrAlarmEnabled}
+              onValueChange={v => updateSettings({ fajrAlarmEnabled: v })}
+              trackColor={{ true: C.primary }}
+            />
           </View>
-          
-          <TouchableOpacity style={styles.row}>
-            <Text style={styles.rowLabel}>Custom azan sound</Text>
-            <Text style={styles.rowValue}>▶ Default</Text>
-          </TouchableOpacity>
+
+          {settings.fajrAlarmEnabled && (
+            <View style={styles.subRow}>
+              <Text style={styles.rowLabel}>Minutes before Fajr</Text>
+              <View style={styles.pillRow}>
+                {FAJR_ALARM_OPTIONS.map(m => (
+                  <TouchableOpacity
+                    key={m}
+                    style={[styles.pill, settings.fajrAlarmMinutes === m && styles.pillActive]}
+                    onPress={() => updateSettings({ fajrAlarmMinutes: m })}
+                  >
+                    <Text style={[styles.pillText, settings.fajrAlarmMinutes === m && styles.pillTextActive]}>{m}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Iqama countdown</Text>
+            <Switch
+              value={settings.iqamaCountdownEnabled}
+              onValueChange={v => updateSettings({ iqamaCountdownEnabled: v })}
+              trackColor={{ true: C.primary }}
+            />
+          </View>
         </View>
       </View>
 
-      {/* About */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>About</Text>
-        
         <View style={styles.card}>
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Version</Text>
             <Text style={styles.rowValue}>1.0.0</Text>
           </View>
-          
-          <TouchableOpacity style={styles.row}>
+
+          <TouchableOpacity style={styles.row} onPress={() => Linking.openURL('https://prayertime.app/privacy')}>
             <Text style={styles.rowLabel}>Privacy Policy</Text>
             <Text style={styles.rowValue}>→</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.row}>
+
+          <TouchableOpacity style={styles.row} onPress={handleRateApp}>
             <Text style={styles.rowLabel}>Rate App</Text>
             <Text style={styles.rowValue}>⭐⭐⭐⭐⭐</Text>
           </TouchableOpacity>
@@ -271,6 +295,24 @@ const styles = StyleSheet.create({
     color: C.textPrimary,
     fontFamily: 'Jost_600SemiBold',
   },
+  subRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+    backgroundColor: C.bgBase,
+  },
+  pillRow: { flexDirection: 'row', gap: 6 },
+  pill: {
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
+    backgroundColor: C.bgSurface,
+  },
+  pillActive: { backgroundColor: C.primary },
+  pillText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
+  pillTextActive: { color: C.white },
   footer: {
     padding: 40,
     alignItems: 'center',
