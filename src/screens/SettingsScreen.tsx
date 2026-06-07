@@ -1,8 +1,10 @@
 import React, { useCallback } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import * as StoreReview from 'expo-store-review';
 import { C, CalculationMethod, Madhab, AppSettings } from '../types';
 import { getCurrentLocation } from '../services/LocationService';
+import { initAudio, playAdhan, stopAdhan } from '../services/AudioService';
 
 interface SettingsScreenProps {
   settings: AppSettings;
@@ -182,18 +184,31 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
           {settings.adhanEnabled && (
             <View style={styles.subRow}>
               <Text style={styles.rowLabel}>Adhan style</Text>
-              <View style={styles.pillRow}>
-                {ADHAN_VARIANTS.map(v => (
-                  <TouchableOpacity
-                    key={v}
-                    style={[styles.pill, settings.adhanVariant === v && styles.pillActive]}
-                    onPress={() => updateSettings({ adhanVariant: v })}
-                  >
-                    <Text style={[styles.pillText, settings.adhanVariant === v && styles.pillTextActive]}>
-                      {v.charAt(0).toUpperCase() + v.slice(1)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <View>
+                <View style={styles.pillRow}>
+                  {ADHAN_VARIANTS.map(v => (
+                    <TouchableOpacity
+                      key={v}
+                      style={[styles.pill, settings.adhanVariant === v && styles.pillActive]}
+                      onPress={() => updateSettings({ adhanVariant: v })}
+                    >
+                      <Text style={[styles.pillText, settings.adhanVariant === v && styles.pillTextActive]}>
+                        {v.charAt(0).toUpperCase() + v.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <TouchableOpacity
+                  style={styles.previewBtn}
+                  onPress={async () => {
+                    await initAudio();
+                    await playAdhan(settings.adhanVariant);
+                    setTimeout(() => stopAdhan(), 4000);
+                  }}
+                >
+                  <Ionicons name="play" size={14} color={C.white} />
+                  <Text style={styles.previewBtnText}>Preview</Text>
+                </TouchableOpacity>
               </View>
             </View>
           )}
@@ -342,6 +357,8 @@ const styles = StyleSheet.create({
   pillActive: { backgroundColor: C.primary },
   pillText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
   pillTextActive: { color: C.white },
+  previewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.primary, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10, marginTop: 8, alignSelf: 'flex-end' },
+  previewBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.white },
   footer: {
     padding: 40,
     alignItems: 'center',

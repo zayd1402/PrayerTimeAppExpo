@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { C } from '../types';
+import { calculateQiblaDirection, haversineDistance, bearingToCompassDirection } from '../services/PrayerService';
 
 const { width } = Dimensions.get('window');
 const COMPASS_SIZE = Math.min(width - 80, 300);
@@ -19,39 +20,6 @@ interface Coordinate {
 
 interface QiblaScreenProps {
   coordinate: Coordinate;
-}
-
-const MAKKAH_LAT = 21.4225;
-const MAKKAH_LON = 39.8262;
-
-function toRadians(deg: number): number { return deg * (Math.PI / 180); }
-function toDegrees(rad: number): number { return rad * (180 / Math.PI); }
-
-function calculateQibla(lat: number, lon: number): number {
-  const lat1 = toRadians(lat);
-  const lon1 = toRadians(lon);
-  const lat2 = toRadians(MAKKAH_LAT);
-  const lon2 = toRadians(MAKKAH_LON);
-  const dLon = lon2 - lon1;
-  const y = Math.sin(dLon) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-  let qibla = Math.atan2(y, x);
-  qibla = toDegrees(qibla);
-  return (qibla + 360) % 360;
-}
-
-function haversine(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) * Math.sin(dLon / 2) ** 2;
-  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
-}
-
-function bearingToDirection(bearing: number): string {
-  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-  const index = Math.round(bearing / 22.5) % 16;
-  return directions[index];
 }
 
 // ─── Accuracy Indicator ──────────────────────────────────────
@@ -137,9 +105,9 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
   const updateIsAligned = (a: boolean) => setIsAligned(a);
 
   useEffect(() => {
-    const qibla = calculateQibla(coordinate.latitude, coordinate.longitude);
+    const qibla = calculateQiblaDirection(coordinate.latitude, coordinate.longitude);
     setQiblaDirection(qibla);
-    const dist = haversine(coordinate.latitude, coordinate.longitude, MAKKAH_LAT, MAKKAH_LON);
+    const dist = haversineDistance(coordinate.latitude, coordinate.longitude, 21.4225, 39.8262);
     setDistance(dist);
   }, [coordinate]);
 
@@ -216,7 +184,7 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Qibla Direction</Text>
-        <Text style={styles.subtitle}>{Math.round(qiblaDirection)}° {bearingToDirection(qiblaDirection)} from North</Text>
+        <Text style={styles.subtitle}>{Math.round(qiblaDirection)}° {bearingToCompassDirection(qiblaDirection)} from North</Text>
       </View>
 
       <View style={styles.compassContainer}>
