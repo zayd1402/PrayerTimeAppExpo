@@ -6,6 +6,8 @@ import { C } from '../types';
 
 import HadithScreen from '../screens/HadithScreen';
 import RamadanScreen from '../screens/RamadanScreen';
+import HifdhScreen from '../screens/HifdhScreen';
+import TazkiyahScreen from '../screens/TazkiyahScreen';
 import FridayScreen from '../screens/FridayScreen';
 import WeeklyScreen from '../screens/WeeklyScreen';
 import QiblaScreen from '../screens/QiblaScreen';
@@ -18,6 +20,8 @@ import { usePrayerApp } from '../context/PrayerAppContext';
 const MORE_MENU = [
   { id: 'hadith',  label: 'Hadith',  icon: 'document-text-outline', color: C.gold },
   { id: 'ramadan', label: 'Ramadan', icon: 'moon-outline',          color: C.gold },
+  { id: 'hifdh',   label: 'Hifdh',   icon: 'book-outline',          color: C.primary },
+  { id: 'tazkiyah',label: 'Tazkiyah',icon: 'leaf-outline',          color: C.primary },
   { id: 'friday',  label: 'Friday',  icon: 'star-outline',         color: C.primaryLight },
   { id: 'weekly',  label: 'Weekly',  icon: 'calendar-clear-outline', color: C.gold },
   { id: 'qibla',   label: 'Qibla',   icon: 'compass-outline',      color: C.primary },
@@ -44,6 +48,8 @@ export default function MoreScreen() {
       switch (activeScreen) {
         case 'hadith':  return <HadithScreen />;
         case 'ramadan': return <RamadanScreen />;
+        case 'hifdh':   return <HifdhScreen />;
+        case 'tazkiyah':return <TazkiyahScreen />;
         case 'friday':  return <FridayScreen />;
         case 'weekly':  return <WeeklyScreen />;
         case 'qibla':   return <QiblaScreen coordinate={{ latitude: ctx.location.latitude, longitude: ctx.location.longitude }} />;

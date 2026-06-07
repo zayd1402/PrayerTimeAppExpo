@@ -14,6 +14,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { usePrayerApp } from '../context/PrayerAppContext';
 import KhushuModal from '../components/KhushuModal';
+import { getUpcomingSacredPeriods, SacredPeriod } from '../services/SacredTimeService';
 
 const { width } = Dimensions.get('window');
 
@@ -254,6 +255,7 @@ export default function TodayScreen() {
   const [reduceMotion, setReduceMotion] = useState(false);
   const [sunnahStreak, setSunnahStreak] = useState(0);
   const [khushuPrayer, setKhushuPrayer] = useState<{ id: string; name: string } | null>(null);
+  const [sacredPeriods, setSacredPeriods] = useState<SacredPeriod[]>([]);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(enabled => setReduceMotion(enabled));
@@ -263,6 +265,7 @@ export default function TodayScreen() {
 
   useEffect(() => {
     import('../services/StorageService').then(s => s.getSunnahStreak().then(setSunnahStreak));
+    setSacredPeriods(getUpcomingSacredPeriods(30));
   }, []);
 
   const entries = [
@@ -375,6 +378,19 @@ export default function TodayScreen() {
         <Ionicons name="calendar-outline" size={14} color={C.textMuted} />
         <Text style={styles.hijriText}>{hijriDateStr}</Text>
       </View>
+
+      {/* Sacred Time Awareness */}
+      {sacredPeriods.length > 0 && sacredPeriods[0].daysUntil <= 14 && (
+        <View style={styles.sacredCard}>
+          <Ionicons name={sacredPeriods[0].icon as any} size={18} color={C.gold} />
+          <View style={{ marginLeft: 10, flex: 1 }}>
+            <Text style={styles.sacredTitle}>
+              {sacredPeriods[0].isActive ? `🕌 ${sacredPeriods[0].title} is here!` : `📅 ${sacredPeriods[0].title} in ${sacredPeriods[0].daysUntil} days`}
+            </Text>
+            <Text style={styles.sacredDesc}>{sacredPeriods[0].description}</Text>
+          </View>
+        </View>
+      )}
 
       {/* Prayer List */}
       <View style={styles.prayerList}>
@@ -514,6 +530,12 @@ const styles = StyleSheet.create({
     backgroundColor: C.surfaceElevated,
     borderRadius: 18, padding: 18, marginTop: 16,
   },
+  sacredCard: {
+    flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale,
+    borderRadius: 16, padding: 14, marginBottom: 12,
+  },
+  sacredTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary },
+  sacredDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
   hadithHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   hadithTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
   hadithText: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontFamily: 'Jost_400Regular', fontStyle: 'italic' },
