@@ -123,11 +123,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
 // ─── Navigation ─────────────────────────────────────────────
 export const NAV_TABS = [
   { id: 'home',      label: 'Home',      icon: 'home-outline',      iconActive: 'home'      },
+  { id: 'sunnah',    label: 'Sunnah',    icon: 'leaf-outline',      iconActive: 'leaf'      },
   { id: 'worship',   label: 'Worship',   icon: 'heart-outline',     iconActive: 'heart'     },
   { id: 'calendar',  label: 'Calendar',  icon: 'calendar-outline',  iconActive: 'calendar'  },
   { id: 'duas',      label: 'Duas',      icon: 'book-outline',      iconActive: 'book'      },
-  { id: 'qibla',     label: 'Qibla',     icon: 'compass-outline',   iconActive: 'compass'   },
-  { id: 'settings',  label: 'Settings',  icon: 'settings-outline',  iconActive: 'settings'  },
+  { id: 'more',      label: 'More',      icon: 'grid-outline',      iconActive: 'grid'      },
 ] as const;
 
 export type TabId = typeof NAV_TABS[number]['id'];

@@ -124,7 +124,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
           }
         },
         (data) => {
-          console.log('Notification tapped:', data);
+          if (__DEV__) console.log('Notification tapped:', data);
         },
       );
 

@@ -47,15 +47,10 @@ export function getUpcomingSacredPeriods(maxDays: number = 60): SacredPeriod[] {
 
 function hijriDateToApproxGreg(day: number, month: number): Date | null {
   if (month === 0) {
-    // White days — apply to current month
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), day);
   }
-  // Use current Hijri year
   const todayHijri = HijriService.gregorianToHijri(new Date());
-  const greg = HijriService.gregorianToHijri(new Date());
-  // Approximate: start from current Hijri year, convert month/day to Gregorian
-  // For now, use a simple heuristic
   return HijriService.hijriToGregorian(todayHijri.year, month, day);
 }
 

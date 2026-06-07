@@ -30,7 +30,7 @@ export async function playAdhan(variant: string = 'default'): Promise<void> {
 
     const source = ADHAN_FILES[variant] || ADHAN_FILES.default;
     if (!source) {
-      console.log('No adhan audio file for variant:', variant);
+      if (__DEV__) console.log('No adhan audio file for variant:', variant);
       return;
     }
 
@@ -48,7 +48,7 @@ export async function playAdhan(variant: string = 'default'): Promise<void> {
       }
     });
   } catch (error) {
-    console.warn('Failed to play adhan:', error);
+    if (__DEV__) console.warn('Failed to play adhan:', error);
     currentSound = null;
   }
 }

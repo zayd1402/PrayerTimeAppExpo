@@ -116,8 +116,7 @@ export function calculatePrayerTimes(
   const decl = getSunDeclination(jd);
   const eqt = getEquationOfTime(jd);
 
-  // Time zone offset (hours from UTC, positive east)
-  const tzOffset = -longitude / 15; // hours
+  // Time zone offset (device timezone — the only reliable method)
   const tzOff = getTimezoneOffset(date); // device timezone offset in hours
 
   const asrFactor = madhab === 'hanafi' ? 2 : 1;
@@ -131,19 +130,19 @@ export function calculatePrayerTimes(
   const fajrCos = (Math.sin((Math.PI / 180) * fajrAngle) - Math.sin(latRad) * Math.sin((Math.PI / 180) * decl)) /
                   (Math.cos(latRad) * Math.cos((Math.PI / 180) * decl));
   const fajrHaDeg = (fajrCos >= -1 && fajrCos <= 1) ? (180 / Math.PI) * Math.acos(fajrCos) : 0;
-  const fajrHour = (fajrHaDeg + eqt) / 15 + tzOffset + tzOff;
+  const fajrHour = (fajrHaDeg + eqt) / 15 + tzOff;
 
-  // Sunrise (similar to Maghrib but offset)
-  const sunriseHour = computeTime(0, latitude, decl, eqt) + tzOffset + tzOff;
+  // Sunrise
+  const sunriseHour = computeTime(0, latitude, decl, eqt) + tzOff;
 
   // Dhuhr
-  const dhuhrHour = (eqt + tzOffset + tzOff);
+  const dhuhrHour = (eqt + tzOff);
 
   // Asr
-  const asrHour = computeAsrTime(latitude, decl, eqt, asrFactor) + tzOffset + tzOff;
+  const asrHour = computeAsrTime(latitude, decl, eqt, asrFactor) + tzOff;
 
   // Maghrib
-  const maghribHour = computeMaghrib(latitude, decl, eqt) + tzOffset + tzOff;
+  const maghribHour = computeMaghrib(latitude, decl, eqt) + tzOff;
 
   // Isha
   let ishaHour: number;
@@ -154,7 +153,7 @@ export function calculatePrayerTimes(
     const ishaCos = (Math.sin((Math.PI / 180) * ishaAngle) - Math.sin(latRad) * Math.sin((Math.PI / 180) * decl)) /
                    (Math.cos(latRad) * Math.cos((Math.PI / 180) * decl));
     const ishaHaDeg = (ishaCos >= -1 && ishaCos <= 1) ? (180 / Math.PI) * Math.acos(ishaCos) : 0;
-    ishaHour = (ishaHaDeg + eqt) / 15 + tzOffset + tzOff;
+    ishaHour = (ishaHaDeg + eqt) / 15 + tzOff;
   }
 
   const times: Record<PrayerId, number> = {

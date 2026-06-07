@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, Alert, Linking } from 'react-native';
 import * as Location from 'expo-location';
 import { C } from '../types';
 
@@ -47,9 +47,8 @@ export default function MosquesScreen({ coordinate }: MosquesScreenProps) {
   }
 
   function openInMaps(mosque: Mosque) {
-    // Open in Apple Maps / Google Maps
     const url = `https://maps.apple.com/?q=${encodeURIComponent(mosque.name)}&ll=${coordinate.latitude},${coordinate.longitude}`;
-    // In a full implementation, use Linking.openURL(url)
+    Linking.openURL(url).catch(() => {});
   }
 
   return (

@@ -57,12 +57,12 @@ Notifications.setNotificationHandler({
 
 export async function hasNotificationPermission(): Promise<boolean> {
   const result = await Notifications.getPermissionsAsync();
-  return (result as any).granted === true;
+  return result.granted;
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
   const result = await Notifications.requestPermissionsAsync();
-  return (result as any).granted === true;
+  return result.granted;
 }
 
 // ─── Prayer Notifications ────────────────────────────────────
