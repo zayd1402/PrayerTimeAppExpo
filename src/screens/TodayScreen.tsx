@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { usePrayerApp } from '../context/PrayerAppContext';
 import KhushuModal from '../components/KhushuModal';
 import { getUpcomingSacredPeriods, SacredPeriod } from '../services/SacredTimeService';
+import { getLessonForDate } from '../data/knowledge';
 
 const { width } = Dimensions.get('window');
 
@@ -256,6 +257,7 @@ export default function TodayScreen() {
   const [sunnahStreak, setSunnahStreak] = useState(0);
   const [khushuPrayer, setKhushuPrayer] = useState<{ id: string; name: string } | null>(null);
   const [sacredPeriods, setSacredPeriods] = useState<SacredPeriod[]>([]);
+  const todayLesson = useMemo(() => getLessonForDate(), []);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(enabled => setReduceMotion(enabled));
@@ -421,6 +423,17 @@ export default function TodayScreen() {
       {/* Daily Hadith */}
       <DailyHadithCard hadith={dailyHadith} />
 
+      {/* Today I Learned */}
+      <View style={styles.learnCard}>
+        <View style={styles.learnHeader}>
+          <Ionicons name="bulb-outline" size={16} color={C.gold} />
+          <Text style={styles.learnTitle}>Today I Learned</Text>
+        </View>
+        <Text style={styles.learnLesson}>{todayLesson.title}</Text>
+        <Text style={styles.learnContent} numberOfLines={4}>{todayLesson.content}</Text>
+        {todayLesson.source && <Text style={styles.learnSource}>— {todayLesson.source}</Text>}
+      </View>
+
       {/* Hint */}
       <Text style={styles.hintText}>Swipe right to mark • Long press for options</Text>
 
@@ -530,6 +543,15 @@ const styles = StyleSheet.create({
     backgroundColor: C.surfaceElevated,
     borderRadius: 18, padding: 18, marginTop: 16,
   },
+  learnCard: {
+    backgroundColor: C.surfaceElevated, borderRadius: 18, padding: 18, marginTop: 10,
+    borderLeftWidth: 3, borderLeftColor: C.gold,
+  },
+  learnHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  learnTitle: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.gold },
+  learnLesson: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 6 },
+  learnContent: { fontSize: 13, color: C.textSecondary, lineHeight: 20 },
+  learnSource: { fontSize: 12, color: C.textMuted, marginTop: 6, textAlign: 'right' },
   sacredCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale,
     borderRadius: 16, padding: 14, marginBottom: 12,

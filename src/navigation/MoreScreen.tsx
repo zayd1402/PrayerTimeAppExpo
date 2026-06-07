@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
 
 import HadithScreen from '../screens/HadithScreen';
+import HajjScreen from '../screens/HajjScreen';
 import RamadanScreen from '../screens/RamadanScreen';
 import HifdhScreen from '../screens/HifdhScreen';
 import TazkiyahScreen from '../screens/TazkiyahScreen';
@@ -19,6 +20,7 @@ import { usePrayerApp } from '../context/PrayerAppContext';
 
 const MORE_MENU = [
   { id: 'hadith',  label: 'Hadith',  icon: 'document-text-outline', color: C.gold },
+  { id: 'hajj',    label: 'Hajj',    icon: 'airplane-outline',      color: C.gold },
   { id: 'ramadan', label: 'Ramadan', icon: 'moon-outline',          color: C.gold },
   { id: 'hifdh',   label: 'Hifdh',   icon: 'book-outline',          color: C.primary },
   { id: 'tazkiyah',label: 'Tazkiyah',icon: 'leaf-outline',          color: C.primary },
@@ -47,6 +49,7 @@ export default function MoreScreen() {
     const subScreen = (() => {
       switch (activeScreen) {
         case 'hadith':  return <HadithScreen />;
+        case 'hajj':    return <HajjScreen />;
         case 'ramadan': return <RamadanScreen />;
         case 'hifdh':   return <HifdhScreen />;
         case 'tazkiyah':return <TazkiyahScreen />;
