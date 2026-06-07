@@ -20,6 +20,7 @@ import {
   setupNotificationResponseHandler,
 } from '../services/NotificationService';
 import { getDailyHadith } from '../data/hadiths';
+import { initAudio, playAdhan } from '../services/AudioService';
 
 function getDateKey(date: Date): string {
   return date.toISOString().split('T')[0];
@@ -188,16 +189,23 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
     return () => sub.remove();
   }, [settings.calculationMethod, settings.madhab, location]);
 
-  // Timer countdown
+  // Timer countdown + adhan trigger
   useEffect(() => {
     if (!nextPrayer) return;
+    let prevDiff = Infinity;
     const interval = setInterval(() => {
       const now = minutesFromMidnight();
       const diff = Math.max(0, nextPrayer.minutes - now);
       setTimerDisplay(formatCountdown(diff));
+
+      // Detect prayer time arrival — play adhan on transition from positive to 0
+      if (prevDiff > 0 && diff === 0 && settings.adhanEnabled) {
+        initAudio().then(() => playAdhan(settings.adhanVariant));
+      }
+      prevDiff = diff;
     }, 1000);
     return () => clearInterval(interval);
-  }, [nextPrayer]);
+  }, [nextPrayer, settings.adhanEnabled, settings.adhanVariant]);
 
   const handleMarkPrayer = async (id: PrayerId, status: 'prayed' | 'qaza') => {
     const todayKey = getDateKey(new Date());

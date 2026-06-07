@@ -102,6 +102,9 @@ export interface AppSettings {
   fajrAlarmMinutes: number;
   iqamaCountdownEnabled: boolean;
   location: { latitude: number; longitude: number; name: string } | null;
+  adhanEnabled: boolean;
+  adhanVariant: string;
+  adhanVolume: number;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -112,6 +115,9 @@ export const DEFAULT_SETTINGS: AppSettings = {
   fajrAlarmMinutes: 15,
   iqamaCountdownEnabled: false,
   location: null,
+  adhanEnabled: true,
+  adhanVariant: 'default',
+  adhanVolume: 1.0,
 };
 
 // ─── Navigation ─────────────────────────────────────────────

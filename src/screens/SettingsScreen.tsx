@@ -25,6 +25,7 @@ const METHODS: { value: CalculationMethod; label: string }[] = [
 ];
 
 const FAJR_ALARM_OPTIONS = [5, 10, 15, 20, 30];
+const ADHAN_VARIANTS = ['default', 'makkah', 'madinah', 'egyptian'];
 
 export default function SettingsScreen({ settings, updateSettings }: SettingsScreenProps) {
   const handleLocationDetect = useCallback(async () => {
@@ -168,6 +169,34 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
               trackColor={{ true: C.primary }}
             />
           </View>
+
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Adhan audio</Text>
+            <Switch
+              value={settings.adhanEnabled}
+              onValueChange={v => updateSettings({ adhanEnabled: v })}
+              trackColor={{ true: C.primary }}
+            />
+          </View>
+
+          {settings.adhanEnabled && (
+            <View style={styles.subRow}>
+              <Text style={styles.rowLabel}>Adhan style</Text>
+              <View style={styles.pillRow}>
+                {ADHAN_VARIANTS.map(v => (
+                  <TouchableOpacity
+                    key={v}
+                    style={[styles.pill, settings.adhanVariant === v && styles.pillActive]}
+                    onPress={() => updateSettings({ adhanVariant: v })}
+                  >
+                    <Text style={[styles.pillText, settings.adhanVariant === v && styles.pillTextActive]}>
+                      {v.charAt(0).toUpperCase() + v.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
         </View>
       </View>
 
