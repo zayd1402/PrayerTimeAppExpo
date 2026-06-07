@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
 
 import HadithScreen from '../screens/HadithScreen';
+import RamadanScreen from '../screens/RamadanScreen';
 import FridayScreen from '../screens/FridayScreen';
 import WeeklyScreen from '../screens/WeeklyScreen';
 import QiblaScreen from '../screens/QiblaScreen';
@@ -16,6 +17,7 @@ import { usePrayerApp } from '../context/PrayerAppContext';
 
 const MORE_MENU = [
   { id: 'hadith',  label: 'Hadith',  icon: 'document-text-outline', color: C.gold },
+  { id: 'ramadan', label: 'Ramadan', icon: 'moon-outline',          color: C.gold },
   { id: 'friday',  label: 'Friday',  icon: 'star-outline',         color: C.primaryLight },
   { id: 'weekly',  label: 'Weekly',  icon: 'calendar-clear-outline', color: C.gold },
   { id: 'qibla',   label: 'Qibla',   icon: 'compass-outline',      color: C.primary },
@@ -41,6 +43,7 @@ export default function MoreScreen() {
     const subScreen = (() => {
       switch (activeScreen) {
         case 'hadith':  return <HadithScreen />;
+        case 'ramadan': return <RamadanScreen />;
         case 'friday':  return <FridayScreen />;
         case 'weekly':  return <WeeklyScreen />;
         case 'qibla':   return <QiblaScreen coordinate={{ latitude: ctx.location.latitude, longitude: ctx.location.longitude }} />;
