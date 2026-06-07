@@ -47,8 +47,14 @@ export default function MosquesScreen({ coordinate }: MosquesScreenProps) {
   }
 
   function openInMaps(mosque: Mosque) {
-    const url = `https://maps.apple.com/?q=${encodeURIComponent(mosque.name)}&ll=${coordinate.latitude},${coordinate.longitude}`;
-    Linking.openURL(url).catch(() => {});
+    const { latitude, longitude } = coordinate;
+    const label = encodeURIComponent(mosque.name);
+    Linking.canOpenURL('comgooglemaps://').then(supported => {
+      const url = supported
+        ? `comgooglemaps://?q=${label}&center=${latitude},${longitude}`
+        : `https://maps.apple.com/?q=${label}&ll=${latitude},${longitude}`;
+      Linking.openURL(url).catch(() => {});
+    });
   }
 
   return (

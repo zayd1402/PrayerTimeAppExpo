@@ -87,7 +87,7 @@ export async function schedulePrayerNotification(
     content: {
       title,
       body,
-      sound: isFajrAlarm ? 'fajr_alarm.wav' : 'default',
+      sound: isFajrAlarm ? 'default' : 'default',
       priority: Notifications.AndroidNotificationPriority.HIGH,
       categoryIdentifier: PRAYER_CATEGORY,
       data: { prayerId, action: 'time' },

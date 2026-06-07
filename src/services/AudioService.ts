@@ -24,6 +24,19 @@ export function setAdhanFile(variant: string, source: AVPlaybackSource): void {
   ADHAN_FILES[variant] = source;
 }
 
+/*
+ * To add adhan audio, call setAdhanFile() at app startup:
+ *
+ * import { setAdhanFile } from './services/AudioService';
+ * setAdhanFile('makkah', require('../assets/audio/adhan-makkah.mp3'));
+ * setAdhanFile('madinah', require('../assets/audio/adhan-madinah.mp3'));
+ * setAdhanFile('egyptian', require('../assets/audio/adhan-egyptian.mp3'));
+ * setAdhanFile('default', require('../assets/audio/adhan-makkah.mp3'));
+ *
+ * Place the MP3 files in assets/audio/ before building.
+ * Free adhan downloads: https://download.quranicaudio.com/qadha/
+ */
+
 export async function playAdhan(variant: string = 'default'): Promise<void> {
   try {
     await stopAdhan();

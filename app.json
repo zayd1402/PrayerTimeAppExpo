@@ -16,7 +16,20 @@
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to calculate prayer times for your current location and find nearby mosques.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to calculate prayer times and provide timely prayer notifications.",
-        "UIBackgroundModes": ["location", "fetch"]
+        "UIBackgroundModes": ["location", "fetch"],
+        "NSPrivacyAccessedAPITypes": [
+          { "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults", "NSPrivacyAccessedAPITypeReasons": ["CA92.1"] },
+          { "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace", "NSPrivacyAccessedAPITypeReasons": ["E174.1"] },
+          { "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp", "NSPrivacyAccessedAPITypeReasons": ["C617.1"] }
+        ]
+      },
+      "privacyManifests": {
+        "NSPrivacyCollectedDataTypes": [],
+        "NSPrivacyAccessedAPITypes": [
+          "NSPrivacyAccessedAPICategoryUserDefaults",
+          "NSPrivacyAccessedAPICategoryDiskSpace",
+          "NSPrivacyAccessedAPICategoryFileTimestamp"
+        ]
       }
     },
     "android": {
