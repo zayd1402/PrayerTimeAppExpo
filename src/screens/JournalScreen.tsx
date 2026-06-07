@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C, PrayerId, PRAYER_IDS } from '../types';
-import { loadPrayerJournal, addJournalEntry } from '../services/StorageService';
+import { loadPrayerJournal, addJournalEntry, getKhushuAverage } from '../services/StorageService';
 
 const MOODS = [
   { value: 'peaceful', label: 'Peaceful', icon: 'leaf-outline', color: C.primary },
@@ -27,10 +27,16 @@ export default function JournalScreen() {
   const [reflection, setReflection] = useState('');
   const [gratitude, setGratitude] = useState('');
   const [improvement, setImprovement] = useState('');
+  const [khushuAvg, setKhushuAvg] = useState(0);
+  const [khushuTrend, setKhushuTrend] = useState<number[]>([]);
   const todayKey = new Date().toISOString().split('T')[0];
 
   useEffect(() => {
     loadPrayerJournal().then(setEntries);
+    getKhushuAverage(7).then(k => {
+      setKhushuAvg(k.average);
+      setKhushuTrend(k.trend);
+    });
   }, []);
 
   const saveEntry = async () => {
@@ -84,6 +90,28 @@ export default function JournalScreen() {
           <Text style={styles.summaryLabel}>Total Entries</Text>
         </View>
       </View>
+
+      {/* Khushu' Trend */}
+      {khushuAvg > 0 && (
+        <View style={styles.khushuCard}>
+          <View style={styles.khushuHeader}>
+            <Ionicons name="heart-half-outline" size={18} color={C.primary} />
+            <Text style={styles.khushuTitle}>Khushu' Trend (7 days)</Text>
+          </View>
+          <Text style={styles.khushuValue}>{khushuAvg}/5</Text>
+          <Text style={styles.khushuLabel}>average concentration</Text>
+          <View style={styles.khushuBars}>
+            {khushuTrend.map((v, i) => (
+              <View key={i} style={styles.khushuBarWrap}>
+                <View style={styles.khushuBarTrack}>
+                  <View style={[styles.khushuBar, { height: `${(v / 5) * 100}%` }]} />
+                </View>
+                <Text style={styles.khushuBarLabel}>{['S','M','T','W','T','F','S'][i]}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
       {/* New Entry Form */}
       <Text style={styles.sectionTitle}>New Entry</Text>
@@ -221,6 +249,17 @@ const styles = StyleSheet.create({
   summaryDivider: { width: 1, backgroundColor: C.border },
   summaryValue: { fontSize: 24, fontFamily: 'Jost_700Bold', color: C.primary },
   summaryLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+
+  khushuCard: { backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16 },
+  khushuHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  khushuTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary },
+  khushuValue: { fontSize: 32, fontFamily: 'BodoniModa_700Bold', color: C.primary },
+  khushuLabel: { fontSize: 12, color: C.textMuted, marginBottom: 12 },
+  khushuBars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 50 },
+  khushuBarWrap: { alignItems: 'center', flex: 1 },
+  khushuBarTrack: { width: 8, height: 40, backgroundColor: C.border, borderRadius: 4, justifyContent: 'flex-end', overflow: 'hidden' },
+  khushuBar: { width: 8, borderRadius: 4, backgroundColor: C.primary },
+  khushuBarLabel: { fontSize: 9, color: C.textMuted, marginTop: 4 },
 
   sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 },
 

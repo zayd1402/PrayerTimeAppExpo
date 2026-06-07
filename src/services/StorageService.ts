@@ -2,7 +2,7 @@ import { MMKV } from 'react-native-mmkv';
 import { 
   PrayerId, PrayerLogEntry, AppSettings, DEFAULT_SETTINGS,
   FastingLog, QuranLog, DhikrSession, 
-  ZakatRecord, CharityRecord, PrayerJournalEntry
+  ZakatRecord, CharityRecord, PrayerJournalEntry, KhushuEntry
 } from '../types';
 
 export const storage = new MMKV({ id: 'prayertime-storage' });
@@ -40,6 +40,7 @@ const KEYS = {
   KAHF_PROGRESS:  '@prayertime:kahf_last_read',
   KHUTBAH_NOTES:  '@prayertime:khutbah_notes',
   FRIDAY_CHECKLIST:'@prayertime:friday_checklist',
+  KHUSHU_LOG:     '@prayertime:khushu_log',
 };
 
 // ─── Settings ───────────────────────────────────────────────
@@ -359,6 +360,40 @@ export async function getKhutbahNotes(): Promise<string> {
 
 export async function setKhutbahNotes(text: string): Promise<void> {
   storage.set(KEYS.KHUTBAH_NOTES, text);
+}
+
+// ─── Khushu' / Ihsan Tracker ────────────────────────────────
+export async function getKhushuLog(): Promise<KhushuEntry[]> {
+  return load<KhushuEntry[]>(KEYS.KHUSHU_LOG, []);
+}
+
+export async function addKhushuEntry(entry: KhushuEntry): Promise<KhushuEntry[]> {
+  const log = load<KhushuEntry[]>(KEYS.KHUSHU_LOG, []);
+  log.push(entry);
+  save(KEYS.KHUSHU_LOG, log);
+  return log;
+}
+
+export async function getKhushuAverage(days: number = 7): Promise<{ average: number; entries: number; trend: number[] }> {
+  const log = load<KhushuEntry[]>(KEYS.KHUSHU_LOG, []);
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const cutoffStr = cutoff.toISOString().split('T')[0];
+  const recent = log.filter(e => e.date >= cutoffStr);
+  const average = recent.length > 0 ? recent.reduce((s, e) => s + e.level, 0) / recent.length : 0;
+
+  // Daily trend (last 7 days)
+  const trend: number[] = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    const dayEntries = recent.filter(e => e.date === key);
+    const dayAvg = dayEntries.length > 0 ? dayEntries.reduce((s, e) => s + e.level, 0) / dayEntries.length : 0;
+    trend.push(Math.round(dayAvg * 10) / 10);
+  }
+
+  return { average: Math.round(average * 10) / 10, entries: recent.length, trend };
 }
 
 // ─── Sunnah Streak ──────────────────────────────────────────

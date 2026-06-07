@@ -267,7 +267,22 @@ export interface IslamicEvent {
   isFixedHijri: boolean;
 }
 
-// ─── Weekly Activity Types ──────────────────────────────────
+// ─── Khushu' / Ihsan Tracker Types ──────────────────────────
+export type KhushuLevel = 1 | 2 | 3 | 4 | 5;
+export type DistractionType = 'phone' | 'noise' | 'thoughts' | 'tired' | 'rushed' | 'none';
+
+export interface KhushuEntry {
+  date: string;
+  prayerId: PrayerId;
+  level: KhushuLevel;
+  distractions: DistractionType[];
+  prePrayerPrep: {
+    wuduPresence: boolean;
+    arrivedEarly: boolean;
+    recitedAdhkar: boolean;
+  };
+  note?: string;
+}
 export interface WeeklyActivity {
   id: string;
   title: string;

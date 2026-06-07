@@ -5,7 +5,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
 import { HijriService } from '../services/HijriService';
-import { loadPrayerLog, getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData } from '../services/StorageService';
+import { loadPrayerLog, getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData, getKhushuAverage } from '../services/StorageService';
 import { getEventsForHijriDate, ISLAMIC_EVENTS } from '../data/islamicEvents';
 
 function getDateKey(date: Date): string {
@@ -42,6 +42,8 @@ export default function CalendarScreen() {
   const [totalPrayers, setTotalPrayers] = useState(0);
   const [onTimeRate, setOnTimeRate] = useState(0);
   const [heatmapData, setHeatmapData] = useState<Record<string, number>>({});
+  const [khushuAvg, setKhushuAvg] = useState(0);
+  const [khushuEntryCount, setKhushuEntryCount] = useState(0);
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -57,11 +59,14 @@ export default function CalendarScreen() {
       getTotalPrayers(),
       getOnTimeRate(),
       getHeatmapData(2),
-    ]).then(([s, t, o, h]) => {
+      getKhushuAverage(7),
+    ]).then(([s, t, o, h, k]) => {
       setStreak(s);
       setTotalPrayers(t);
       setOnTimeRate(o);
       setHeatmapData(h);
+      setKhushuAvg(k.average);
+      setKhushuEntryCount(k.entries);
     });
   }, [selectedDate]);
 
@@ -270,6 +275,11 @@ export default function CalendarScreen() {
                     <Text style={styles.prayerSummary}>
                       {prayedDayCount} of 5 completed
                     </Text>
+                    {khushuEntryCount > 0 && (
+                      <Text style={styles.khushuSummary}>
+                        <Ionicons name="heart-half-outline" size={12} color={C.primary} /> Weekly khushu' avg: {khushuAvg}/5 ({khushuEntryCount} entries)
+                      </Text>
+                    )}
                   </>
                 )}
 
@@ -385,6 +395,7 @@ const styles = StyleSheet.create({
   prayerStatusBadgeText: { fontSize: 11, fontFamily: 'Jost_600SemiBold', color: C.textMuted },
   prayerStatusBadgeTextPrayed: { color: C.primary },
   prayerSummary: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.primary, marginTop: 2, marginBottom: 12 },
+  khushuSummary: { fontSize: 12, fontFamily: 'Jost_500Medium', color: C.textMuted, marginTop: -8, marginBottom: 12 },
 
   eventRow: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 12, marginBottom: 8 },
   eventTitle: { fontSize: 14, fontFamily: 'Jost_600SemiBold' },

@@ -13,6 +13,7 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { usePrayerApp } from '../context/PrayerAppContext';
+import KhushuModal from '../components/KhushuModal';
 
 const { width } = Dimensions.get('window');
 
@@ -252,6 +253,7 @@ export default function TodayScreen() {
   const scrollY = useSharedValue(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [sunnahStreak, setSunnahStreak] = useState(0);
+  const [khushuPrayer, setKhushuPrayer] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(enabled => setReduceMotion(enabled));
@@ -295,6 +297,12 @@ export default function TodayScreen() {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch {}
     togglePrayer(id);
+    // Show khushu' modal after marking
+    const entry = TRACKABLE.find(p => p === id);
+    if (entry && !completedPrayers.has(id)) {
+      const prayer = PRAYERS.find(p => p.id === id);
+      if (prayer) setKhushuPrayer({ id: prayer.id, name: prayer.name });
+    }
   };
 
   const handleLongPress = (prayer: Prayer) => {
@@ -399,6 +407,15 @@ export default function TodayScreen() {
 
       {/* Hint */}
       <Text style={styles.hintText}>Swipe right to mark • Long press for options</Text>
+
+      {khushuPrayer && (
+        <KhushuModal
+          visible={!!khushuPrayer}
+          prayerId={khushuPrayer.id as PrayerId}
+          prayerName={khushuPrayer.name}
+          onClose={() => setKhushuPrayer(null)}
+        />
+      )}
     </Animated.ScrollView>
   );
 }
