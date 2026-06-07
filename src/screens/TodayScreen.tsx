@@ -251,11 +251,16 @@ export default function TodayScreen() {
   } = usePrayerApp();
   const scrollY = useSharedValue(0);
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [sunnahStreak, setSunnahStreak] = useState(0);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then(enabled => setReduceMotion(enabled));
     const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
     return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    import('../services/StorageService').then(s => s.getSunnahStreak().then(setSunnahStreak));
   }, []);
 
   const entries = [
@@ -347,6 +352,13 @@ export default function TodayScreen() {
             </View>
             <Text style={styles.progressText}>{completedCount}/5</Text>
           </View>
+
+          {sunnahStreak > 0 && (
+            <View style={styles.sunnahStreakRow}>
+              <Ionicons name="leaf-outline" size={11} color={C.gold} />
+              <Text style={styles.sunnahStreakText}>{sunnahStreak}-day sunnah streak</Text>
+            </View>
+          )}
         </LinearGradient>
       </Animated.View>
 
@@ -423,6 +435,9 @@ const styles = StyleSheet.create({
   progressBar: { flex: 1, height: 6, backgroundColor: 'rgba(202,138,4,0.15)', borderRadius: 3 },
   progressFill: { height: '100%', backgroundColor: C.gold, borderRadius: 3 },
   progressText: { color: C.textPrimary, fontSize: 14, fontFamily: 'Jost_700Bold', fontVariant: ['tabular-nums'] },
+
+  sunnahStreakRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 6 },
+  sunnahStreakText: { color: C.gold, fontSize: 11, fontFamily: 'Jost_500Medium' },
 
   // Ring
   ringContainer: { justifyContent: 'center', alignItems: 'center' },

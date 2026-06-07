@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
 
 import TodayScreen from '../screens/TodayScreen';
+import SunnahRoutineScreen from '../screens/SunnahRoutineScreen';
 import WorshipScreen from '../screens/WorshipScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import DuaLibraryScreen from '../screens/DuaLibraryScreen';
@@ -46,6 +47,14 @@ export default function TabNavigator() {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => <TabIcon name="home" color={color} size={size} />,
+        }}
+      />
+      <Tab.Screen
+        name="sunnah"
+        component={SunnahRoutineScreen}
+        options={{
+          tabBarLabel: 'Sunnah',
+          tabBarIcon: ({ color, size }) => <TabIcon name="leaf" color={color} size={size} />,
         }}
       />
       <Tab.Screen

@@ -17,6 +17,7 @@ import {
   setupNotificationCategories,
   scheduleFridayReminders,
   scheduleWeeklyReminders,
+  scheduleSunnahReminders,
   setupNotificationResponseHandler,
 } from '../services/NotificationService';
 import { getDailyHadith } from '../data/hadiths';
@@ -102,6 +103,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       await setupNotificationCategories();
       await scheduleFridayReminders().catch(() => {});
       await scheduleWeeklyReminders().catch(() => {});
+      await scheduleSunnahReminders().catch(() => {});
 
       // Notification response handler
       notifSubRef.current = setupNotificationResponseHandler(

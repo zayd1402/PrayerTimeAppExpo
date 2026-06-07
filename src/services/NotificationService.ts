@@ -186,6 +186,39 @@ export async function scheduleWeeklyReminders(): Promise<void> {
   });
 }
 
+// ─── Schedule Sunnah Reminder ───────────────────────────────
+export async function scheduleSunnahReminders(): Promise<void> {
+  await Notifications.scheduleNotificationAsync({
+    identifier: 'morning-adhkar-daily',
+    content: {
+      title: 'Morning Adhkar',
+      body: 'Start your day with the morning remembrances.',
+      sound: true,
+      ...(Platform.OS === 'android' && { channelId: 'reminders' }),
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: 8,
+      minute: 0,
+    },
+  });
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: 'evening-adhkar-daily',
+    content: {
+      title: 'Evening Adhkar',
+      body: 'Take a moment for the evening remembrances before the night falls.',
+      sound: true,
+      ...(Platform.OS === 'android' && { channelId: 'reminders' }),
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DAILY,
+      hour: 17,
+      minute: 0,
+    },
+  });
+}
+
 // ─── Cancel All Notifications ────────────────────────────────
 export async function cancelAllNotifications(): Promise<void> {
   await Notifications.cancelAllScheduledNotificationsAsync();

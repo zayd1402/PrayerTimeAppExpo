@@ -360,3 +360,28 @@ export async function getKhutbahNotes(): Promise<string> {
 export async function setKhutbahNotes(text: string): Promise<void> {
   storage.set(KEYS.KHUTBAH_NOTES, text);
 }
+
+// ─── Sunnah Streak ──────────────────────────────────────────
+export async function getSunnahStreak(): Promise<number> {
+  const raw = storage.getString('@prayertime:sunnah_log');
+  if (!raw) return 0;
+  const log: Record<string, any> = JSON.parse(raw);
+  const dates = Object.keys(log).sort().reverse();
+  if (dates.length === 0) return 0;
+
+  let streak = 0;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let i = 0; i < dates.length; i++) {
+    const expected = new Date(today);
+    expected.setDate(today.getDate() - i);
+    const expectedKey = expected.toISOString().split('T')[0];
+    if (dates[i] !== expectedKey) break;
+    const dayLog = log[dates[i]];
+    const completed = Object.values(dayLog).filter(v => v === 100 || v === 1 || v === 3).length;
+    if (completed > 0) streak++;
+    else break;
+  }
+  return streak;
+}
