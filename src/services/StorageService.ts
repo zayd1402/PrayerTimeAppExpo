@@ -1,9 +1,26 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MMKV } from 'react-native-mmkv';
 import { 
   PrayerId, PrayerLogEntry, AppSettings, DEFAULT_SETTINGS,
-  Dua, Hadith, FastingLog, QuranLog, DhikrSession, 
-  ZakatRecord, CharityRecord, PrayerJournalEntry, IslamicEvent
+  FastingLog, QuranLog, DhikrSession, 
+  ZakatRecord, CharityRecord, PrayerJournalEntry
 } from '../types';
+
+export const storage = new MMKV({ id: 'prayertime-storage' });
+
+// ─── helpers ────────────────────────────────────────────────
+function load<T>(key: string, fallback: T): T {
+  try {
+    const raw = storage.getString(key);
+    if (raw !== undefined) return JSON.parse(raw);
+    return fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function save<T>(key: string, value: T): void {
+  storage.set(key, JSON.stringify(value));
+}
 
 // ─── Storage Keys ────────────────────────────────────────────
 const KEYS = {
@@ -20,38 +37,29 @@ const KEYS = {
   CHARITY_LOG:    '@prayertime:charity_log',
   PRAYER_JOURNAL: '@prayertime:prayer_journal',
   LAST_HADITH_DATE:'@prayertime:last_hadith_date',
+  KAHF_PROGRESS:  '@prayertime:kahf_last_read',
+  KHUTBAH_NOTES:  '@prayertime:khutbah_notes',
+  FRIDAY_CHECKLIST:'@prayertime:friday_checklist',
 };
 
 // ─── Settings ───────────────────────────────────────────────
 export async function loadSettings(): Promise<AppSettings> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.SETTINGS);
-    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
-    return DEFAULT_SETTINGS;
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
+  return load<AppSettings>(KEYS.SETTINGS, DEFAULT_SETTINGS);
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {
-  await AsyncStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
+  save(KEYS.SETTINGS, settings);
 }
 
 // ─── Prayer Log ──────────────────────────────────────────────
 type DayLog = Record<PrayerId, PrayerLogEntry['status']>;
 
 export async function loadPrayerLog(): Promise<Record<string, DayLog>> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.PRAYER_LOG);
-    if (raw) return JSON.parse(raw);
-    return {};
-  } catch {
-    return {};
-  }
+  return load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
 }
 
 export async function savePrayerLog(log: Record<string, DayLog>): Promise<void> {
-  await AsyncStorage.setItem(KEYS.PRAYER_LOG, JSON.stringify(log));
+  save(KEYS.PRAYER_LOG, log);
 }
 
 export async function markPrayer(
@@ -59,21 +67,21 @@ export async function markPrayer(
   prayerId: PrayerId,
   status: PrayerLogEntry['status']
 ): Promise<Record<string, DayLog>> {
-  const log = await loadPrayerLog();
+  const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
   if (!log[dateKey]) log[dateKey] = {} as DayLog;
   log[dateKey][prayerId] = status;
-  await savePrayerLog(log);
+  save(KEYS.PRAYER_LOG, log);
   return log;
 }
 
 export async function getPrayerLogForDate(dateKey: string): Promise<DayLog | null> {
-  const log = await loadPrayerLog();
+  const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
   return log[dateKey] || null;
 }
 
 // ─── Stats ───────────────────────────────────────────────────
 export async function getStreak(): Promise<number> {
-  const log = await loadPrayerLog();
+  const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
   const dates = Object.keys(log).sort().reverse();
   if (dates.length === 0) return 0;
 
@@ -98,7 +106,7 @@ export async function getStreak(): Promise<number> {
 }
 
 export async function getTotalPrayers(): Promise<number> {
-  const log = await loadPrayerLog();
+  const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
   let total = 0;
   for (const day of Object.values(log)) {
     total += Object.values(day).filter(s => s === 'prayed').length;
@@ -107,7 +115,7 @@ export async function getTotalPrayers(): Promise<number> {
 }
 
 export async function getOnTimeRate(): Promise<number> {
-  const log = await loadPrayerLog();
+  const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
   let prayed = 0;
   let qaza = 0;
   for (const day of Object.values(log)) {
@@ -122,7 +130,7 @@ export async function getOnTimeRate(): Promise<number> {
 }
 
 export async function getHeatmapData(months: number = 2): Promise<Record<string, number>> {
-  const log = await loadPrayerLog();
+  const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
   const result: Record<string, number> = {};
   const now = new Date();
   for (let i = 0; i < 30 * months; i++) {
@@ -141,110 +149,91 @@ export async function getHeatmapData(months: number = 2): Promise<Record<string,
 
 // ─── Favorite Duas ───────────────────────────────────────────
 export async function getFavoriteDuas(): Promise<string[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.FAVORITE_DUAS);
-    if (raw) return JSON.parse(raw);
-    return [];
-  } catch { return []; }
+  return load<string[]>(KEYS.FAVORITE_DUAS, []);
 }
 
 export async function toggleFavoriteDua(duaId: string): Promise<string[]> {
-  const favs = await getFavoriteDuas();
+  const favs = load<string[]>(KEYS.FAVORITE_DUAS, []);
   const idx = favs.indexOf(duaId);
   if (idx >= 0) favs.splice(idx, 1);
   else favs.push(duaId);
-  await AsyncStorage.setItem(KEYS.FAVORITE_DUAS, JSON.stringify(favs));
+  save(KEYS.FAVORITE_DUAS, favs);
   return favs;
 }
 
 export async function isFavoriteDua(duaId: string): Promise<boolean> {
-  const favs = await getFavoriteDuas();
+  const favs = load<string[]>(KEYS.FAVORITE_DUAS, []);
   return favs.includes(duaId);
 }
 
 // ─── Hadith ──────────────────────────────────────────────────
 export async function getLastHadithIndex(): Promise<number> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.HADITH_INDEX);
-    return raw ? parseInt(raw, 10) : 0;
-  } catch { return 0; }
+  return storage.getNumber(KEYS.HADITH_INDEX) ?? 0;
 }
 
 export async function setLastHadithIndex(index: number): Promise<void> {
-  await AsyncStorage.setItem(KEYS.HADITH_INDEX, String(index));
+  storage.set(KEYS.HADITH_INDEX, index);
 }
 
 export async function getFavoriteHadiths(): Promise<string[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.FAVORITE_HADITH);
-    if (raw) return JSON.parse(raw);
-    return [];
-  } catch { return []; }
+  return load<string[]>(KEYS.FAVORITE_HADITH, []);
 }
 
 export async function toggleFavoriteHadith(hadithId: string): Promise<string[]> {
-  const favs = await getFavoriteHadiths();
+  const favs = load<string[]>(KEYS.FAVORITE_HADITH, []);
   const idx = favs.indexOf(hadithId);
   if (idx >= 0) favs.splice(idx, 1);
   else favs.push(hadithId);
-  await AsyncStorage.setItem(KEYS.FAVORITE_HADITH, JSON.stringify(favs));
+  save(KEYS.FAVORITE_HADITH, favs);
   return favs;
 }
 
 export async function getLastHadithDate(): Promise<string | null> {
-  return await AsyncStorage.getItem(KEYS.LAST_HADITH_DATE);
+  return storage.getString(KEYS.LAST_HADITH_DATE) ?? null;
 }
 
 export async function setLastHadithDate(date: string): Promise<void> {
-  await AsyncStorage.setItem(KEYS.LAST_HADITH_DATE, date);
+  storage.set(KEYS.LAST_HADITH_DATE, date);
 }
 
 // ─── Fasting Log ─────────────────────────────────────────────
 export async function loadFastingLog(): Promise<Record<string, FastingLog>> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.FASTING_LOG);
-    if (raw) return JSON.parse(raw);
-    return {};
-  } catch { return {}; }
+  return load<Record<string, FastingLog>>(KEYS.FASTING_LOG, {});
 }
 
 export async function saveFastingLog(log: Record<string, FastingLog>): Promise<void> {
-  await AsyncStorage.setItem(KEYS.FASTING_LOG, JSON.stringify(log));
+  save(KEYS.FASTING_LOG, log);
 }
 
 export async function toggleFast(dateKey: string, type: FastingLog['type']): Promise<Record<string, FastingLog>> {
-  const log = await loadFastingLog();
+  const log = load<Record<string, FastingLog>>(KEYS.FASTING_LOG, {});
   if (log[dateKey]) {
     delete log[dateKey];
   } else {
     log[dateKey] = { date: dateKey, type, completed: true };
   }
-  await saveFastingLog(log);
+  save(KEYS.FASTING_LOG, log);
   return log;
 }
 
 // ─── Quran Log ───────────────────────────────────────────────
 export async function loadQuranLog(): Promise<Record<string, QuranLog>> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.QURAN_LOG);
-    if (raw) return JSON.parse(raw);
-    return {};
-  } catch { return {}; }
+  return load<Record<string, QuranLog>>(KEYS.QURAN_LOG, {});
 }
 
 export async function saveQuranLog(log: Record<string, QuranLog>): Promise<void> {
-  await AsyncStorage.setItem(KEYS.QURAN_LOG, JSON.stringify(log));
+  save(KEYS.QURAN_LOG, log);
 }
 
 export async function addQuranLog(entry: QuranLog): Promise<Record<string, QuranLog>> {
-  const log = await loadQuranLog();
+  const log = load<Record<string, QuranLog>>(KEYS.QURAN_LOG, {});
   log[entry.date] = entry;
-  await saveQuranLog(log);
+  save(KEYS.QURAN_LOG, log);
   return log;
 }
 
 export async function getWeeklyQuranStats(): Promise<number[]> {
-  const log = await loadQuranLog();
+  const log = load<Record<string, QuranLog>>(KEYS.QURAN_LOG, {});
   const result: number[] = [];
   const now = new Date();
   for (let i = 6; i >= 0; i--) {
@@ -258,28 +247,23 @@ export async function getWeeklyQuranStats(): Promise<number[]> {
 
 // ─── Dhikr History ───────────────────────────────────────────
 export async function loadDhikrHistory(): Promise<DhikrSession[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.DHIKR_HISTORY);
-    if (raw) return JSON.parse(raw);
-    return [];
-  } catch { return []; }
+  return load<DhikrSession[]>(KEYS.DHIKR_HISTORY, []);
 }
 
 export async function saveDhikrHistory(history: DhikrSession[]): Promise<void> {
-  await AsyncStorage.setItem(KEYS.DHIKR_HISTORY, JSON.stringify(history));
+  save(KEYS.DHIKR_HISTORY, history);
 }
 
 export async function addDhikrSession(session: DhikrSession): Promise<DhikrSession[]> {
-  const history = await loadDhikrHistory();
+  const history = load<DhikrSession[]>(KEYS.DHIKR_HISTORY, []);
   history.push(session);
-  // Keep last 90 days
   if (history.length > 90) history.shift();
-  await saveDhikrHistory(history);
+  save(KEYS.DHIKR_HISTORY, history);
   return history;
 }
 
 export async function getTodayDhikrCount(): Promise<{ subhanallah: number; alhamdulillah: number; allahuakbar: number }> {
-  const history = await loadDhikrHistory();
+  const history = load<DhikrSession[]>(KEYS.DHIKR_HISTORY, []);
   const today = new Date().toISOString().split('T')[0];
   const todaySessions = history.filter(s => s.date === today);
   return todaySessions.reduce((acc, s) => ({
@@ -291,72 +275,88 @@ export async function getTodayDhikrCount(): Promise<{ subhanallah: number; alham
 
 // ─── Zakat Records ───────────────────────────────────────────
 export async function loadZakatRecords(): Promise<ZakatRecord[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.ZAKAT_RECORDS);
-    if (raw) return JSON.parse(raw);
-    return [];
-  } catch { return []; }
+  return load<ZakatRecord[]>(KEYS.ZAKAT_RECORDS, []);
 }
 
 export async function saveZakatRecords(records: ZakatRecord[]): Promise<void> {
-  await AsyncStorage.setItem(KEYS.ZAKAT_RECORDS, JSON.stringify(records));
+  save(KEYS.ZAKAT_RECORDS, records);
 }
 
 export async function addZakatRecord(record: ZakatRecord): Promise<ZakatRecord[]> {
-  const records = await loadZakatRecords();
+  const records = load<ZakatRecord[]>(KEYS.ZAKAT_RECORDS, []);
   records.push(record);
-  await saveZakatRecords(records);
+  save(KEYS.ZAKAT_RECORDS, records);
   return records;
 }
 
 // ─── Charity Log ─────────────────────────────────────────────
 export async function loadCharityLog(): Promise<CharityRecord[]> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.CHARITY_LOG);
-    if (raw) return JSON.parse(raw);
-    return [];
-  } catch { return []; }
+  return load<CharityRecord[]>(KEYS.CHARITY_LOG, []);
 }
 
 export async function saveCharityLog(records: CharityRecord[]): Promise<void> {
-  await AsyncStorage.setItem(KEYS.CHARITY_LOG, JSON.stringify(records));
+  save(KEYS.CHARITY_LOG, records);
 }
 
 export async function addCharityRecord(record: CharityRecord): Promise<CharityRecord[]> {
-  const records = await loadCharityLog();
+  const records = load<CharityRecord[]>(KEYS.CHARITY_LOG, []);
   records.push(record);
-  await saveCharityLog(records);
+  save(KEYS.CHARITY_LOG, records);
   return records;
 }
 
 export async function getCharityTotal(): Promise<number> {
-  const records = await loadCharityLog();
+  const records = load<CharityRecord[]>(KEYS.CHARITY_LOG, []);
   return records.reduce((sum, r) => sum + r.amount, 0);
 }
 
 // ─── Prayer Journal ──────────────────────────────────────────
 export async function loadPrayerJournal(): Promise<Record<string, PrayerJournalEntry[]>> {
-  try {
-    const raw = await AsyncStorage.getItem(KEYS.PRAYER_JOURNAL);
-    if (raw) return JSON.parse(raw);
-    return {};
-  } catch { return {}; }
+  return load<Record<string, PrayerJournalEntry[]>>(KEYS.PRAYER_JOURNAL, {});
 }
 
 export async function savePrayerJournal(journal: Record<string, PrayerJournalEntry[]>): Promise<void> {
-  await AsyncStorage.setItem(KEYS.PRAYER_JOURNAL, JSON.stringify(journal));
+  save(KEYS.PRAYER_JOURNAL, journal);
 }
 
 export async function addJournalEntry(entry: PrayerJournalEntry): Promise<Record<string, PrayerJournalEntry[]>> {
-  const journal = await loadPrayerJournal();
+  const journal = load<Record<string, PrayerJournalEntry[]>>(KEYS.PRAYER_JOURNAL, {});
   if (!journal[entry.date]) journal[entry.date] = [];
   journal[entry.date].push(entry);
-  await savePrayerJournal(journal);
+  save(KEYS.PRAYER_JOURNAL, journal);
   return journal;
 }
+
+// ─── Direct MMKV access for screens that import storage ─────
+export { storage as mmkv };
 
 // ─── Clear All Data ──────────────────────────────────────────
 export async function clearAllData(): Promise<void> {
   const keys = Object.values(KEYS);
-  await Promise.all(keys.map(key => AsyncStorage.removeItem(key)));
+  keys.forEach(key => storage.delete(key));
+}
+
+// ─── Friday Screen Data ─────────────────────────────────────
+export async function getFridayChecklist(): Promise<Record<string, boolean>> {
+  return load<Record<string, boolean>>(KEYS.FRIDAY_CHECKLIST, {});
+}
+
+export async function setFridayChecklist(data: Record<string, boolean>): Promise<void> {
+  save(KEYS.FRIDAY_CHECKLIST, data);
+}
+
+export async function getKahfProgress(): Promise<number> {
+  return storage.getNumber(KEYS.KAHF_PROGRESS) ?? 0;
+}
+
+export async function setKahfProgress(section: number): Promise<void> {
+  storage.set(KEYS.KAHF_PROGRESS, section);
+}
+
+export async function getKhutbahNotes(): Promise<string> {
+  return storage.getString(KEYS.KHUTBAH_NOTES) ?? '';
+}
+
+export async function setKhutbahNotes(text: string): Promise<void> {
+  storage.set(KEYS.KHUTBAH_NOTES, text);
 }

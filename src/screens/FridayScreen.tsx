@@ -5,11 +5,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-const KAHF_KEY = '@prayertime:kahf_last_read';
-const KHUTBAH_KEY = '@prayertime:khutbah_notes';
-const CHECKLIST_KEY = '@prayertime:friday_checklist';
+import {
+  getFridayChecklist, setFridayChecklist as persistChecklist,
+  getKahfProgress, setKahfProgress as persistKahf,
+  getKhutbahNotes, setKhutbahNotes as persistKhutbah,
+} from '../services/StorageService';
 
 const FRIDAY_CHECKLIST = [
   { id: 'ghusl', label: 'Perform Ghusl (ritual bath)', icon: 'water-outline' },
@@ -44,30 +44,30 @@ export default function FridayScreen() {
   }, []);
 
   const loadData = async () => {
-    const [kahf, khutbah, checks] = await Promise.all([
-      AsyncStorage.getItem(KAHF_KEY),
-      AsyncStorage.getItem(KHUTBAH_KEY),
-      AsyncStorage.getItem(CHECKLIST_KEY),
+    const [kahfVal, khutbahVal, checks] = await Promise.all([
+      getKahfProgress(),
+      getKhutbahNotes(),
+      getFridayChecklist(),
     ]);
-    if (kahf) setKahfProgress(parseInt(kahf, 10));
-    if (khutbah) setKhutbahNotes(khutbah);
-    if (checks) setChecklist(JSON.parse(checks));
+    setKahfProgress(kahfVal);
+    setKhutbahNotes(khutbahVal);
+    if (checks) setChecklist(checks);
   };
 
   const toggleCheck = async (id: string) => {
     const next = { ...checklist, [id]: !checklist[id] };
     setChecklist(next);
-    await AsyncStorage.setItem(CHECKLIST_KEY, JSON.stringify(next));
+    await persistChecklist(next);
   };
 
   const updateKahfProgress = async (section: number) => {
     setKahfProgress(section);
-    await AsyncStorage.setItem(KAHF_KEY, String(section));
+    await persistKahf(section);
   };
 
   const saveKhutbah = async (text: string) => {
     setKhutbahNotes(text);
-    await AsyncStorage.setItem(KHUTBAH_KEY, text);
+    await persistKhutbah(text);
   };
 
   const isFriday = new Date().getDay() === 5;

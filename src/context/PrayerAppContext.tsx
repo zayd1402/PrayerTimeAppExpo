@@ -1,6 +1,6 @@
 // ─── PrayerAppContext — Global state for the app ──────────────
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Platform, AppState, AppStateStatus } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { C, PrayerId, PrayerTime, AppSettings, DEFAULT_SETTINGS, PRAYER_ICONS } from '../types';
 import {
@@ -8,10 +8,17 @@ import {
 } from '../services/PrayerService';
 import { HijriService } from '../services/HijriService';
 import {
-  loadSettings, saveSettings, markPrayer, loadPrayerLog
+  loadSettings, saveSettings, markPrayer, loadPrayerLog, mmkv
 } from '../services/StorageService';
 import { getCurrentLocation, DEFAULT_LOCATION } from '../services/LocationService';
-import { schedulePrayerNotification } from '../services/NotificationService';
+import {
+  schedulePrayerNotification,
+  setupNotificationChannels,
+  setupNotificationCategories,
+  scheduleFridayReminders,
+  scheduleWeeklyReminders,
+  setupNotificationResponseHandler,
+} from '../services/NotificationService';
 import { getDailyHadith } from '../data/hadiths';
 
 function getDateKey(date: Date): string {
@@ -66,6 +73,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   const [timerDisplay, setTimerDisplay] = useState('');
   const [dailyHadith, setDailyHadith] = useState<{ english: string; source: string } | null>(null);
   const lastScheduledRef = useRef<string>('');
+  const notifSubRef = useRef<{ remove: () => void } | null>(null);
 
   // Initialize
   useEffect(() => {
@@ -87,9 +95,42 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       }
       const hadith = getDailyHadith();
       setDailyHadith({ english: hadith.english, source: hadith.source });
+
+      // Setup notifications
+      await setupNotificationChannels();
+      await setupNotificationCategories();
+      await scheduleFridayReminders().catch(() => {});
+      await scheduleWeeklyReminders().catch(() => {});
+
+      // Notification response handler
+      notifSubRef.current = setupNotificationResponseHandler(
+        (prayerId) => {
+          const todayKey = getDateKey(new Date());
+          markPrayer(todayKey, prayerId as PrayerId, 'prayed');
+          const todayLog = mmkv.getString('@prayertime:prayer_log');
+          if (todayLog) {
+            const log = JSON.parse(todayLog);
+            const todayData = log[todayKey];
+            if (todayData) {
+              const completed = new Set<string>();
+              Object.entries(todayData).forEach(([id, status]) => {
+                if (status === 'prayed') completed.add(id);
+              });
+              setCompletedPrayers(completed);
+            }
+          }
+        },
+        (data) => {
+          console.log('Notification tapped:', data);
+        },
+      );
+
       setLoading(false);
     };
     init();
+    return () => {
+      notifSubRef.current?.remove();
+    };
   }, []);
 
   const updatePrayerTimes = useCallback(() => {
@@ -136,6 +177,16 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
     const interval = setInterval(updatePrayerTimes, 60000);
     return () => clearInterval(interval);
   }, [settings.calculationMethod, settings.madhab, location, loading]);
+
+  // AppState listener — refresh prayer times when returning to foreground
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
+      if (state === 'active') {
+        updatePrayerTimes();
+      }
+    });
+    return () => sub.remove();
+  }, [settings.calculationMethod, settings.madhab, location]);
 
   // Timer countdown
   useEffect(() => {

@@ -6,6 +6,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { C } from '../types';
 
 const { width } = Dimensions.get('window');
@@ -147,6 +148,7 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
     let headingHistory: number[] = [];
 
     async function startCompass() {
+      await activateKeepAwakeAsync();
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
@@ -188,7 +190,10 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
     }
 
     startCompass();
-    return () => subscription?.remove();
+    return () => {
+      subscription?.remove();
+      deactivateKeepAwake();
+    };
   }, [qiblaDirection]);
 
   // Smooth rotation animation
