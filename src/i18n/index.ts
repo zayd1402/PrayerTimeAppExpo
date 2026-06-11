@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import * as Localization from 'expo-localization';
+import { useLocales } from 'expo-localization';
 import en from './en.json';
 import ar from './ar.json';
 
@@ -29,14 +30,8 @@ export function t(key: string, locale: string, params?: Record<string, string>):
 }
 
 export function useTranslation() {
-  const [locale, setLocale] = useState(getDeviceLocale);
-
-  useEffect(() => {
-    const sub = Localization.addLocaleListener?.(() => {
-      setLocale(getDeviceLocale());
-    });
-    return () => sub?.remove();
-  }, []);
+  const locales = useLocales();
+  const locale = locales[0]?.languageTag?.startsWith('ar') ? 'ar' : 'en';
 
   const translate = useCallback(
     (key: string, params?: Record<string, string>) => t(key, locale, params),

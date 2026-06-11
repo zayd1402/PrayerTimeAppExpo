@@ -1,94 +1,107 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Alert, Linking } from 'react-native';
-import * as Location from 'expo-location';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, FlatList, TouchableOpacity, Linking, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
-
-interface Coordinate {
-  latitude: number;
-  longitude: number;
-}
-
-interface Mosque {
-  id: string;
-  name: string;
-  address: string;
-  distance?: string;
-}
+import { AppLocation } from '../types';
+import { getNearbyMosques, searchLocalMosques, NearbyMosque } from '../services/LocalMosqueService';
 
 interface MosquesScreenProps {
-  coordinate: Coordinate;
+  coordinate: Pick<AppLocation, 'latitude' | 'longitude'>;
+  embedded?: boolean;
 }
 
-export default function MosquesScreen({ coordinate }: MosquesScreenProps) {
-  const [mosques, setMosques] = useState<Mosque[]>([]);
-  const [loading, setLoading] = useState(true);
+function formatDistance(km: number) {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(km < 10 ? 1 : 0)} km`;
+}
+
+export default function MosquesScreen({ coordinate, embedded = false }: MosquesScreenProps) {
+  const [query, setQuery] = useState('');
+  const [mosques, setMosques] = useState<NearbyMosque[]>([]);
 
   useEffect(() => {
-    searchMosques();
-  }, []);
+    const normalized = query.trim().toLowerCase();
+    const nearby = getNearbyMosques(coordinate, 100);
+    const filtered = normalized
+      ? searchLocalMosques(query)
+          .map(mosque => ({
+            ...mosque,
+            distanceKm: nearby.find(item => item.id === mosque.id)?.distanceKm ?? Number.POSITIVE_INFINITY,
+          }))
+          .sort((a, b) => a.distanceKm - b.distanceKm)
+      : nearby;
 
-  async function searchMosques() {
-    try {
-      setLoading(true);
-      // Using foursquare API placeholder - in production, use Places API
-      const demoMosques: Mosque[] = [
-        { id: '1', name: 'Masjid Al-Hussein', address: '123 William St, Sydney NSW', distance: '0.5 km' },
-        { id: '2', name: 'Sydney Mosque', address: '200 George St, Sydney NSW', distance: '1.2 km' },
-        { id: '3', name: 'Lakemba Mosque', address: '45 Railway St, Lakemba NSW', distance: '8.5 km' },
-        { id: '4', name: 'Fivedock Mosque', address: '100 Great North Rd, Five Dock NSW', distance: '12 km' },
-        { id: '5', name: ' Aubury Mosque', address: '88 Burwood Rd, Auburn NSW', distance: '15 km' },
-      ];
-      setMosques(demoMosques);
-    } catch (error) {
-      Alert.alert('Error', 'Unable to search mosques');
-    } finally {
-      setLoading(false);
-    }
-  }
+    setMosques(filtered);
+  }, [coordinate, query]);
 
-  function openInMaps(mosque: Mosque) {
-    const { latitude, longitude } = coordinate;
+  function openInMaps(mosque: NearbyMosque) {
     const label = encodeURIComponent(mosque.name);
-    Linking.canOpenURL('comgooglemaps://').then(supported => {
-      const url = supported
-        ? `comgooglemaps://?q=${label}&center=${latitude},${longitude}`
-        : `https://maps.apple.com/?q=${label}&ll=${latitude},${longitude}`;
-      Linking.openURL(url).catch(() => {});
-    });
+    const lat = mosque.latitude;
+    const lng = mosque.longitude;
+
+    Linking.canOpenURL('comgooglemaps://')
+      .then(supported => {
+        const url = supported
+          ? `comgooglemaps://?q=${label}&center=${lat},${lng}`
+          : `https://maps.apple.com/?q=${label}&ll=${lat},${lng}`;
+        return Linking.openURL(url);
+      })
+      .catch(() => {});
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Nearby Mosques</Text>
-        <TouchableOpacity onPress={searchMosques}>
-          <Text style={styles.refreshText}>↻ Refresh</Text>
+    <View style={[styles.container, embedded && styles.embeddedContainer]}>
+      <View style={[styles.header, embedded && styles.embeddedHeader]}>
+        <View>
+          <Text style={styles.title}>Mosques</Text>
+          <Text style={styles.subtitle}>Local Australia seed list with distance from your selected city.</Text>
+        </View>
+        <TouchableOpacity style={styles.refreshButton} onPress={() => setQuery('')}>
+          <Ionicons name="refresh-outline" size={18} color={C.primary} />
         </TouchableOpacity>
       </View>
 
-      {loading ? (
-        <View style={styles.loading}>
-          <Text style={styles.loadingText}>Searching nearby...</Text>
+      <View style={styles.searchWrap}>
+        <Ionicons name="search" size={18} color={C.textMuted} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search city, name, or address"
+          placeholderTextColor={C.textMuted}
+          value={query}
+          onChangeText={setQuery}
+        />
+        {query.length > 0 && (
+          <TouchableOpacity onPress={() => setQuery('')}>
+            <Ionicons name="close-circle" size={18} color={C.textMuted} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {mosques.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons name="business-outline" size={36} color={C.textMuted} />
+          <Text style={styles.emptyTitle}>No mosques found</Text>
+          <Text style={styles.emptyText}>Try another city or clear the search.</Text>
         </View>
       ) : (
         <FlatList
           data={mosques}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          scrollEnabled={false}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.mosqueCard} onPress={() => openInMaps(item)}>
+            <TouchableOpacity style={styles.mosqueCard} onPress={() => openInMaps(item)} activeOpacity={0.8}>
               <View style={styles.mosqueIcon}>
-                <Text style={styles.mosqueIconText}>🕌</Text>
+                <Ionicons name="business" size={24} color={C.primary} />
               </View>
               <View style={styles.mosqueInfo}>
                 <Text style={styles.mosqueName}>{item.name}</Text>
                 <Text style={styles.mosqueAddress}>{item.address}</Text>
+                {item.phone && <Text style={styles.mosqueMeta}>{item.phone}</Text>}
               </View>
-              {item.distance && (
-                <View style={styles.distanceTag}>
-                  <Text style={styles.distanceText}>{item.distance}</Text>
-                </View>
-              )}
+              <View style={styles.distanceTag}>
+                <Text style={styles.distanceText}>{formatDistance(item.distanceKm)}</Text>
+              </View>
             </TouchableOpacity>
           )}
         />
@@ -98,81 +111,49 @@ export default function MosquesScreen({ coordinate }: MosquesScreenProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: C.bgSurface,
-  },
-  header: {
+  container: { flex: 1, backgroundColor: C.bgSurface, borderRadius: 22, marginHorizontal: 18, padding: 16 },
+  embeddedContainer: { backgroundColor: C.bgSurface },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  embeddedHeader: { paddingTop: 0 },
+  title: { fontSize: 18, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  refreshButton: { width: 36, height: 36, borderRadius: 14, backgroundColor: C.goldPale, justifyContent: 'center', alignItems: 'center' },
+  searchWrap: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 18,
-    paddingTop: 60,
-    backgroundColor: C.heroBg,
+    backgroundColor: C.bgBase,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 8,
+    marginBottom: 12,
   },
-  title: {
-    fontSize: 24,
-    fontFamily: 'BodoniModa_700Bold',
-    color: C.goldPale,
-  },
-  refreshText: {
-    fontSize: 14,
-    color: C.textSecondary,
-  },
-  loading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: C.textSecondary,
-  },
-  list: {
-    padding: 18,
-    gap: 12,
-  },
+  searchInput: { flex: 1, fontSize: 14, color: C.textPrimary },
+  list: { gap: 10 },
   mosqueCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: C.bgSurface,
+    backgroundColor: C.bgBase,
     borderRadius: 16,
-    padding: 16,
+    padding: 14,
     gap: 12,
+    marginBottom: 10,
   },
   mosqueIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 46,
+    height: 46,
+    borderRadius: 15,
     backgroundColor: C.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  mosqueIconText: {
-    fontSize: 24,
-  },
-  mosqueInfo: {
-    flex: 1,
-  },
-  mosqueName: {
-    fontSize: 16,
-    fontFamily: 'Jost_600SemiBold',
-    color: C.textPrimary,
-  },
-  mosqueAddress: {
-    fontSize: 13,
-    color: C.textMuted,
-    marginTop: 2,
-  },
-  distanceTag: {
-    backgroundColor: C.primaryLight,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 12,
-  },
-  distanceText: {
-    fontSize: 12,
-    color: C.textSecondary,
-    fontFamily: 'Jost_600SemiBold',
-  },
+  mosqueInfo: { flex: 1 },
+  mosqueName: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary },
+  mosqueAddress: { fontSize: 12, color: C.textMuted, marginTop: 2, lineHeight: 16 },
+  mosqueMeta: { fontSize: 11, color: C.textMuted, marginTop: 2 },
+  distanceTag: { backgroundColor: C.goldPale, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  distanceText: { fontSize: 11, color: C.gold, fontFamily: 'Jost_700Bold' },
+  emptyState: { paddingVertical: 28, alignItems: 'center' },
+  emptyTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 8 },
+  emptyText: { fontSize: 13, color: C.textMuted, marginTop: 4 },
 });

@@ -6,29 +6,19 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "backgroundColor": "#FDF8F3"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.prayertime.app",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to calculate prayer times for your current location and find nearby mosques.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to calculate prayer times and provide timely prayer notifications.",
-        "UIBackgroundModes": ["location", "fetch"],
-        "NSPrivacyAccessedAPITypes": [
-          { "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults", "NSPrivacyAccessedAPITypeReasons": ["CA92.1"] },
-          { "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace", "NSPrivacyAccessedAPITypeReasons": ["E174.1"] },
-          { "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp", "NSPrivacyAccessedAPITypeReasons": ["C617.1"] }
-        ]
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Used to calculate prayer times and provide timely prayer notifications."
       },
       "privacyManifests": {
         "NSPrivacyCollectedDataTypes": [],
         "NSPrivacyAccessedAPITypes": [
-          "NSPrivacyAccessedAPICategoryUserDefaults",
-          "NSPrivacyAccessedAPICategoryDiskSpace",
-          "NSPrivacyAccessedAPICategoryFileTimestamp"
+          { "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults", "NSPrivacyAccessedAPITypeReasons": ["CA92.1"] },
+          { "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace", "NSPrivacyAccessedAPITypeReasons": ["E174.1"] },
+          { "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp", "NSPrivacyAccessedAPITypeReasons": ["C617.1"] }
         ]
       }
     },

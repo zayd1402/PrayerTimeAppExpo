@@ -13,8 +13,10 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
 import { usePrayerApp } from '../context/PrayerAppContext';
+import SettingsScreen from './SettingsScreen';
 import KhushuModal from '../components/KhushuModal';
 import { getUpcomingSacredPeriods, SacredPeriod } from '../services/SacredTimeService';
+import { getRamadanState, RamadanState } from '../services/RamadanService';
 import { getLessonForDate } from '../data/knowledge';
 
 const { width } = Dimensions.get('window');
@@ -245,18 +247,55 @@ function DailyHadithCard({ hadith }: { hadith: { english: string; source: string
   );
 }
 
+function RamadanQuickCard({ state }: { state: RamadanState }) {
+  const title = state.isRamadan
+    ? `Ramadan day ${state.ramadanDay}`
+    : state.isPreRamadan
+      ? `${state.daysUntilRamadan} days until Ramadan`
+      : state.isPostRamadan
+        ? 'Continue Shawwal worship'
+        : `${state.daysUntilRamadan} days until Ramadan`;
+
+  const desc = state.isRamadan
+    ? state.isLast10Nights ? 'Last 10 nights: intensify worship and Quran.' : 'Fast, pray, give, and keep the Quran close.'
+    : state.isPreRamadan
+      ? 'Prepare your intention, routine, and Quran plan.'
+      : state.isPostRamadan
+        ? 'Keep the Ramadan habits alive after Eid.'
+        : 'Plan ahead for the blessed month.';
+
+  return (
+    <View style={styles.ramadanCard}>
+      <Ionicons name="moon-outline" size={22} color={C.gold} />
+      <View style={styles.ramadanTextWrap}>
+        <Text style={styles.ramadanTitle}>{title}</Text>
+        <Text style={styles.ramadanDesc}>{desc}</Text>
+      </View>
+      {state.isRamadan && (
+        <View style={styles.ramadanBadge}>
+          <Text style={styles.ramadanBadgeText}>{state.isLast10Nights ? 'Last 10' : 'Day'}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
 // ─── Main Screen ─────────────────────────────────────────────
 export default function TodayScreen() {
   const {
     prayersObj: prayerTimes, nextPrayerObj: nextPrayer, nextPrayerTime,
     completedPrayers, location, timerDisplay, dailyHadith, hijriDateStr,
+    settings,
     handleTogglePrayer: togglePrayer,
+    handleUpdateSettings,
   } = usePrayerApp();
   const scrollY = useSharedValue(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   const [sunnahStreak, setSunnahStreak] = useState(0);
   const [khushuPrayer, setKhushuPrayer] = useState<{ id: string; name: string } | null>(null);
   const [sacredPeriods, setSacredPeriods] = useState<SacredPeriod[]>([]);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const ramadanState = getRamadanState();
   const todayLesson = useMemo(() => getLessonForDate(), []);
 
   useEffect(() => {
@@ -324,13 +363,23 @@ export default function TodayScreen() {
   };
 
   return (
-    <Animated.ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-      scrollEventThrottle={16}
-      onScroll={scrollHandler}
-    >
+    <>
+      <Animated.ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onScroll={scrollHandler}
+      >
+        {settingsOpen && (
+          <View style={styles.settingsOverlay}>
+            <TouchableOpacity style={styles.settingsBackButton} onPress={() => setSettingsOpen(false)}>
+              <Ionicons name="arrow-back" size={20} color={C.white} />
+              <Text style={styles.settingsBackText}>Back</Text>
+            </TouchableOpacity>
+            <SettingsScreen settings={settings} updateSettings={handleUpdateSettings} />
+          </View>
+        )}
       {/* Hero Card with Sunset Gradient */}
       <Animated.View style={[styles.heroCard, heroStyle]}>
         <LinearGradient
@@ -339,11 +388,15 @@ export default function TodayScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.heroGradient}
         >
+          <TouchableOpacity style={styles.heroSettingsButton} onPress={() => setSettingsOpen(true)}>
+            <Ionicons name="settings-outline" size={20} color={C.heroBg} />
+          </TouchableOpacity>
+
           <View style={styles.heroTop}>
             <View style={styles.heroLeft}>
               <View style={styles.locationRow}>
                 <Ionicons name="location" size={14} color={C.textSecondary} />
-                <Text style={styles.locationText}>{location.name}</Text>
+                <Text style={styles.locationText}>{location?.name ?? 'Choose location'}</Text>
               </View>
               <Text style={styles.nextPrayerText}>
                 {nextPrayer ? nextPrayer.name : 'All Complete'}
@@ -355,8 +408,10 @@ export default function TodayScreen() {
             <PrayerRing completed={completedCount} total={5} />
           </View>
 
-          {nextPrayerTime && (
+          {nextPrayerTime && timerDisplay ? (
             <Text style={styles.timerText}>{timerDisplay}</Text>
+          ) : (
+            <Text style={styles.timerHint}>Live countdown is off</Text>
           )}
 
           <View style={styles.progressRow}>
@@ -381,13 +436,15 @@ export default function TodayScreen() {
         <Text style={styles.hijriText}>{hijriDateStr}</Text>
       </View>
 
+      <RamadanQuickCard state={ramadanState} />
+
       {/* Sacred Time Awareness */}
       {sacredPeriods.length > 0 && sacredPeriods[0].daysUntil <= 14 && (
         <View style={styles.sacredCard}>
           <Ionicons name={sacredPeriods[0].icon as any} size={18} color={C.gold} />
           <View style={{ marginLeft: 10, flex: 1 }}>
             <Text style={styles.sacredTitle}>
-              {sacredPeriods[0].isActive ? `🕌 ${sacredPeriods[0].title} is here!` : `📅 ${sacredPeriods[0].title} in ${sacredPeriods[0].daysUntil} days`}
+              {sacredPeriods[0].isActive ? `${sacredPeriods[0].title} is here!` : `${sacredPeriods[0].title} in ${sacredPeriods[0].daysUntil} days`}
             </Text>
             <Text style={styles.sacredDesc}>{sacredPeriods[0].description}</Text>
           </View>
@@ -446,12 +503,28 @@ export default function TodayScreen() {
         />
       )}
     </Animated.ScrollView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { padding: 18, paddingBottom: 120 },
+  settingsOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, backgroundColor: C.bgBase },
+  settingsBackButton: {
+    position: 'absolute',
+    top: 54,
+    left: 18,
+    zIndex: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(58,44,26,0.72)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  settingsBackText: { color: C.white, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
 
   // Hero — Neumorphic
   heroCard: {
@@ -470,6 +543,17 @@ const styles = StyleSheet.create({
     // Makes the top-left shadow "light" visible
     backgroundColor: C.bgCard,
   },
+  heroSettingsButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   heroLeft: { flex: 1 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
@@ -477,6 +561,7 @@ const styles = StyleSheet.create({
   nextPrayerText: { color: C.textPrimary, fontSize: 34, fontFamily: 'BodoniModa_700Bold' },
   nextPrayerTime: { color: C.textSecondary, fontSize: 14, fontFamily: 'Jost_400Regular', marginTop: 2 },
   timerText: { color: C.gold, fontSize: 38, fontFamily: 'BodoniModa_700Bold', marginTop: 12, fontVariant: ['tabular-nums'] },
+  timerHint: { color: C.textMuted, fontSize: 12, fontFamily: 'Jost_500Medium', marginTop: 12 },
   progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, gap: 12 },
   progressBar: { flex: 1, height: 6, backgroundColor: 'rgba(202,138,4,0.15)', borderRadius: 3 },
   progressFill: { height: '100%', backgroundColor: C.gold, borderRadius: 3 },
@@ -496,6 +581,21 @@ const styles = StyleSheet.create({
   // Hijri
   hijriRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16 },
   hijriText: { textAlign: 'center', color: C.textSecondary, fontSize: 14, fontFamily: 'Jost_500Medium' },
+
+  // Ramadan
+  ramadanCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: C.goldPale,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 16,
+  },
+  ramadanTextWrap: { flex: 1, marginLeft: 12 },
+  ramadanTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.gold },
+  ramadanDesc: { fontSize: 12, color: C.textSecondary, lineHeight: 17, marginTop: 2 },
+  ramadanBadge: { backgroundColor: C.heroBg, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  ramadanBadgeText: { color: C.goldPale, fontSize: 11, fontFamily: 'Jost_700Bold' },
 
   // Prayer List
   prayerList: { gap: 10 },

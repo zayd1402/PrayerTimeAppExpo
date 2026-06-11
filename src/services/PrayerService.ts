@@ -1,4 +1,4 @@
-import { CalculationMethod, Madhab, PrayerId, PrayerTime } from '../types';
+import { CalculationMethod, Madhab, PrayerId, PrayerTime, PRAYER_ICONS } from '../types';
 import { getTimezoneOffset } from './TimezoneService';
 
 // ─── Constants ───────────────────────────────────────────────
@@ -80,14 +80,14 @@ function getEquationOfTime(jd: number): number {
 
 // ─── Time Calculation ─────────────────────────────────────────
 function computeTime(ha: number, lat: number, decl: number, t: number): number {
-  // ha = hour angle, lat = latitude, decl = declination, t = equation of time
+  // ha = hour angle, lat = latitude, decl = declination, t = equation of time in minutes
   const latRad = (Math.PI / 180) * lat;
   const declRad = (Math.PI / 180) * decl;
   const cosHa = (Math.sin((Math.PI / 180) * -0.8333) - Math.sin(latRad) * Math.sin(declRad)) /
                (Math.cos(latRad) * Math.cos(declRad));
   if (cosHa > 1 || cosHa < -1) return 0;
   const haDeg = (180 / Math.PI) * Math.acos(cosHa);
-  return (haDeg + t) / 15; // hours from midnight
+  return (haDeg - t / 4) / 15; // hours from solar noon
 }
 
 function computeAsrTime(lat: number, decl: number, t: number, factor: number): number {
@@ -97,7 +97,7 @@ function computeAsrTime(lat: number, decl: number, t: number, factor: number): n
   const cosA = (Math.sin(angle) - Math.sin(latRad) * Math.sin(declRad)) / (Math.cos(latRad) * Math.cos(declRad));
   if (cosA > 1 || cosA < -1) return 0;
   const haDeg = (180 / Math.PI) * Math.acos(cosA);
-  return (haDeg + t) / 15;
+  return (haDeg - t / 4) / 15;
 }
 
 function computeMaghrib(lat: number, decl: number, t: number): number {
@@ -120,6 +120,7 @@ export function calculatePrayerTimes(
   const tzOff = getTimezoneOffset(date); // device timezone offset in hours
 
   const asrFactor = madhab === 'hanafi' ? 2 : 1;
+  const longitudeCorrection = longitude / 15;
 
   const fajrAngle = METHOD_PARAMS[method][0];
   const ishaAngle = METHOD_PARAMS[method][1];
@@ -130,19 +131,19 @@ export function calculatePrayerTimes(
   const fajrCos = (Math.sin((Math.PI / 180) * fajrAngle) - Math.sin(latRad) * Math.sin((Math.PI / 180) * decl)) /
                   (Math.cos(latRad) * Math.cos((Math.PI / 180) * decl));
   const fajrHaDeg = (fajrCos >= -1 && fajrCos <= 1) ? (180 / Math.PI) * Math.acos(fajrCos) : 0;
-  const fajrHour = (fajrHaDeg + eqt) / 15 + tzOff;
+  const fajrHour = 12 + tzOff - longitudeCorrection - eqt / 60 - fajrHaDeg / 15;
 
   // Sunrise
-  const sunriseHour = computeTime(0, latitude, decl, eqt) + tzOff;
+  const sunriseHour = computeTime(0, latitude, decl, eqt) + tzOff - longitudeCorrection;
 
   // Dhuhr
-  const dhuhrHour = (eqt + tzOff);
+  const dhuhrHour = 12 + tzOff - longitudeCorrection - eqt / 60;
 
   // Asr
-  const asrHour = computeAsrTime(latitude, decl, eqt, asrFactor) + tzOff;
+  const asrHour = computeAsrTime(latitude, decl, eqt, asrFactor) + tzOff - longitudeCorrection;
 
   // Maghrib
-  const maghribHour = computeMaghrib(latitude, decl, eqt) + tzOff;
+  const maghribHour = computeMaghrib(latitude, decl, eqt) + tzOff - longitudeCorrection;
 
   // Isha
   let ishaHour: number;
@@ -218,8 +219,8 @@ export function getPrayerTimesObject(
       id,
       name: PRAYER_NAMES[id].name,
       arabic: PRAYER_NAMES[id].arabic,
-      icon: '',
-      iconActive: '',
+      icon: PRAYER_ICONS[id].icon,
+      iconActive: PRAYER_ICONS[id].iconActive,
       time: minutesToTimeString(minutes),
       minutes,
       status,
@@ -232,12 +233,15 @@ export function getNextPrayer(
   times: PrayerTime[],
   currentMinutes: number
 ): PrayerTime | null {
-  const upcoming = times.filter(p => p.minutes > currentMinutes && p.id !== 'sunrise');
-  return upcoming.length > 0 ? upcoming[0] : null;
+  const prayers = times.filter(p => p.id !== 'sunrise');
+  const upcoming = prayers.filter(p => p.minutes > currentMinutes);
+  if (upcoming.length > 0) return upcoming[0];
+  return prayers[0] ?? null;
 }
 
 export function getTimeUntilNext(nextPrayer: PrayerTime, currentMinutes: number): string {
-  const diff = nextPrayer.minutes - currentMinutes;
+  let diff = nextPrayer.minutes - currentMinutes;
+  if (diff < 0) diff += 1440;
   if (diff <= 0) return '0m';
   const h = Math.floor(diff / 60);
   const m = diff % 60;

@@ -20,6 +20,8 @@ interface Coordinate {
 
 interface QiblaScreenProps {
   coordinate: Coordinate;
+  compact?: boolean;
+  showHeader?: boolean;
 }
 
 // ─── Accuracy Indicator ──────────────────────────────────────
@@ -87,7 +89,7 @@ const calStyles = StyleSheet.create({
   desc: { fontSize: 14, color: C.textSecondary }});
 
 // ─── Main Screen ─────────────────────────────────────────────
-export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
+export default function QiblaScreen({ coordinate, compact = false, showHeader = true }: QiblaScreenProps) {
   const [qiblaDirection, setQiblaDirection] = useState(0);
   const [deviceHeading, setDeviceHeading] = useState(0);
   const [rotation, setRotation] = useState(0);
@@ -181,13 +183,15 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
   }));
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Qibla Direction</Text>
-        <Text style={styles.subtitle}>{Math.round(qiblaDirection)}° {bearingToCompassDirection(qiblaDirection)} from North</Text>
-      </View>
+    <View style={[styles.container, compact && { flex: 0 }]}>
+      {showHeader && (
+        <View style={styles.header}>
+          <Text style={styles.title}>Qibla Direction</Text>
+          <Text style={styles.subtitle}>{Math.round(qiblaDirection)}° {bearingToCompassDirection(qiblaDirection)} from North</Text>
+        </View>
+      )}
 
-      <View style={styles.compassContainer}>
+      <View style={[styles.compassContainer, compact && { flex: 0, paddingVertical: 10 }]}>
         <View style={[styles.compass, isAligned && styles.compassAligned]}>
           <CalibrationOverlay visible={accuracy === 'calibrating'} />
 
@@ -254,12 +258,14 @@ export default function QiblaScreen({ coordinate }: QiblaScreenProps) {
         </View>
       </View>
 
-      <View style={styles.howToCard}>
-        <Ionicons name="information-circle-outline" size={20} color={C.textSecondary} />
-        <Text style={styles.howToText}>
-          Hold your phone flat and rotate until the needle points to Qibla. The compass uses your device's magnetometer.
-        </Text>
-      </View>
+      {!compact && (
+        <View style={styles.howToCard}>
+          <Ionicons name="information-circle-outline" size={20} color={C.textSecondary} />
+          <Text style={styles.howToText}>
+            Hold your phone flat and rotate until the needle points to Qibla. The compass uses your device's magnetometer.
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

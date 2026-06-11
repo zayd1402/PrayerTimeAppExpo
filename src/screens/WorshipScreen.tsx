@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
+import { getRamadanState } from '../services/RamadanService';
 import {
   loadFastingLog, toggleFast, loadQuranLog, addQuranLog,
   loadDhikrHistory, addDhikrSession, getTodayDhikrCount,
@@ -251,7 +252,37 @@ export default function WorshipScreen() {
     );
   }
 
-  // ─── Fasting Tab ───────────────────────────────────────────
+  // ─── Ramadan Worship Card ───────────────────────────────────
+function RamadanWorshipCard() {
+  const state = getRamadanState();
+  const title = state.isRamadan
+    ? 'Ramadan Worship Tracker'
+    : state.isPreRamadan
+      ? 'Ramadan Preparation'
+      : state.isPostRamadan
+        ? 'Shawwal Continuity'
+        : 'Ramadan Planning';
+
+  const text = state.isRamadan
+    ? `Day ${state.ramadanDay}: track fasting, Fajr on time, taraweeh, Quran, charity, and adhkar.`
+    : state.isPreRamadan
+      ? `${state.daysUntilRamadan} day(s) until Ramadan — build a steady routine now.`
+      : state.isPostRamadan
+        ? 'Keep the Ramadan rhythm with fasting, Quran, and charity habits.'
+        : `${state.daysUntilRamadan} day(s) until Ramadan — plan your worship goals.`;
+
+  return (
+    <View style={styles.ramadanCard}>
+      <Ionicons name={state.isRamadan ? 'moon' : 'calendar-outline'} size={28} color={C.gold} />
+      <View style={{ marginLeft: 12, flex: 1 }}>
+        <Text style={styles.ramadanTitle}>{title}</Text>
+        <Text style={styles.ramadanText}>{text}</Text>
+      </View>
+    </View>
+  );
+}
+
+// ─── Fasting Tab ───────────────────────────────────────────
   function FastingTab() {
     const isFastToday = (type: string) => fastingLog[todayKey]?.type === type;
 
@@ -281,14 +312,7 @@ export default function WorshipScreen() {
           })}
         </View>
 
-        {/* Ramadan countdown placeholder */}
-        <View style={styles.ramadanCard}>
-          <Ionicons name="moon" size={28} color={C.gold} />
-          <View style={{ marginLeft: 12, flex: 1 }}>
-            <Text style={styles.ramadanTitle}>Ramadan Countdown</Text>
-            <Text style={styles.ramadanText}>Coming soon — track your Ramadan progress</Text>
-          </View>
-        </View>
+        <RamadanWorshipCard />
       </>
     );
   }

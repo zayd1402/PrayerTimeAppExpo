@@ -2,15 +2,15 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
-import { C, PrayerId, PrayerTime, AppSettings, DEFAULT_SETTINGS, PRAYER_ICONS } from '../types';
+import { C, PrayerId, PrayerTime, AppSettings, AppLocation, DEFAULT_SETTINGS, PRAYER_ICONS, PRAYER_IDS, PrayerNotificationId } from '../types';
 import {
-  getPrayerTimesObject, getNextPrayer
+  getPrayerTimesObject, getNextPrayer, getTimeUntilNext
 } from '../services/PrayerService';
 import { HijriService } from '../services/HijriService';
 import {
   loadSettings, saveSettings, markPrayer, loadPrayerLog, mmkv
 } from '../services/StorageService';
-import { getCurrentLocation, DEFAULT_LOCATION } from '../services/LocationService';
+import { getCurrentLocation } from '../services/LocationService';
 import {
   schedulePrayerNotification,
   setupNotificationChannels,
@@ -19,6 +19,7 @@ import {
   scheduleWeeklyReminders,
   scheduleSunnahReminders,
   setupNotificationResponseHandler,
+  cancelAllNotifications,
 } from '../services/NotificationService';
 import { getDailyHadith } from '../data/hadiths';
 import { initAudio, playAdhan } from '../services/AudioService';
@@ -46,11 +47,47 @@ function getHourMinute(minutes: number): { hour: number; minute: number } {
   };
 }
 
+function getScheduleKey(settings: AppSettings, times: PrayerTime[]): string {
+  return [
+    times.map(p => `${p.id}:${p.minutes}`).join('|'),
+    ...PRAYER_IDS.filter(id => id !== 'sunrise').map(id => `${id}:${settings.prayerNotifications[id as PrayerNotificationId] ? 1 : 0}`),
+    settings.fajrAlarmEnabled ? `fajr-alarm:${settings.fajrAlarmMinutes}` : 'fajr-alarm:0',
+  ].join(';');
+}
+
+async function scheduleEnabledNotifications(
+  settings: AppSettings,
+  times: PrayerTime[],
+  lastScheduledRef: { current: string }
+) {
+  const scheduleKey = getScheduleKey(settings, times);
+  if (scheduleKey === lastScheduledRef.current) return;
+  lastScheduledRef.current = scheduleKey;
+
+  await cancelAllNotifications();
+
+  for (const prayer of times) {
+    if (prayer.id === 'sunrise') continue;
+    if (!settings.prayerNotifications[prayer.id as PrayerNotificationId]) continue;
+    const { hour, minute } = getHourMinute(prayer.minutes);
+    await schedulePrayerNotification(prayer.id as PrayerNotificationId, prayer.name, hour, minute, false);
+  }
+
+  if (settings.fajrAlarmEnabled) {
+    const fajr = times.find(p => p.id === 'fajr');
+    if (fajr) {
+      const alarmMinutes = (fajr.minutes - settings.fajrAlarmMinutes + 1440) % 1440;
+      const { hour, minute } = getHourMinute(alarmMinutes);
+      await schedulePrayerNotification('fajr', 'Fajr', hour, minute, true);
+    }
+  }
+}
+
 export interface PrayerAppState {
   settings: AppSettings;
   prayerTimes: PrayerTime[];
   nextPrayer: PrayerTime | null;
-  location: { latitude: number; longitude: number; name: string };
+  location: AppLocation | null;
   loading: boolean;
   completedPrayers: Set<string>;
   timerDisplay: string;
@@ -69,7 +106,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [prayerTimes, setPrayerTimes] = useState<PrayerTime[]>([]);
   const [nextPrayer, setNextPrayer] = useState<PrayerTime | null>(null);
-  const [location, setLocation] = useState(DEFAULT_LOCATION);
+  const [location, setLocation] = useState<AppLocation | null>(null);
   const [loading, setLoading] = useState(true);
   const [completedPrayers, setCompletedPrayers] = useState<Set<string>>(new Set());
   const [timerDisplay, setTimerDisplay] = useState('');
@@ -81,8 +118,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const init = async () => {
       if (Platform.OS === 'android') {
-        await NavigationBar.setBackgroundColorAsync(C.bgBase);
-        await NavigationBar.setButtonStyleAsync('dark');
+        NavigationBar.setStyle('light');
       }
       const saved = await loadSettings();
       setSettings(saved);
@@ -94,16 +130,21 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
         await saveSettings(newSettings);
       } else if (saved.location) {
         setLocation(saved.location);
+      } else {
+        setLocation(null);
       }
       const hadith = getDailyHadith();
       setDailyHadith({ english: hadith.english, source: hadith.source });
 
-      // Setup notifications
       await setupNotificationChannels();
       await setupNotificationCategories();
-      await scheduleFridayReminders().catch(() => {});
-      await scheduleWeeklyReminders().catch(() => {});
-      await scheduleSunnahReminders().catch(() => {});
+      if (saved.notificationsEnabled) {
+        await scheduleFridayReminders().catch(() => {});
+        await scheduleWeeklyReminders().catch(() => {});
+        await scheduleSunnahReminders().catch(() => {});
+      } else {
+        await cancelAllNotifications().catch(() => {});
+      }
 
       // Notification response handler
       notifSubRef.current = setupNotificationResponseHandler(
@@ -137,6 +178,20 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const updatePrayerTimes = useCallback(() => {
+    if (!location) {
+      setPrayerTimes([]);
+      setNextPrayer(null);
+      setTimerDisplay('');
+      if (settings.notificationsEnabled) {
+        lastScheduledRef.current = '';
+        cancelAllNotifications().catch(() => {});
+      } else {
+        lastScheduledRef.current = '';
+        cancelAllNotifications().catch(() => {});
+      }
+      return;
+    }
+
     const times = getPrayerTimesObject(
       new Date(), location.latitude, location.longitude,
       settings.calculationMethod, settings.madhab
@@ -158,17 +213,12 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (settings.notificationsEnabled) {
-      const scheduleKey = times.map(p => `${p.id}:${p.minutes}`).join('|');
-      if (scheduleKey !== lastScheduledRef.current) {
-        lastScheduledRef.current = scheduleKey;
-        times.forEach(p => {
-          if (p.id === 'sunrise') return;
-          const { hour, minute } = getHourMinute(p.minutes);
-          schedulePrayerNotification(p.id, p.name, hour, minute, false);
-        });
-      }
+      scheduleEnabledNotifications(settings, times, lastScheduledRef).catch(() => {});
+    } else {
+      lastScheduledRef.current = '';
+      cancelAllNotifications().catch(() => {});
     }
-  }, [settings.calculationMethod, settings.madhab, location, loading, settings.notificationsEnabled]);
+  }, [settings.calculationMethod, settings.madhab, location, settings.notificationsEnabled, settings.prayerNotifications, settings.fajrAlarmEnabled, settings.fajrAlarmMinutes]);
 
   useEffect(() => {
     if (loading) return;
@@ -193,21 +243,29 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
 
   // Timer countdown + adhan trigger
   useEffect(() => {
-    if (!nextPrayer) return;
+    if (!nextPrayer) {
+      setTimerDisplay('');
+      return;
+    }
+    if (!settings.liveCountdownEnabled) {
+      setTimerDisplay('');
+      return;
+    }
+
     let prevDiff = Infinity;
     const interval = setInterval(() => {
       const now = minutesFromMidnight();
-      const diff = Math.max(0, nextPrayer.minutes - now);
-      setTimerDisplay(formatCountdown(diff));
+      const diff = getTimeUntilNext(nextPrayer, now);
+      setTimerDisplay(diff);
 
       // Detect prayer time arrival — play adhan on transition from positive to 0
-      if (prevDiff > 0 && diff === 0 && settings.adhanEnabled) {
+      if (prevDiff > 0 && diff === '0m' && settings.adhanEnabled) {
         initAudio().then(() => playAdhan(settings.adhanVariant));
       }
-      prevDiff = diff;
+      prevDiff = diff === '0m' ? 0 : Infinity;
     }, 1000);
     return () => clearInterval(interval);
-  }, [nextPrayer, settings.adhanEnabled, settings.adhanVariant]);
+  }, [nextPrayer, settings.liveCountdownEnabled, settings.adhanEnabled, settings.adhanVariant]);
 
   const handleMarkPrayer = async (id: PrayerId, status: 'prayed' | 'qaza') => {
     const todayKey = getDateKey(new Date());
@@ -226,13 +284,20 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleUpdateSettings = async (partial: Partial<AppSettings>) => {
-    const updated = { ...settings, ...partial };
+    const updated = {
+      ...settings,
+      ...partial,
+      prayerNotifications: {
+        ...settings.prayerNotifications,
+        ...(partial.prayerNotifications || {}),
+      },
+    };
     setSettings(updated);
     await saveSettings(updated);
   };
 
   // Derived data
-  const prayersObj = prayerTimes.length > 0 ? {
+  const prayersObj: Record<string, Date> = prayerTimes.length > 0 ? {
     fajr: new Date(new Date().setHours(Math.floor(prayerTimes[0].minutes / 60), prayerTimes[0].minutes % 60, 0)),
     sunrise: new Date(new Date().setHours(Math.floor(prayerTimes[1].minutes / 60), prayerTimes[1].minutes % 60, 0)),
     dhuhr: new Date(new Date().setHours(Math.floor(prayerTimes[2].minutes / 60), prayerTimes[2].minutes % 60, 0)),
@@ -249,6 +314,10 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   const nextPrayerTime = nextPrayer ? new Date(new Date().setHours(
     Math.floor(nextPrayer.minutes / 60), nextPrayer.minutes % 60, 0
   )) : null;
+
+  if (nextPrayer && nextPrayerTime && nextPrayer.minutes <= minutesFromMidnight()) {
+    nextPrayerTime.setDate(nextPrayerTime.getDate() + 1);
+  }
 
   const hijriDate = HijriService.gregorianToHijri(new Date());
   const hijriDateStr = `${hijriDate.day} ${hijriDate.monthNameArabic} ${hijriDate.year} AH`;

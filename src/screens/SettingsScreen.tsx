@@ -1,14 +1,18 @@
-import React, { useCallback } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch, Alert, Linking } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  StyleSheet, View, Text, ScrollView, TouchableOpacity, Switch, Alert, Linking, TextInput
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as StoreReview from 'expo-store-review';
-import { C, CalculationMethod, Madhab, AppSettings } from '../types';
+import { C, CalculationMethod, Madhab, AppSettings, PRAYER_IDS, PrayerNotificationId } from '../types';
 import { getCurrentLocation } from '../services/LocationService';
-import { initAudio, playAdhan, stopAdhan } from '../services/AudioService';
+import { initAudio, playAdhan, stopAdhan, getAdhanVariants, getAdhanAttribution, setAdhanVolume } from '../services/AudioService';
+import { requestNotificationPermission } from '../services/NotificationService';
+import { MANUAL_CITIES } from '../data/manualCities';
 
 interface SettingsScreenProps {
   settings: AppSettings;
-  updateSettings: (updates: Partial<AppSettings>) => void;
+  updateSettings: (updates: Partial<AppSettings>) => void | Promise<void>;
 }
 
 const METHODS: { value: CalculationMethod; label: string }[] = [
@@ -27,18 +31,39 @@ const METHODS: { value: CalculationMethod; label: string }[] = [
 ];
 
 const FAJR_ALARM_OPTIONS = [5, 10, 15, 20, 30];
-const ADHAN_VARIANTS = ['default', 'makkah', 'madinah', 'egyptian'];
+const VOLUME_OPTIONS = [0.5, 0.75, 1];
+const ADHAN_VARIANTS = getAdhanVariants();
+const NOTIFICATION_PRAYERS = PRAYER_IDS.filter(id => id !== 'sunrise') as PrayerNotificationId[];
 
 export default function SettingsScreen({ settings, updateSettings }: SettingsScreenProps) {
+  const [manualSearch, setManualSearch] = useState('');
+
+  const filteredCities = useMemo(() => {
+    const normalized = manualSearch.trim().toLowerCase();
+    if (!normalized) return MANUAL_CITIES;
+    return MANUAL_CITIES.filter(city => city.name.toLowerCase().includes(normalized));
+  }, [manualSearch]);
+
   const handleLocationDetect = useCallback(async () => {
     const loc = await getCurrentLocation();
     if (loc) {
-      updateSettings({ location: loc });
+      await updateSettings({ location: loc });
       Alert.alert('Location Updated', `Set to ${loc.name}`);
     } else {
-      Alert.alert('Location Failed', 'Could not detect location. Please try again or enter manually.');
+      Alert.alert('Location Failed', 'Could not detect location. Please choose a manual city below.');
     }
   }, [updateSettings]);
+
+  const handleNotificationsEnabled = async (enabled: boolean) => {
+    if (enabled) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        Alert.alert('Notifications Off', 'Notification permission was not granted. You can enable it later in device settings.');
+        return;
+      }
+    }
+    await updateSettings({ notificationsEnabled: enabled });
+  };
 
   const handleRateApp = useCallback(async () => {
     if (await StoreReview.hasAction()) {
@@ -46,24 +71,30 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
     }
   }, []);
 
+  const attribution = getAdhanAttribution();
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
         <Text style={styles.title}>Settings</Text>
+        <Text style={styles.subtitle}>Local-only prayer settings for this device.</Text>
       </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Location</Text>
         <View style={styles.card}>
           <View style={styles.row}>
-            <View>
-              <Text style={styles.rowLabel}>Auto-detect location</Text>
-              <Text style={styles.rowSubtitle}>{settings.location?.name || 'Not set'}</Text>
+            <View style={styles.rowIconWrap}>
+              <Ionicons name="locate-outline" size={18} color={settings.location ? C.primary : C.textMuted} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowLabel}>Device location</Text>
+              <Text style={styles.rowSubtitle}>{settings.location?.source === 'device' ? settings.location.name : 'Not active'}</Text>
             </View>
             <Switch
-              value={!!settings.location}
+              value={settings.location?.source === 'device'}
               onValueChange={() => {
-                if (settings.location) {
+                if (settings.location?.source === 'device') {
                   updateSettings({ location: null });
                 } else {
                   handleLocationDetect();
@@ -74,9 +105,40 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
           </View>
 
           <TouchableOpacity style={styles.row} onPress={handleLocationDetect}>
-            <Text style={styles.rowLabel}>📍 Use Current Location</Text>
-            <Text style={styles.rowValue}>→</Text>
+            <View style={styles.rowIconWrap}>
+              <Ionicons name="navigate-outline" size={18} color={C.primary} />
+            </View>
+            <Text style={styles.rowLabel}>Use Current Location</Text>
+            <Ionicons name="chevron-forward" size={16} color={C.textMuted} />
           </TouchableOpacity>
+
+          <View style={styles.manualSearchWrap}>
+            <Ionicons name="search" size={16} color={C.textMuted} />
+            <TextInput
+              style={styles.manualSearchInput}
+              placeholder="Search manual city"
+              placeholderTextColor={C.textMuted}
+              value={manualSearch}
+              onChangeText={setManualSearch}
+            />
+          </View>
+
+          {filteredCities.map(city => {
+            const selected = settings.location?.name === city.name && settings.location?.source === 'manual-city';
+            return (
+              <TouchableOpacity
+                key={city.name}
+                style={[styles.manualCityRow, selected && styles.manualCityRowSelected]}
+                onPress={() => updateSettings({ location: city })}
+              >
+                <View>
+                  <Text style={[styles.manualCityName, selected && styles.manualCityNameSelected]}>{city.name}</Text>
+                  <Text style={styles.manualCityMeta}>{city.timezone}</Text>
+                </View>
+                {selected && <Ionicons name="checkmark-circle" size={20} color={C.primary} />}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </View>
 
@@ -91,7 +153,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             >
               <Text style={styles.optionLabel}>{method.label}</Text>
               {settings.calculationMethod === method.value && (
-                <Text style={styles.checkmark}>✓</Text>
+                <Ionicons name="checkmark-circle" size={20} color={C.primary} />
               )}
             </TouchableOpacity>
           ))}
@@ -99,29 +161,21 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Madhhab (School of Thought)</Text>
+        <Text style={styles.sectionTitle}>Madhhab</Text>
         <View style={styles.card}>
-          <TouchableOpacity
-            style={styles.optionRow}
-            onPress={() => updateSettings({ madhab: 'shafi' })}
-          >
-            <View>
-              <Text style={styles.optionLabel}>Shafi</Text>
-              <Text style={styles.optionSubtitle}>Standard Asr time</Text>
-            </View>
-            {settings.madhab === 'shafi' && <Text style={styles.checkmark}>✓</Text>}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.optionRow}
-            onPress={() => updateSettings({ madhab: 'hanafi' })}
-          >
-            <View>
-              <Text style={styles.optionLabel}>Hanafi</Text>
-              <Text style={styles.optionSubtitle}>Later Asr time</Text>
-            </View>
-            {settings.madhab === 'hanafi' && <Text style={styles.checkmark}>✓</Text>}
-          </TouchableOpacity>
+          {(['shafi', 'hanafi'] as Madhab[]).map(madhab => (
+            <TouchableOpacity
+              key={madhab}
+              style={styles.optionRow}
+              onPress={() => updateSettings({ madhab })}
+            >
+              <View>
+                <Text style={styles.optionLabel}>{madhab === 'shafi' ? 'Shafi' : 'Hanafi'}</Text>
+                <Text style={styles.optionSubtitle}>{madhab === 'shafi' ? 'Standard Asr time' : 'Later Asr time'}</Text>
+              </View>
+              {settings.madhab === madhab && <Ionicons name="checkmark-circle" size={20} color={C.primary} />}
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 
@@ -129,15 +183,38 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
         <Text style={styles.sectionTitle}>Notifications</Text>
         <View style={styles.card}>
           <View style={styles.row}>
+            <View style={styles.rowIconWrap}>
+              <Ionicons name="notifications-outline" size={18} color={settings.notificationsEnabled ? C.primary : C.textMuted} />
+            </View>
             <Text style={styles.rowLabel}>Prayer time alerts</Text>
             <Switch
               value={settings.notificationsEnabled}
-              onValueChange={v => updateSettings({ notificationsEnabled: v })}
+              onValueChange={handleNotificationsEnabled}
               trackColor={{ true: C.primary }}
             />
           </View>
 
+          {NOTIFICATION_PRAYERS.map(prayerId => (
+            <View key={prayerId} style={styles.row}>
+              <View style={styles.rowIconWrap}>
+                <Ionicons name="time-outline" size={18} color={settings.prayerNotifications[prayerId] ? C.primary : C.textMuted} />
+              </View>
+              <Text style={[styles.rowLabel, { textTransform: 'capitalize' }]}>{prayerId}</Text>
+              <Switch
+                disabled={!settings.notificationsEnabled}
+                value={settings.prayerNotifications[prayerId]}
+                onValueChange={v => updateSettings({
+                  prayerNotifications: { ...settings.prayerNotifications, [prayerId]: v },
+                })}
+                trackColor={{ true: C.primary }}
+              />
+            </View>
+          ))}
+
           <View style={styles.row}>
+            <View style={styles.rowIconWrap}>
+              <Ionicons name="alarm-outline" size={18} color={settings.fajrAlarmEnabled ? C.primary : C.textMuted} />
+            </View>
             <Text style={styles.rowLabel}>Fajr alarm</Text>
             <Switch
               value={settings.fajrAlarmEnabled}
@@ -164,6 +241,21 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
           )}
 
           <View style={styles.row}>
+            <View style={styles.rowIconWrap}>
+              <Ionicons name="timer-outline" size={18} color={settings.liveCountdownEnabled ? C.primary : C.textMuted} />
+            </View>
+            <Text style={styles.rowLabel}>Live countdown</Text>
+            <Switch
+              value={settings.liveCountdownEnabled}
+              onValueChange={v => updateSettings({ liveCountdownEnabled: v })}
+              trackColor={{ true: C.primary }}
+            />
+          </View>
+
+          <View style={styles.row}>
+            <View style={styles.rowIconWrap}>
+              <Ionicons name="time-outline" size={18} color={settings.iqamaCountdownEnabled ? C.primary : C.textMuted} />
+            </View>
             <Text style={styles.rowLabel}>Iqama countdown</Text>
             <Switch
               value={settings.iqamaCountdownEnabled}
@@ -173,6 +265,9 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
           </View>
 
           <View style={styles.row}>
+            <View style={styles.rowIconWrap}>
+              <Ionicons name="volume-medium-outline" size={18} color={settings.adhanEnabled ? C.primary : C.textMuted} />
+            </View>
             <Text style={styles.rowLabel}>Adhan audio</Text>
             <Switch
               value={settings.adhanEnabled}
@@ -198,6 +293,22 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
                     </TouchableOpacity>
                   ))}
                 </View>
+                <View style={styles.pillRow}>
+                  {VOLUME_OPTIONS.map(volume => (
+                    <TouchableOpacity
+                      key={volume}
+                      style={[styles.pill, settings.adhanVolume === volume && styles.pillActive]}
+                      onPress={async () => {
+                        await setAdhanVolume(volume);
+                        await updateSettings({ adhanVolume: volume });
+                      }}
+                    >
+                      <Text style={[styles.pillText, settings.adhanVolume === volume && styles.pillTextActive]}>
+                        {Math.round(volume * 100)}%
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
                 <TouchableOpacity
                   style={styles.previewBtn}
                   onPress={async () => {
@@ -212,6 +323,13 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
               </View>
             </View>
           )}
+
+          <View style={styles.attribution}>
+            <Ionicons name="information-circle-outline" size={16} color={C.textMuted} />
+            <Text style={styles.attributionText}>
+              Default adhan: {attribution.title} by {attribution.author}, {attribution.source}, {attribution.license}.
+            </Text>
+          </View>
         </View>
       </View>
 
@@ -225,12 +343,12 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
 
           <TouchableOpacity style={styles.row} onPress={() => Linking.openURL('https://prayertime.app/privacy')}>
             <Text style={styles.rowLabel}>Privacy Policy</Text>
-            <Text style={styles.rowValue}>→</Text>
+            <Ionicons name="chevron-forward" size={16} color={C.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.row} onPress={handleRateApp}>
             <Text style={styles.rowLabel}>Rate App</Text>
-            <Text style={styles.rowValue}>⭐⭐⭐⭐⭐</Text>
+            <Ionicons name="star-outline" size={16} color={C.gold} />
           </TouchableOpacity>
         </View>
       </View>
@@ -260,6 +378,12 @@ const styles = StyleSheet.create({
     fontFamily: 'Jost_700Bold',
     color: C.white,
   },
+  subtitle: {
+    fontSize: 13,
+    color: C.goldLight,
+    fontFamily: 'Jost_400Regular',
+    marginTop: 4,
+  },
   section: {
     padding: 18,
     paddingBottom: 0,
@@ -286,9 +410,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: C.border,
   },
+  rowIconWrap: { width: 28, justifyContent: 'center', alignItems: 'center' },
+  rowText: { flex: 1, marginLeft: 8 },
   rowLabel: {
-    fontSize: 16,
+    fontSize: 15,
     color: C.textPrimary,
+    fontFamily: 'Jost_500Medium',
+    flex: 1,
   },
   rowSubtitle: {
     fontSize: 13,
@@ -309,36 +437,40 @@ const styles = StyleSheet.create({
     borderBottomColor: C.border,
   },
   optionLabel: {
-    fontSize: 16,
+    fontSize: 15,
     color: C.textPrimary,
+    fontFamily: 'Jost_500Medium',
   },
   optionSubtitle: {
     fontSize: 13,
     color: C.textMuted,
     marginTop: 2,
   },
-  checkmark: {
-    fontSize: 18,
-    color: C.primary,
-    fontFamily: 'Jost_700Bold',
-  },
-  manualLocation: {
-    padding: 16,
-    gap: 10,
-    borderTopWidth: 1,
-    borderTopColor: C.border,
-  },
-  locationButton: {
-    backgroundColor: C.goldPale,
-    padding: 14,
-    borderRadius: 10,
+  manualSearchWrap: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: C.bgBase,
   },
-  locationButtonText: {
-    fontSize: 15,
-    color: C.textPrimary,
-    fontFamily: 'Jost_600SemiBold',
+  manualSearchInput: { flex: 1, fontSize: 14, color: C.textPrimary },
+  manualCityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
   },
+  manualCityRowSelected: { backgroundColor: C.goldPale },
+  manualCityName: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
+  manualCityNameSelected: { color: C.primary },
+  manualCityMeta: { fontSize: 12, color: C.textMuted, marginTop: 2 },
   subRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -349,16 +481,37 @@ const styles = StyleSheet.create({
     borderBottomColor: C.border,
     backgroundColor: C.bgBase,
   },
-  pillRow: { flexDirection: 'row', gap: 6 },
+  pillRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 8 },
   pill: {
-    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
     backgroundColor: C.bgSurface,
+    borderWidth: 1,
+    borderColor: C.borderStrong,
   },
-  pillActive: { backgroundColor: C.primary },
+  pillActive: { backgroundColor: C.primary, borderColor: C.primary },
   pillText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
   pillTextActive: { color: C.white },
-  previewBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: C.primary, paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10, marginTop: 8, alignSelf: 'flex-end' },
+  previewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: C.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginTop: 8,
+    alignSelf: 'flex-end',
+  },
   previewBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.white },
+  attribution: {
+    flexDirection: 'row',
+    gap: 8,
+    padding: 14,
+    backgroundColor: C.bgBase,
+  },
+  attributionText: { flex: 1, fontSize: 12, color: C.textMuted, lineHeight: 18 },
   footer: {
     padding: 40,
     alignItems: 'center',

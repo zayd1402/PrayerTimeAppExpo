@@ -1,18 +1,36 @@
 {
-  "extends": "expo/tsconfig.base",
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "strict": true,
-    "jsx": "react-native",
-    "moduleResolution": "bundler",
+    "allowJs": true,
+    "customConditions": [
+      "react-native"
+    ],
     "esModuleInterop": true,
+    "jsx": "react-native",
+    "lib": [
+      "DOM",
+      "ESNext"
+    ],
+    "module": "esnext",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "resolveJsonModule": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "strict": true,
+    "target": "ESNext"
   },
   "include": [
     "**/*.ts",
     "**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
-  ]
+    "node_modules",
+    "android",
+    "ios",
+    "babel.config.js",
+    "metro.config.js",
+    "jest.config.js"
+  ],
+  "extends": "expo/tsconfig.base"
 }

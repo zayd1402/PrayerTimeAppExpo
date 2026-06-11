@@ -1,14 +1,24 @@
 import { Audio, AVPlaybackSource } from 'expo-av';
 
-const ADHAN_FILES: Record<string, AVPlaybackSource | null> = {
-  makkah: null,
-  madinah: null,
-  egyptian: null,
-  default: null,
+const ADHAN_FILES: Record<string, AVPlaybackSource> = {
+  default: require('../../assets/audio/adhan-default.mp3'),
+};
+
+const ADHAN_ATTRIBUTION = {
+  title: 'Adhan in Qusser by the sea.mp3',
+  author: 'AhmadAiuby',
+  source: 'Freesound',
+  license: 'CC0 1.0',
+  soundId: 555065,
 };
 
 let currentSound: Audio.Sound | null = null;
 let isLoaded = false;
+let currentVolume = 1.0;
+
+export function getAdhanAttribution() {
+  return ADHAN_ATTRIBUTION;
+}
 
 export async function initAudio(): Promise<void> {
   if (isLoaded) return;
@@ -20,36 +30,26 @@ export async function initAudio(): Promise<void> {
   isLoaded = true;
 }
 
-export function setAdhanFile(variant: string, source: AVPlaybackSource): void {
-  ADHAN_FILES[variant] = source;
+export function getAdhanVariants(): string[] {
+  return Object.keys(ADHAN_FILES);
 }
 
-/*
- * To add adhan audio, call setAdhanFile() at app startup:
- *
- * import { setAdhanFile } from './services/AudioService';
- * setAdhanFile('makkah', require('../assets/audio/adhan-makkah.mp3'));
- * setAdhanFile('madinah', require('../assets/audio/adhan-madinah.mp3'));
- * setAdhanFile('egyptian', require('../assets/audio/adhan-egyptian.mp3'));
- * setAdhanFile('default', require('../assets/audio/adhan-makkah.mp3'));
- *
- * Place the MP3 files in assets/audio/ before building.
- * Free adhan downloads: https://download.quranicaudio.com/qadha/
- */
+export async function setAdhanVolume(volume: number): Promise<void> {
+  currentVolume = Math.max(0, Math.min(1, volume));
+  if (currentSound) {
+    await currentSound.setVolumeAsync(currentVolume);
+  }
+}
 
 export async function playAdhan(variant: string = 'default'): Promise<void> {
   try {
     await stopAdhan();
 
     const source = ADHAN_FILES[variant] || ADHAN_FILES.default;
-    if (!source) {
-      if (__DEV__) console.log('No adhan audio file for variant:', variant);
-      return;
-    }
 
     const { sound } = await Audio.Sound.createAsync(source, {
       shouldPlay: true,
-      volume: 1.0,
+      volume: currentVolume,
       isLooping: false,
     });
     currentSound = sound;

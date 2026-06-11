@@ -1,11 +1,11 @@
-import { MMKV } from 'react-native-mmkv';
+import { createMMKV } from 'react-native-mmkv';
 import { 
   PrayerId, PrayerLogEntry, AppSettings, DEFAULT_SETTINGS,
   FastingLog, QuranLog, DhikrSession, 
   ZakatRecord, CharityRecord, PrayerJournalEntry, KhushuEntry
 } from '../types';
 
-export const storage = new MMKV({ id: 'prayertime-storage' });
+export const storage = createMMKV({ id: 'prayertime-storage' });
 
 // ─── helpers ────────────────────────────────────────────────
 function load<T>(key: string, fallback: T): T {
@@ -334,7 +334,7 @@ export { storage as mmkv };
 // ─── Clear All Data ──────────────────────────────────────────
 export async function clearAllData(): Promise<void> {
   const keys = Object.values(KEYS);
-  keys.forEach(key => storage.delete(key));
+  keys.forEach(key => storage.remove(key));
 }
 
 // ─── Friday Screen Data ─────────────────────────────────────

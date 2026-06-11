@@ -1,12 +1,12 @@
 {
   "/Users/Apple/Projects/PrayerTimeAppExpo/App.tsx": {
-    "mtime": 1780708310.7077184,
-    "ast_hash": "79ff3269fda37cdc1d2638c28c978f54",
+    "mtime": 1780798854.301249,
+    "ast_hash": "cd28a0117965ede6fd295c220d97517d",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/app.json": {
-    "mtime": 1780705744.636815,
-    "ast_hash": "4afe78dc6b2328c5e451a3f11553a4d0",
+    "mtime": 1781153244.6935754,
+    "ast_hash": "4791e8cd8b4cf25ef342a96dea241618",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/screenshots.js": {
@@ -15,13 +15,13 @@
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/package.json": {
-    "mtime": 1780708295.4651172,
-    "ast_hash": "5df4080b44b40b01766682d8f6eccb81",
+    "mtime": 1781154122.7109535,
+    "ast_hash": "1d3de8c45aae88f314e331818ad8384a",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/tsconfig.json": {
-    "mtime": 1780705740.2815866,
-    "ast_hash": "55b43f84c710b091e052c56c2b0e4d98",
+    "mtime": 1781154176.9504123,
+    "ast_hash": "7ea521d0ecaef49c4d5954875a2e27f7",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/.claude/settings.json": {
@@ -35,38 +35,38 @@
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/types/index.ts": {
-    "mtime": 1780711097.0221124,
-    "ast_hash": "80c66f0d0039871773136c856abbfdc6",
+    "mtime": 1781152704.2392068,
+    "ast_hash": "e056be0533769e2a36a1f1a6005075d0",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/WorshipScreen.tsx": {
-    "mtime": 1780711869.076872,
-    "ast_hash": "3fd8c9d6c32a0858848d5320c1c2a523",
+    "mtime": 1781152915.4567823,
+    "ast_hash": "971527edfcd09cef059870dd623488e9",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/TodayScreen.tsx": {
-    "mtime": 1780711866.4547203,
-    "ast_hash": "19eaac41cb6d187c07ee7aa7145abd06",
+    "mtime": 1781152901.1172616,
+    "ast_hash": "a81c9519e394366d254f42b86dc851c8",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/MosquesScreen.tsx": {
-    "mtime": 1780711876.5135746,
-    "ast_hash": "a5ee588600da21d849a743dd0b3522b3",
+    "mtime": 1781152652.2697072,
+    "ast_hash": "cc696f830e9e13428fe853c032a06cb3",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/SettingsScreen.tsx": {
-    "mtime": 1780711877.6356199,
-    "ast_hash": "f9a39a8bc7d0417c64be1bdacc7dcca9",
+    "mtime": 1781152698.526806,
+    "ast_hash": "429ad1baa331d00f3a437dfbd7682807",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/QiblaScreen.tsx": {
-    "mtime": 1780711634.1043863,
-    "ast_hash": "aa044a4b0255591b4a71f92d5cc16bac",
+    "mtime": 1781152608.3323479,
+    "ast_hash": "2807ffe7c22690a93601bad1d01cf8ce",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/services/NotificationService.ts": {
-    "mtime": 1780706664.1341276,
-    "ast_hash": "af8fe52664897d7585f55bde0c027a10",
+    "mtime": 1781149026.5265644,
+    "ast_hash": "3846fc7b2b94130a5c8c83bcf50f66b3",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/services/HijriService.ts": {
@@ -75,28 +75,28 @@
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/services/StorageService.ts": {
-    "mtime": 1780706547.9109356,
-    "ast_hash": "6cb71ad8e2a72f87962268e8b6c0008a",
+    "mtime": 1781149033.2477767,
+    "ast_hash": "989b30c45f109cc05ef19e0bba4d2b4c",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/services/LocationService.ts": {
-    "mtime": 1780668948.199854,
-    "ast_hash": "101f3881cf8d2e26a0b6f6375b6f3d41",
+    "mtime": 1781147736.9869697,
+    "ast_hash": "349c7e94b3664e742328b046afe1c56e",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/services/PrayerService.ts": {
-    "mtime": 1780706509.5309076,
-    "ast_hash": "18b31b8cc197f8697d5aeb62ca8d9b9c",
+    "mtime": 1781147723.1430016,
+    "ast_hash": "89715e8630da541c7e797ba2ee7cf4e7",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/AGENTS.md": {
-    "mtime": 1780573863.154961,
-    "ast_hash": "5f18613a4c1e1fecd292e4afdee2dd70",
+    "mtime": 1781146853.5272715,
+    "ast_hash": "88159159b6cb15ed0a849d94385ebd05",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/CLAUDE.md": {
-    "mtime": 1780573863.155291,
-    "ast_hash": "9c08b0305a7e0615e6a0971f59ae20e4",
+    "mtime": 1781146853.5276976,
+    "ast_hash": "e3dd1c8e5a9be1bf1015992169798972",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/.claude/CLAUDE.md": {
@@ -120,23 +120,23 @@
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/context/PrayerAppContext.tsx": {
-    "mtime": 1780708447.5277643,
-    "ast_hash": "b657312b5dc7bc38fbee29357ce10818",
+    "mtime": 1781154094.0458496,
+    "ast_hash": "54ac2c592657c7fcc3a381b980297471",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/navigation/MoreScreen.tsx": {
-    "mtime": 1780711846.4884708,
-    "ast_hash": "30f4fac4992da5fcff55d14e41ea4879",
+    "mtime": 1781149212.9734535,
+    "ast_hash": "acdf296aac7cdd7cd85c59f73667c4c7",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/navigation/TabNavigator.tsx": {
-    "mtime": 1780711122.8466828,
-    "ast_hash": "c8584b473badeabc73e8bbb2e8abef18",
+    "mtime": 1781152987.651894,
+    "ast_hash": "9c3e3f4b2b82c0e9432609e9b644101a",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/CalendarScreen.tsx": {
-    "mtime": 1780711457.8363395,
-    "ast_hash": "7e3af9bead23594f3fa7c2d4f016656b",
+    "mtime": 1781152976.0405908,
+    "ast_hash": "2fd0ff0235108203d20d35986ace2866",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/HadithScreen.tsx": {
@@ -150,8 +150,8 @@
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/JournalScreen.tsx": {
-    "mtime": 1780711639.0748732,
-    "ast_hash": "3e66448a5e04846e985f7f9429e01e15",
+    "mtime": 1780797615.9579685,
+    "ast_hash": "11d847ed5f5345199a6ab0c973009b16",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/DuaLibraryScreen.tsx": {
@@ -165,8 +165,8 @@
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/FridayScreen.tsx": {
-    "mtime": 1780711872.7851248,
-    "ast_hash": "fbfa4ebbe0826287cf001c089b0ba0af",
+    "mtime": 1780795784.8592596,
+    "ast_hash": "65ba3a7fe109a07d0fc42d735eba192f",
     "semantic_hash": ""
   },
   "/Users/Apple/Projects/PrayerTimeAppExpo/src/data/islamicEvents.ts": {
@@ -192,6 +192,126 @@
   "/Users/Apple/Projects/PrayerTimeAppExpo/assets/adaptive-icon.png": {
     "mtime": 1780709086.6438596,
     "ast_hash": "1d5711da1a6ff4b1eff8ea2ffdf7dabd",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/context/ThemeContext.tsx": {
+    "mtime": 1780796455.2606802,
+    "ast_hash": "c9f29b26fa0349a7999581d9d019c84c",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/TazkiyahScreen.tsx": {
+    "mtime": 1780797739.3866758,
+    "ast_hash": "c3343bd112bf99931afc7dfd737bda4d",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/HifdhScreen.tsx": {
+    "mtime": 1780797717.6723673,
+    "ast_hash": "66e42fd0aa42cea617f29cad6865e87d",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/SunnahRoutineScreen.tsx": {
+    "mtime": 1780796657.8197222,
+    "ast_hash": "d3b669ddff5db241ebcd9e7dd4d92725",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/RamadanScreen.tsx": {
+    "mtime": 1781148036.240643,
+    "ast_hash": "ad111400ac7b78443e1db789aa99289d",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/HajjScreen.tsx": {
+    "mtime": 1780798568.0974524,
+    "ast_hash": "13a2ff801ae0b6030112d13464b05016",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/components/KhushuModal.tsx": {
+    "mtime": 1780797505.9637225,
+    "ast_hash": "4d3a32c4458a44be4aec32010db1cad0",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/components/ErrorBoundary.tsx": {
+    "mtime": 1780798848.8346462,
+    "ast_hash": "412a788537ccfefecf702b7a05a8d5b1",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/i18n/en.json": {
+    "mtime": 1780796430.125794,
+    "ast_hash": "b6bd7c3c30a145aa93cde634856d29fa",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/i18n/index.ts": {
+    "mtime": 1781148966.2585306,
+    "ast_hash": "ddbde0ea32f1c0f0210245fd60eaa790",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/i18n/ar.json": {
+    "mtime": 1780796436.8784003,
+    "ast_hash": "a4abf704e00e0f1a59ac2e72889a455e",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/data/knowledge.ts": {
+    "mtime": 1780798538.2693872,
+    "ast_hash": "374d76c3d4fc8e85b9177b40438ec53d",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/data/manualCities.ts": {
+    "mtime": 1781147449.491768,
+    "ast_hash": "e0b46f185d5d5c549a392f3bbdd49cfd",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/data/duas.ts": {
+    "mtime": 1781147480.5767326,
+    "ast_hash": "79260dc1fea381f0e4c045b44d49bea8",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/data/mosques.ts": {
+    "mtime": 1781147466.169414,
+    "ast_hash": "76ff83d42ebe65a9b84dea8d45efe8df",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/data/sunnahRoutine.ts": {
+    "mtime": 1780796640.6491337,
+    "ast_hash": "5893c87a66bf5075fec0f55c117d7dd5",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/services/SacredTimeService.ts": {
+    "mtime": 1780798881.6651947,
+    "ast_hash": "d71edaf08dee79de4cac8f7d62a632ae",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/services/LocalMosqueService.ts": {
+    "mtime": 1781153027.4300156,
+    "ast_hash": "fe25883923ffd8059e68a8b6e27547ab",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/services/AudioService.ts": {
+    "mtime": 1781147663.2121205,
+    "ast_hash": "f64a577defc0faa34da11eddb0bc5a9e",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/services/RamadanService.ts": {
+    "mtime": 1780796945.8233488,
+    "ast_hash": "e5d4ac82e6d7af955d9c7477e6bde32b",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/assets/audio/adhan-default.mp3": {
+    "mtime": 1781147309.7970288,
+    "ast_hash": "82db46d254dd8a131147badae94b17ec",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/eslint.config.js": {
+    "mtime": 1781153335.0295975,
+    "ast_hash": "8b66ed1a83bf6b1d2b5ebe01b9ad7acc",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/QiblaMosquesScreen.tsx": {
+    "mtime": 1781152519.3684309,
+    "ast_hash": "a4e441be985dfb21263694206eaebd04",
+    "semantic_hash": ""
+  },
+  "/Users/Apple/Projects/PrayerTimeAppExpo/src/screens/LearnScreen.tsx": {
+    "mtime": 1781152538.2586496,
+    "ast_hash": "6e3bdd717866857ead54c6fba3807fd1",
     "semantic_hash": ""
   }
 }

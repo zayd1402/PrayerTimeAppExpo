@@ -1,9 +1,8 @@
 import * as Location from 'expo-location';
+import { AppLocation, LocationSource } from '../types';
 
-export interface LocationResult {
-  latitude: number;
-  longitude: number;
-  name: string;
+export interface LocationResult extends AppLocation {
+  source: LocationSource;
 }
 
 export async function requestLocationPermission(): Promise<boolean> {
@@ -32,7 +31,7 @@ export async function getCurrentLocation(): Promise<LocationResult | null> {
       else if (address.country) name = address.country;
     }
 
-    return { latitude, longitude, name };
+    return { latitude, longitude, name, source: 'device', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
   } catch {
     return null;
   }
@@ -52,9 +51,4 @@ export async function getLocationName(latitude: number, longitude: number): Prom
   }
 }
 
-// Sydney default coordinates
-export const DEFAULT_LOCATION: LocationResult = {
-  latitude: -33.8688,
-  longitude: 151.2093,
-  name: 'Sydney, NSW',
-};
+// Manual fallback is intentionally disabled; callers must ask the user to enable location or choose a city.

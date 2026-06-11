@@ -5,6 +5,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
 import { HijriService } from '../services/HijriService';
+import { getRamadanState } from '../services/RamadanService';
 import { loadPrayerLog, getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData, getKhushuAverage } from '../services/StorageService';
 import { getEventsForHijriDate, ISLAMIC_EVENTS } from '../data/islamicEvents';
 
@@ -90,6 +91,36 @@ export default function CalendarScreen() {
     return events[0];
   };
   const nextEvent = getNextEvent();
+  const ramadanState = getRamadanState();
+
+  const RamadanSummary = () => {
+    const title = ramadanState.isRamadan
+      ? `Ramadan — day ${ramadanState.ramadanDay}`
+      : ramadanState.isPreRamadan
+        ? `${ramadanState.daysUntilRamadan} days until Ramadan`
+        : ramadanState.isPostRamadan
+          ? 'Shawwal — continue the good deeds'
+          : `${ramadanState.daysUntilRamadan} days until Ramadan`;
+
+    return (
+      <View style={styles.ramadanSummary}>
+        <View style={styles.ramadanSummaryLeft}>
+          <Ionicons name="moon-outline" size={24} color={C.gold} />
+          <View style={{ marginLeft: 12 }}>
+            <Text style={styles.ramadanSummaryTitle}>{title}</Text>
+            <Text style={styles.ramadanSummaryDesc}>
+              {ramadanState.isRamadan
+                ? ramadanState.isLast10Nights ? 'Last 10 nights are visible on the Hijri calendar.' : 'Ramadan events are marked in the calendar grid.'
+                : 'Ramadan, Laylat al-Qadr, Eid, and Shawwal are included in the MVP calendar.'}
+            </Text>
+          </View>
+        </View>
+        <View style={[styles.ramadanSummaryBadge, { backgroundColor: (EVENT_COLORS.ramadan || C.gold) + '15' }]}>
+          <Text style={[styles.ramadanSummaryBadgeText, { color: C.gold }]}>Ramadan</Text>
+        </View>
+      </View>
+    );
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -133,6 +164,8 @@ export default function CalendarScreen() {
           <Text style={styles.streakLabel}>on time</Text>
         </View>
       </View>
+
+      <RamadanSummary />
 
       {/* Month Navigation */}
       <View style={styles.calHeader}>
@@ -338,6 +371,16 @@ const styles = StyleSheet.create({
     backgroundColor: C.goldPale, borderRadius: 16, marginHorizontal: 18, marginBottom: 14,
     paddingVertical: 12, paddingHorizontal: 8,
   },
+  ramadanSummary: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: C.surfaceElevated, borderRadius: 18, marginHorizontal: 18, marginBottom: 14,
+    padding: 16,
+  },
+  ramadanSummaryLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  ramadanSummaryTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary },
+  ramadanSummaryDesc: { fontSize: 12, color: C.textMuted, lineHeight: 17, marginTop: 2 },
+  ramadanSummaryBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  ramadanSummaryBadgeText: { fontSize: 11, fontFamily: 'Jost_700Bold' },
   streakItem: { alignItems: 'center', flex: 1 },
   streakValue: { fontSize: 20, fontFamily: 'Jost_700Bold', color: C.textPrimary },
   streakLabel: { fontSize: 11, fontFamily: 'Jost_500Medium', color: C.textMuted, marginTop: 1 },

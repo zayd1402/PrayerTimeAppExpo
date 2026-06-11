@@ -1,73 +1,49 @@
-// ─── Design Tokens — "Warm Courtyard" Graded Gold + Amber ────
-// Style: Warm tonal layering, premium gold accents, no shadows at rest
-// Contrast: textPrimary 10.5:1 on bgBase, textMuted 5.2:1 on bgBase
-
 export const C = {
-  // Backgrounds — warm limestone-to-parchment spectrum
-  bgBase:       '#FDF8F0',  // warm cream — screen background
-  bgSurface:    '#F8F1E5',  // parchment — card surfaces
-  bgCard:       '#F2E8D5',  // deeper warm tone — elevated cards
-
-  // Primary — Burnished Amber
-  primary:      '#C27A2D',  // amber — active states, check circles, tab indicators
-  primaryDark:  '#9E5C1A',  // deeper amber — pressed states
-  primaryLight: '#F0D9B0',  // pale amber — today highlight, active backgrounds
-
-  // Accent — Inscription Gold
-  gold:         '#B8860B',  // dark goldenrod — sacred content, hadith, timer
-  goldLight:    '#D4A843',  // brighter gold — hover, secondary accents
-  goldPale:     '#FBF0D5',  // gold wash — sacred card backgrounds
-
-  // Surface variations for tonal layering
+  bgBase: '#FDF8F0',
+  bgSurface: '#F8F1E5',
+  bgCard: '#F2E8D5',
+  primary: '#C27A2D',
+  primaryDark: '#9E5C1A',
+  primaryLight: '#F0D9B0',
+  gold: '#B8860B',
+  goldLight: '#D4A843',
+  goldPale: '#FBF0D5',
   surfaceElevated: '#F5ECD8',
-  surfacePressed:  '#EBDFC5',
-
-  // Hero & header background
-  heroBg:      '#3D2415',  // deep warm brown-black — hero header, More header
-
-  // Shadow — hero card only (separates dark header from status bar)
+  surfacePressed: '#EBDFC5',
+  heroBg: '#3D2415',
   shadow: {
     shadowColor: 'rgba(61,36,21,0.10)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 12,
   },
-
-  // Timer
   timerAmber: '#B8860B',
-
-  // Text — warm brown spectrum
-  textPrimary:  '#2D2010',  // warm dark brown — body text
-  textSecondary:'#6B5030',  // warm umber — secondary text
-  textMuted:    '#8C7855',  // warm taupe — hints, metadata
-
-  // Semantic
-  red:          '#C4553B',  // terracotta — errors, danger
-  white:        '#FFFFFF',
-
-  // Borders
-  border:       'rgba(45,32,16,0.08)',
+  textPrimary: '#2D2010',
+  textSecondary: '#6B5030',
+  textMuted: '#8C7855',
+  red: '#C4553B',
+  white: '#FFFFFF',
+  border: 'rgba(45,32,16,0.08)',
   borderStrong: 'rgba(45,32,16,0.15)',
-
-  // Radius scale
   radius: {
-    sm: 12, md: 14, lg: 16, xl: 24,
+    sm: 12,
+    md: 14,
+    lg: 16,
+    xl: 24,
   },
-
-  // Typography scale
   type: {
-    display:  { fontSize: 32, fontWeight: '700' as const, lineHeight: 1.15 },
+    display: { fontSize: 32, fontWeight: '700' as const, lineHeight: 1.15 },
     headline: { fontSize: 22, fontWeight: '700' as const, lineHeight: 1.25 },
-    title:    { fontSize: 16, fontWeight: '600' as const, lineHeight: 1.3  },
-    body:     { fontSize: 14, fontWeight: '400' as const, lineHeight: 1.55 },
-    label:    { fontSize: 12, fontWeight: '500' as const, lineHeight: 1.3  },
-    caption:  { fontSize: 10, fontWeight: '500' as const, lineHeight: 1.2  },
+    title: { fontSize: 16, fontWeight: '600' as const, lineHeight: 1.3 },
+    body: { fontSize: 14, fontWeight: '400' as const, lineHeight: 1.55 },
+    label: { fontSize: 12, fontWeight: '500' as const, lineHeight: 1.3 },
+    caption: { fontSize: 10, fontWeight: '500' as const, lineHeight: 1.2 },
   },
 };
 
-// ─── Prayer IDs & Config ─────────────────────────────────────
 export const PRAYER_IDS = ['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'] as const;
 export type PrayerId = typeof PRAYER_IDS[number];
+export type PrayerNotificationId = Exclude<PrayerId, 'sunrise'>;
 
 export interface PrayerTime {
   id: PrayerId;
@@ -87,30 +63,61 @@ export interface PrayerLogEntry {
   time?: string;
 }
 
-// ─── Settings Types ─────────────────────────────────────────
 export type CalculationMethod =
-  | 'muslim_world_league' | 'egyptian' | 'umm_al_qura' | 'isna' | 'karachi'
-  | 'dubai' | 'qatar' | 'kuwait' | 'moonsighting_committee' | 'singapore'
-  | 'tehran' | 'north_america' | 'custom';
+  | 'muslim_world_league'
+  | 'egyptian'
+  | 'umm_al_qura'
+  | 'isna'
+  | 'karachi'
+  | 'dubai'
+  | 'qatar'
+  | 'kuwait'
+  | 'moonsighting_committee'
+  | 'singapore'
+  | 'tehran'
+  | 'north_america'
+  | 'custom';
+
 export type Madhab = 'shafi' | 'hanafi';
+export type LocationSource = 'device' | 'manual-city';
+
+export interface AppLocation {
+  latitude: number;
+  longitude: number;
+  name: string;
+  source?: LocationSource;
+  timezone?: string;
+}
 
 export interface AppSettings {
   calculationMethod: CalculationMethod;
   madhab: Madhab;
   notificationsEnabled: boolean;
+  liveCountdownEnabled: boolean;
+  prayerNotifications: Record<PrayerNotificationId, boolean>;
   fajrAlarmEnabled: boolean;
   fajrAlarmMinutes: number;
   iqamaCountdownEnabled: boolean;
-  location: { latitude: number; longitude: number; name: string } | null;
+  location: AppLocation | null;
   adhanEnabled: boolean;
   adhanVariant: string;
   adhanVolume: number;
 }
 
+export const DEFAULT_PRAYER_NOTIFICATIONS: Record<PrayerNotificationId, boolean> = {
+  fajr: false,
+  dhuhr: false,
+  asr: false,
+  maghrib: false,
+  isha: false,
+};
+
 export const DEFAULT_SETTINGS: AppSettings = {
   calculationMethod: 'muslim_world_league',
   madhab: 'shafi',
-  notificationsEnabled: true,
+  notificationsEnabled: false,
+  liveCountdownEnabled: true,
+  prayerNotifications: DEFAULT_PRAYER_NOTIFICATIONS,
   fajrAlarmEnabled: false,
   fajrAlarmMinutes: 15,
   iqamaCountdownEnabled: false,
@@ -120,29 +127,25 @@ export const DEFAULT_SETTINGS: AppSettings = {
   adhanVolume: 1.0,
 };
 
-// ─── Navigation ─────────────────────────────────────────────
 export const NAV_TABS = [
-  { id: 'home',      label: 'Home',      icon: 'home-outline',      iconActive: 'home'      },
-  { id: 'sunnah',    label: 'Sunnah',    icon: 'leaf-outline',      iconActive: 'leaf'      },
-  { id: 'worship',   label: 'Worship',   icon: 'heart-outline',     iconActive: 'heart'     },
-  { id: 'calendar',  label: 'Calendar',  icon: 'calendar-outline',  iconActive: 'calendar'  },
-  { id: 'duas',      label: 'Duas',      icon: 'book-outline',      iconActive: 'book'      },
-  { id: 'more',      label: 'More',      icon: 'grid-outline',      iconActive: 'grid'      },
+  { id: 'today', label: 'Today', icon: 'today-outline', iconActive: 'today' },
+  { id: 'worship', label: 'Worship', icon: 'heart-outline', iconActive: 'heart' },
+  { id: 'qibla-mosques', label: 'Qibla & Mosques', icon: 'navigate-outline', iconActive: 'navigate' },
+  { id: 'calendar', label: 'Calendar', icon: 'calendar-outline', iconActive: 'calendar' },
+  { id: 'learn', label: 'Learn', icon: 'book-outline', iconActive: 'book' },
 ] as const;
 
 export type TabId = typeof NAV_TABS[number]['id'];
 
-// ─── Icons Map ───────────────────────────────────────────────
 export const PRAYER_ICONS: Record<PrayerId, { icon: string; iconActive: string }> = {
-  fajr:    { icon: 'sunny-outline',        iconActive: 'sunny'        },
+  fajr: { icon: 'sunny-outline', iconActive: 'sunny' },
   sunrise: { icon: 'partly-sunny-outline', iconActive: 'partly-sunny' },
-  dhuhr:  { icon: 'sun-outline',           iconActive: 'sun'          },
-  asr:    { icon: 'cloud-outline',         iconActive: 'cloud'         },
-  maghrib:{ icon: 'sunset-outline',        iconActive: 'sunset'        },
-  isha:   { icon: 'moon-outline',          iconActive: 'moon'          },
+  dhuhr: { icon: 'sun-outline', iconActive: 'sun' },
+  asr: { icon: 'cloud-outline', iconActive: 'cloud' },
+  maghrib: { icon: 'sunset-outline', iconActive: 'sunset' },
+  isha: { icon: 'moon-outline', iconActive: 'moon' },
 };
 
-// ─── Dua Types ──────────────────────────────────────────────
 export interface Dua {
   id: string;
   title: string;
@@ -155,11 +158,22 @@ export interface Dua {
   isFavorite?: boolean;
 }
 
-export type DuaCategory = 
-  | 'morning' | 'evening' | 'sleep' | 'waking' 
-  | 'mosque' | 'travel' | 'eating' | 'home'
-  | 'prayer' | 'protection' | 'forgiveness' | 'gratitude'
-  | 'sickness' | 'distress' | 'general';
+export type DuaCategory =
+  | 'morning'
+  | 'evening'
+  | 'sleep'
+  | 'waking'
+  | 'mosque'
+  | 'travel'
+  | 'eating'
+  | 'home'
+  | 'prayer'
+  | 'protection'
+  | 'forgiveness'
+  | 'gratitude'
+  | 'sickness'
+  | 'distress'
+  | 'general';
 
 export const DUA_CATEGORIES: { value: DuaCategory; label: string; icon: string }[] = [
   { value: 'morning', label: 'Morning', icon: 'sunny-outline' },
@@ -179,7 +193,6 @@ export const DUA_CATEGORIES: { value: DuaCategory; label: string; icon: string }
   { value: 'general', label: 'General', icon: 'chatbubble-outline' },
 ];
 
-// ─── Hadith Types ───────────────────────────────────────────
 export interface Hadith {
   id: string;
   arabic: string;
@@ -193,7 +206,6 @@ export interface Hadith {
   isFavorite?: boolean;
 }
 
-// ─── Fasting Types ──────────────────────────────────────────
 export interface FastingLog {
   date: string;
   type: 'ramadan' | 'monday' | 'thursday' | 'white_days' | 'ashura' | 'arafah' | 'custom' | 'makeup';
@@ -201,7 +213,6 @@ export interface FastingLog {
   notes?: string;
 }
 
-// ─── Quran Tracker Types ────────────────────────────────────
 export interface QuranLog {
   date: string;
   pagesRead: number;
@@ -211,7 +222,6 @@ export interface QuranLog {
   notes?: string;
 }
 
-// ─── Dhikr History Types ────────────────────────────────────
 export interface DhikrSession {
   id: string;
   date: string;
@@ -221,7 +231,6 @@ export interface DhikrSession {
   custom?: { label: string; count: number }[];
 }
 
-// ─── Zakat Types ────────────────────────────────────────────
 export interface ZakatRecord {
   id: string;
   date: string;
@@ -244,7 +253,6 @@ export interface CharityRecord {
   notes?: string;
 }
 
-// ─── Prayer Journal Types ───────────────────────────────────
 export interface PrayerJournalEntry {
   id: string;
   date: string;
@@ -255,7 +263,6 @@ export interface PrayerJournalEntry {
   improvement?: string;
 }
 
-// ─── Islamic Event Types ────────────────────────────────────
 export interface IslamicEvent {
   id: string;
   title: string;
@@ -267,7 +274,6 @@ export interface IslamicEvent {
   isFixedHijri: boolean;
 }
 
-// ─── Khushu' / Ihsan Tracker Types ──────────────────────────
 export type KhushuLevel = 1 | 2 | 3 | 4 | 5;
 export type DistractionType = 'phone' | 'noise' | 'thoughts' | 'tired' | 'rushed' | 'none';
 
@@ -283,6 +289,7 @@ export interface KhushuEntry {
   };
   note?: string;
 }
+
 export interface WeeklyActivity {
   id: string;
   title: string;

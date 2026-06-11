@@ -1,5 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { PrayerNotificationId } from '../types';
 
 // ─── Notification Channels (Android) ─────────────────────────
 export async function setupNotificationChannels(): Promise<void> {
@@ -57,23 +58,32 @@ Notifications.setNotificationHandler({
 
 export async function hasNotificationPermission(): Promise<boolean> {
   const result = await Notifications.getPermissionsAsync();
-  return result.granted;
+  const permissions = result as { granted?: boolean; status?: string; ios?: { status?: number } };
+  return permissions.granted === true ||
+    permissions.status === 'granted' ||
+    permissions.ios?.status === Notifications.IosAuthorizationStatus.AUTHORIZED ||
+    permissions.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
 }
 
 export async function requestNotificationPermission(): Promise<boolean> {
   const result = await Notifications.requestPermissionsAsync();
-  return result.granted;
+  const permissions = result as { granted?: boolean; status?: string; ios?: { status?: number } };
+  return permissions.granted === true ||
+    permissions.status === 'granted' ||
+    permissions.ios?.status === Notifications.IosAuthorizationStatus.AUTHORIZED ||
+    permissions.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
 }
 
 // ─── Prayer Notifications ────────────────────────────────────
 export async function schedulePrayerNotification(
-  prayerId: string,
+  prayerId: PrayerNotificationId,
   prayerName: string,
   hour: number,
   minute: number,
-  isFajrAlarm: boolean = false
+  isFajrAlarm: boolean = false,
+  minutesOffset: number = 0
 ): Promise<void> {
-  const identifier = `prayer-${prayerId}`;
+  const identifier = isFajrAlarm ? 'fajr-alarm' : `prayer-${prayerId}`;
 
   await Notifications.cancelScheduledNotificationAsync(identifier);
 
@@ -87,10 +97,10 @@ export async function schedulePrayerNotification(
     content: {
       title,
       body,
-      sound: isFajrAlarm ? 'default' : 'default',
+      sound: true,
       priority: Notifications.AndroidNotificationPriority.HIGH,
       categoryIdentifier: PRAYER_CATEGORY,
-      data: { prayerId, action: 'time' },
+      data: { prayerId, action: isFajrAlarm ? 'alarm' : 'time' },
       ...(Platform.OS === 'android' && { channelId: 'prayer-times' }),
     },
     trigger: {
@@ -235,10 +245,10 @@ export function setupNotificationResponseHandler(
   onNotificationTap: (data: any) => void,
 ): Notifications.Subscription {
   const sub = Notifications.addNotificationResponseReceivedListener(response => {
-    const { data } = response.notification.request.content;
+    const data = response.notification.request.content.data as Record<string, unknown> | undefined;
     const actionId = response.actionIdentifier;
 
-    if (actionId === 'MARK_PRAYED' && data?.prayerId) {
+    if (actionId === 'MARK_PRAYED' && typeof data?.prayerId === 'string') {
       onMarkPrayed(data.prayerId);
     }
     if (actionId === Notifications.DEFAULT_ACTION_IDENTIFIER) {

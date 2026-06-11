@@ -115,7 +115,7 @@ export default function RamadanScreen() {
               <Ionicons name="time-outline" size={20} color={C.gold} />
               <Text style={styles.checkLabel}>Taraweeh rakahs</Text>
               <View style={styles.stepper}>
-                <TouchableOpacity onPress={() => taraweehRakahs > 0 && updateLog({ taraweehRakahs: todayLog.taraweehRakahs - 2 })}>
+                <TouchableOpacity onPress={() => todayLog.taraweehRakahs > 0 && updateLog({ taraweehRakahs: todayLog.taraweehRakahs - 2 })}>
                   <Ionicons name="remove-circle" size={26} color={C.primary} />
                 </TouchableOpacity>
                 <Text style={styles.stepperValue}>{todayLog.taraweehRakahs}</Text>
@@ -206,7 +206,10 @@ export default function RamadanScreen() {
               <Ionicons name="moon" size={24} color={C.gold} />
               <Text style={styles.last10Title}>Night {state.currentNight} of the Last 10</Text>
               {oddNight && (
-                <Text style={styles.oddNightText}>🌙 Odd night — intensify your worship!</Text>
+                <View style={styles.oddNightRow}>
+                  <Ionicons name="moon" size={16} color={C.gold} />
+                  <Text style={styles.oddNightText}>Odd night — intensify your worship!</Text>
+                </View>
               )}
               <Text style={styles.virtueText}>{getNightVirtue(state.ramadanDay).label}</Text>
               <View style={styles.itiKafCheck}>
@@ -320,7 +323,8 @@ const styles = StyleSheet.create({
 
   last10Card: { backgroundColor: C.heroBg, borderWidth: 1, borderColor: C.gold },
   last10Title: { fontSize: 18, fontFamily: 'BodoniModa_700Bold', color: C.goldPale, marginTop: 8 },
-  oddNightText: { fontSize: 14, color: C.gold, marginTop: 4, fontFamily: 'Jost_700Bold' },
+  oddNightRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  oddNightText: { fontSize: 14, color: C.gold, fontFamily: 'Jost_700Bold' },
   virtueText: { fontSize: 13, color: C.goldLight, marginTop: 4 },
   itiKafCheck: { marginTop: 12 },
   itiKafHint: { fontSize: 11, color: C.textMuted, marginLeft: 30, marginTop: -4 },

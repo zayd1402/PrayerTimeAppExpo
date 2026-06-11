@@ -1,18 +1,24 @@
-// ─── TabNavigator — Native bottom tabs using @react-navigation ─
 import React from 'react';
-import { Platform, View, Text, StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
 
 import TodayScreen from '../screens/TodayScreen';
-import SunnahRoutineScreen from '../screens/SunnahRoutineScreen';
 import WorshipScreen from '../screens/WorshipScreen';
+import QiblaMosquesScreen from '../screens/QiblaMosquesScreen';
 import CalendarScreen from '../screens/CalendarScreen';
-import DuaLibraryScreen from '../screens/DuaLibraryScreen';
-import MoreScreen from './MoreScreen';
+import LearnScreen from '../screens/LearnScreen';
 
 const Tab = createBottomTabNavigator();
+
+const TABS = [
+  { name: 'today', label: 'Today', icon: 'today-outline', component: TodayScreen },
+  { name: 'worship', label: 'Worship', icon: 'heart-outline', component: WorshipScreen },
+  { name: 'qibla-mosques', label: 'Qibla & Mosques', icon: 'navigate-outline', component: QiblaMosquesScreen },
+  { name: 'calendar', label: 'Calendar', icon: 'calendar-outline', component: CalendarScreen },
+  { name: 'learn', label: 'Learn', icon: 'book-outline', component: LearnScreen },
+];
 
 function TabIcon({ name, color, size }: { name: string; color: string; size: number }) {
   return <Ionicons name={name as any} size={size} color={color} />;
@@ -23,72 +29,42 @@ export default function TabNavigator() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: C.bgSurface,
-          borderTopColor: C.border,
-          borderTopWidth: 1,
-          paddingTop: 6,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 10,
-          height: Platform.OS === 'ios' ? 84 : 64,
-          elevation: 0,
-        },
+        tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: C.primary,
         tabBarInactiveTintColor: C.textMuted,
-        tabBarLabelStyle: {
-          fontSize: 10,
-          fontFamily: 'Jost_500Medium',
-          marginTop: 2,
-        },
+        tabBarLabelStyle: styles.tabLabel,
       }}
     >
-      <Tab.Screen
-        name="home"
-        component={TodayScreen}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ color, size }) => <TabIcon name="home" color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="sunnah"
-        component={SunnahRoutineScreen}
-        options={{
-          tabBarLabel: 'Sunnah',
-          tabBarIcon: ({ color, size }) => <TabIcon name="leaf" color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="worship"
-        component={WorshipScreen}
-        options={{
-          tabBarLabel: 'Worship',
-          tabBarIcon: ({ color, size }) => <TabIcon name="heart" color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="calendar"
-        component={CalendarScreen}
-        options={{
-          tabBarLabel: 'Calendar',
-          tabBarIcon: ({ color, size }) => <TabIcon name="calendar" color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="duas"
-        component={DuaLibraryScreen}
-        options={{
-          tabBarLabel: 'Duas',
-          tabBarIcon: ({ color, size }) => <TabIcon name="book" color={color} size={size} />,
-        }}
-      />
-      <Tab.Screen
-        name="more"
-        component={MoreScreen}
-        options={{
-          tabBarLabel: 'More',
-          tabBarIcon: ({ color, size }) => <TabIcon name="grid" color={color} size={size} />,
-        }}
-      />
+      {TABS.map(tab => (
+        <Tab.Screen
+          key={tab.name}
+          name={tab.name}
+          component={tab.component}
+          options={{
+            tabBarLabel: tab.label,
+            tabBarIcon: ({ color, size }) => (
+              <TabIcon name={tab.icon} color={color} size={size} />
+            ),
+          }}
+        />
+      ))}
     </Tab.Navigator>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    backgroundColor: C.bgSurface,
+    borderTopColor: C.border,
+    borderTopWidth: 1,
+    paddingTop: 6,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+    height: Platform.OS === 'ios' ? 84 : 64,
+    elevation: 0,
+  },
+  tabLabel: {
+    fontSize: 10,
+    fontFamily: 'Jost_500Medium',
+    marginTop: 2,
+  },
+});

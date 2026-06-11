@@ -43,8 +43,20 @@ const GRID_CARD_WIDTH = (SCREEN_WIDTH - GRID_PADDING * 2 - GRID_GAP * 2) / 3;
 export default function MoreScreen() {
   const [activeScreen, setActiveScreen] = useState<MoreItemId | null>(null);
   const ctx = usePrayerApp();
+  const activeLocation = ctx.location;
 
-  if (activeScreen) {
+  if (!activeLocation) {
+    return (
+      <View style={styles.screen}>
+        <View style={styles.moreHeader}>
+          <Text style={styles.moreTitle}>Location needed</Text>
+          <Text style={styles.moreLabel}>Choose a manual city or enable device location in Settings.</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (activeScreen && activeLocation) {
     const handleBack = () => setActiveScreen(null);
     const subScreen = (() => {
       switch (activeScreen) {
@@ -55,16 +67,16 @@ export default function MoreScreen() {
         case 'tazkiyah':return <TazkiyahScreen />;
         case 'friday':  return <FridayScreen />;
         case 'weekly':  return <WeeklyScreen />;
-        case 'qibla':   return <QiblaScreen coordinate={{ latitude: ctx.location.latitude, longitude: ctx.location.longitude }} />;
+        case 'qibla':   return <QiblaScreen coordinate={{ latitude: activeLocation.latitude, longitude: activeLocation.longitude }} />;
         case 'zakat':   return <ZakatScreen />;
         case 'journal': return <JournalScreen />;
-        case 'mosques': return <MosquesScreen coordinate={{ latitude: ctx.location.latitude, longitude: ctx.location.longitude }} />;
+        case 'mosques': return <MosquesScreen coordinate={{ latitude: activeLocation.latitude, longitude: activeLocation.longitude }} />;
         case 'settings':return <SettingsScreen settings={{
           ...ctx.settings,
-          location: ctx.location.latitude ? {
-            latitude: ctx.location.latitude,
-            longitude: ctx.location.longitude,
-            name: ctx.location.name,
+          location: activeLocation.latitude ? {
+            latitude: activeLocation.latitude,
+            longitude: activeLocation.longitude,
+            name: activeLocation.name,
           } : null,
         }} updateSettings={(u) => {
           ctx.handleUpdateSettings(u);
