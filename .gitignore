@@ -45,8 +45,13 @@ test-results/
 .claude/
 .codex/
 .impeccable/
-.opencode/
 .gitnexus/
+
+# OpenCode — ignore runtime files but track project harness config
+.opencode/*
+!.opencode/project-harness
+!.opencode/project-harness/**
+!.opencode/skills
 
 # Design specs (not app code)
 DESIGN.md

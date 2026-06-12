@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "generated_by": "opencode-project-harness",
+  "project_name": "PrayerTimeAppExpo",
+  "project_root": "/Users/Apple/Projects/PrayerTimeAppExpo",
+  "last_updated": "2026-06-12T20:26:00.000Z",
+  "detected": {
+    "project_type": "mobile",
+    "languages": ["TypeScript", "JavaScript"],
+    "frameworks": ["Expo SDK 56", "React Native 0.85", "React 19", "React Navigation 7"],
+    "package_manager": "npm",
+    "runtime": "Node.js",
+    "source_dirs": ["src", "App.tsx"],
+    "test_dirs": [],
+    "config_files": [
+      "package.json",
+      "tsconfig.json",
+      "babel.config.js",
+      "app.json",
+      ".eslintrc.cjs",
+      "eslint.config.js",
+      ".gitignore"
+    ],
+    "generated_or_sensitive_files": [
+      "ios/",
+      "android/",
+      "node_modules/",
+      ".expo/",
+      "graphify-out/",
+      ".gitnexus/",
+      ".claude/",
+      ".codex/",
+      ".impeccable/",
+      ".opencode/"
+    ],
+    "ci_files": []
+  },
+  "commands": {
+    "install": {
+      "command": "npm install",
+      "confidence": "High",
+      "source": "package.json (lockfile present)"
+    },
+    "dev": {
+      "command": "npx expo start",
+      "confidence": "High",
+      "source": "package.json scripts"
+    },
+    "lint": {
+      "command": "npx eslint .",
+      "confidence": "High",
+      "source": "package.json scripts + .eslintrc.cjs + eslint.config.js"
+    },
+    "typecheck": {
+      "command": "npx tsc --noEmit",
+      "confidence": "Medium",
+      "source": "tsconfig.json with noEmit: true, strict mode"
+    },
+    "test": {
+      "command": "",
+      "confidence": "",
+      "source": "Not detected — no test framework or test files"
+    },
+    "build": {
+      "command": "npx expo run:android / npx expo run:ios",
+      "confidence": "High",
+      "source": "package.json scripts"
+    }
+  },
+  "quality_gates": {
+    "required_before_done": [
+      "npx tsc --noEmit",
+      "npx eslint ."
+    ],
+    "recommended_ci": [
+      "lint",
+      "typecheck",
+      "build check"
+    ],
+    "missing": [
+      "test framework",
+      "CI pipeline",
+      "test files",
+      "smoke tests",
+      "secret scanning",
+      "dependency audit",
+      "e2e tests"
+    ]
+  },
+  "risk_areas": [
+    "Location services (expo-location, permissions)",
+    "Notifications (expo-notifications, background-fetch)",
+    "Prayer time calculation (PrayerService.ts)",
+    "Audio playback (expo-av, Adhan)",
+    "Mobile build config (ios/, android/)",
+    "Environment config (app.json)",
+    "i18n file sync (ar.json, en.json)",
+    "Dark mode tokens (ThemeContext.tsx)"
+  ],
+  "manual_sections_preserved": true
+}
