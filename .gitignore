@@ -47,6 +47,9 @@ test-results/
 .impeccable/
 .gitnexus/
 
+# Graphify analysis cache — generated artifacts, not tracked
+graphify-out/cache/
+
 # OpenCode — ignore runtime files but track project harness config
 .opencode/*
 !.opencode/project-harness
