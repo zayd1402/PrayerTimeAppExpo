@@ -1,101 +1,120 @@
 {
-  "schema_version": 1,
-  "generated_by": "opencode-project-harness",
+  "generator": "universal-coding-harness",
+  "generatorVersion": "0.2.0",
+  "generated": "2026-06-12T13:25:04.364669Z",
+  "schema_version": "0.2.0",
   "project_name": "PrayerTimeAppExpo",
   "project_root": "/Users/Apple/Projects/PrayerTimeAppExpo",
-  "last_updated": "2026-06-12T20:26:00.000Z",
-  "detected": {
-    "project_type": "mobile",
-    "languages": ["TypeScript", "JavaScript"],
-    "frameworks": ["Expo SDK 56", "React Native 0.85", "React 19", "React Navigation 7"],
-    "package_manager": "npm",
-    "runtime": "Node.js",
-    "source_dirs": ["src", "App.tsx"],
-    "test_dirs": [],
-    "config_files": [
-      "package.json",
-      "tsconfig.json",
-      "babel.config.js",
-      "app.json",
-      ".eslintrc.cjs",
-      "eslint.config.js",
-      ".gitignore"
-    ],
-    "generated_or_sensitive_files": [
-      "ios/",
-      "android/",
-      "node_modules/",
-      ".expo/",
-      "graphify-out/",
-      ".gitnexus/",
-      ".claude/",
-      ".codex/",
-      ".impeccable/",
-      ".opencode/"
-    ],
-    "ci_files": []
+  "last_updated": "2026-06-12T13:25:04.364669Z",
+  "project": {
+    "name": "PrayerTimeAppExpo",
+    "language": "JavaScript/TypeScript",
+    "framework": "Expo",
+    "packageManager": "npm",
+    "testFramework": "Unknown",
+    "ciSystem": "None",
+    "detectedType": "Expo"
   },
+  "languages": [
+    "JavaScript/TypeScript"
+  ],
+  "frameworks": [
+    "Expo"
+  ],
+  "packageManager": "npm",
+  "runtime": "JavaScript/TypeScript",
+  "sourceDirs": [
+    "src"
+  ],
+  "testDirs": [],
+  "configFiles": [
+    "tsconfig.json",
+    "babel.config.js"
+  ],
+  "generatedFiles": [
+    "package-lock.json"
+  ],
+  "sensitiveFiles": [],
+  "ciFiles": [],
   "commands": {
-    "install": {
-      "command": "npm install",
-      "confidence": "High",
-      "source": "package.json (lockfile present)"
-    },
-    "dev": {
-      "command": "npx expo start",
-      "confidence": "High",
-      "source": "package.json scripts"
-    },
-    "lint": {
-      "command": "npx eslint .",
-      "confidence": "High",
-      "source": "package.json scripts + .eslintrc.cjs + eslint.config.js"
-    },
-    "typecheck": {
-      "command": "npx tsc --noEmit",
-      "confidence": "Medium",
-      "source": "tsconfig.json with noEmit: true, strict mode"
-    },
-    "test": {
-      "command": "",
-      "confidence": "",
-      "source": "Not detected — no test framework or test files"
-    },
-    "build": {
-      "command": "npx expo run:android / npx expo run:ios",
-      "confidence": "High",
-      "source": "package.json scripts"
+    "npm": {
+      "start": "expo start",
+      "lint": "eslint ."
     }
   },
-  "quality_gates": {
-    "required_before_done": [
-      "npx tsc --noEmit",
-      "npx eslint ."
+  "qualityGates": {
+    "lint": [
+      "tsconfig.json",
+      "babel.config.js"
     ],
-    "recommended_ci": [
-      "lint",
-      "typecheck",
-      "build check"
-    ],
-    "missing": [
-      "test framework",
-      "CI pipeline",
-      "test files",
-      "smoke tests",
-      "secret scanning",
-      "dependency audit",
-      "e2e tests"
-    ]
+    "testFramework": "Unknown"
   },
-  "risk_areas": [
-    "Location services (expo-location, permissions)",
-    "Notifications (expo-notifications, background-fetch)",
-    "Prayer time calculation (PrayerService.ts)",
-    "Audio playback (expo-av, Adhan)",
-    "Mobile build config (ios/, android/)",
-    "Environment config (app.json)",
-    "i18n file sync (ar.json, en.json)",
-    "Dark mode tokens (ThemeContext.tsx)"
+  "riskAreas": [],
+  "generated_files": [
+    {
+      "path": "AGENTS.md",
+      "content_hash": "sha256:0d4b53757457155da4029555c235f9a5d88cff7706749423a3d0709a19d9684c",
+      "generated_region_hash": "sha256:76d868aeaf380be5347ce167a0ca2fb5b962e9f60bdd87825f0da483c8b8221a",
+      "manual_section_hash": "sha256:e802c14680e89b65a269c12f7644b5d05bd2d8e4a105d77385ce3ea93079af35",
+      "last_action": "ADOPTED",
+      "last_updated": "2026-06-12T13:25:04.364655Z"
+    },
+    {
+      "path": "docs/REPO_MAP.md",
+      "content_hash": "sha256:1a3ede7e44c7c7df2029745ac3c856a23ea4abcb4f5c50cb99cf5c052fd846e4",
+      "generated_region_hash": "sha256:dbb6fc951b0803a8457303e1574fa273d25d299b58bbadf4661c1b4095ddfbb1",
+      "manual_section_hash": "sha256:e802c14680e89b65a269c12f7644b5d05bd2d8e4a105d77385ce3ea93079af35",
+      "last_action": "ADOPTED",
+      "last_updated": "2026-06-12T13:25:04.364661Z"
+    },
+    {
+      "path": "docs/ARCHITECTURE.md",
+      "content_hash": "sha256:ae707d8a710600cd6d58caf9df34e0a95b3c3594189e4063cf73c264f56ee844",
+      "generated_region_hash": "sha256:25eba2d2f210231670572352e5123a71f113967326387a451d8f58d5db913856",
+      "manual_section_hash": "sha256:e802c14680e89b65a269c12f7644b5d05bd2d8e4a105d77385ce3ea93079af35",
+      "last_action": "ADOPTED",
+      "last_updated": "2026-06-12T13:25:04.364663Z"
+    },
+    {
+      "path": "docs/QUALITY_GATES.md",
+      "content_hash": "sha256:9602c10bb8e22c0363a6d045801df714bc82396f142402bb783662438ff11ebe",
+      "generated_region_hash": "sha256:de0ce0815479f8951f2ab0b7f67b0f76913af7dd74b97ca989ebfd87cc965be2",
+      "manual_section_hash": "sha256:e802c14680e89b65a269c12f7644b5d05bd2d8e4a105d77385ce3ea93079af35",
+      "last_action": "ADOPTED",
+      "last_updated": "2026-06-12T13:25:04.364664Z"
+    },
+    {
+      "path": "docs/TESTING_STRATEGY.md",
+      "content_hash": "sha256:a7dfe26a88733b91a279a5c76c5f80ac520ff8cc346dfc0bad019f2e39260500",
+      "generated_region_hash": "sha256:f4e0b5669f4c7e5dc018034cd08716cf24fd7c078a13b97bc172369c1da7539d",
+      "manual_section_hash": "sha256:e802c14680e89b65a269c12f7644b5d05bd2d8e4a105d77385ce3ea93079af35",
+      "last_action": "ADOPTED",
+      "last_updated": "2026-06-12T13:25:04.364665Z"
+    },
+    {
+      "path": "docs/PROJECT_AGENT_GUIDE.md",
+      "content_hash": "sha256:d90d0f79a0d60edffe54e45202106423d08764c848550f3ee859e38ffd8f5f07",
+      "generated_region_hash": "sha256:afdc1287632a6a49d0c4d0c0801572f238b0162b242f7c3cb7134805df932ff5",
+      "manual_section_hash": "sha256:e802c14680e89b65a269c12f7644b5d05bd2d8e4a105d77385ce3ea93079af35",
+      "last_action": "ADOPTED",
+      "last_updated": "2026-06-12T13:25:04.364666Z"
+    },
+    {
+      "path": "docs/PROJECT_CONTEXT.md",
+      "content_hash": "sha256:5046dec08fc6c2920e106b93c37e43522f2f175f8c95a157f2ec44c545f238d9",
+      "generated_region_hash": "sha256:9f8db2f878afc1a6a3c56616d341d6ef617d72ce8520924e79dd376e38cca540",
+      "manual_section_hash": "sha256:e802c14680e89b65a269c12f7644b5d05bd2d8e4a105d77385ce3ea93079af35",
+      "last_action": "ADOPTED",
+      "last_updated": "2026-06-12T13:25:04.364667Z"
+    },
+    {
+      "path": "docs/HARNESS_DRIFT_REPORT.md",
+      "content_hash": "sha256:9e49b73fd7fbf7cba4c5f05c41abc96a7c24efc7357e1b40facc0aa057ac7b05",
+      "generated_region_hash": "sha256:a06699a4245f0c0418631f7d1a9b678395adfee0c935ef5f253427921a018bf2",
+      "manual_section_hash": "sha256:e802c14680e89b65a269c12f7644b5d05bd2d8e4a105d77385ce3ea93079af35",
+      "last_action": "ADOPTED",
+      "last_updated": "2026-06-12T13:25:04.364668Z"
+    }
   ],
-  "manual_sections_preserved": true
+  "driftResult": "FIRST_RUN_NO_BASELINE"
 }
