@@ -3,14 +3,19 @@ import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity, Share
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { logger } from '../utils/logger';
 import { C, Hadith } from '../types';
 import { HADITHS, getDailyHadith, getHadithCategories, getHadithByCategory } from '../data/hadiths';
 import { getFavoriteHadiths, toggleFavoriteHadith } from '../services/StorageService';
 
 function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boolean; onToggleFav: () => void }) {
   const handleShare = async () => {
-    await Share.share({
-      message: `"${hadith.english}"\n— ${hadith.source}\n\n${hadith.arabic}`});
+    try {
+      await Share.share({
+        message: `"${hadith.english}"\n— ${hadith.source}\n\n${hadith.arabic}`});
+    } catch {
+      // user cancelled share sheet
+    }
   };
 
   const gradeColor = hadith.grade === 'sahih' ? C.primary : hadith.grade === 'hasan' ? C.gold : C.textMuted;
@@ -62,13 +67,21 @@ export default function HadithScreen() {
   }, []);
 
   const loadFavorites = async () => {
-    const favs = await getFavoriteHadiths();
-    setFavorites(new Set(favs));
+    try {
+      const favs = await getFavoriteHadiths();
+      setFavorites(new Set(favs));
+    } catch (error) {
+      logger.warn('HadithScreen: failed to load favorites', error);
+    }
   };
 
   const toggleFav = async (id: string) => {
-    const favs = await toggleFavoriteHadith(id);
-    setFavorites(new Set(favs));
+    try {
+      const favs = await toggleFavoriteHadith(id);
+      setFavorites(new Set(favs));
+    } catch (error) {
+      logger.warn('HadithScreen: failed to toggle favorite', error);
+    }
   };
 
   const categories = getHadithCategories();

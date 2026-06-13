@@ -86,6 +86,11 @@
   "settings.notificationsOff": "Notifications Off",
   "settings.notificationsOffMessage": "Notification permission was not granted. You can enable it later in device settings.",
   "settings.footer": "PrayerTimeApp © 2024",
+  "settings.theme": "Theme",
+  "settings.themeLight": "Light",
+  "settings.themeDark": "Dark",
+  "settings.themeSystem": "System",
+  "settings.adhanAlert": "Adhan audio alerts during prayer times",
 
   "worship.title": "Worship Tracker",
   "worship.prayers": "Prayers",

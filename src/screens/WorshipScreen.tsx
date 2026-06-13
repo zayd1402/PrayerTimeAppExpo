@@ -7,6 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { useTranslation } from '../i18n';
+import { logger } from '../utils/logger';
 import { C, FastingLog, QuranLog } from '../types';
 import { getRamadanState } from '../services/RamadanService';
 import {
@@ -153,17 +154,21 @@ export default function WorshipScreen() {
   }, []);
 
   const loadData = async () => {
-    const [fl, ql, wc] = await Promise.all([
-      loadFastingLog(),
-      loadQuranLog(),
-      getWeeklyQuranStats()
-    ]);
-    setFastingLog(fl);
-    setQuranLog(ql);
-    setWeeklyQuran(wc);
+    try {
+      const [fl, ql, wc] = await Promise.all([
+        loadFastingLog(),
+        loadQuranLog(),
+        getWeeklyQuranStats()
+      ]);
+      setFastingLog(fl);
+      setQuranLog(ql);
+      setWeeklyQuran(wc);
 
-    const todayDhikr = await getTodayDhikrCount();
-    setDhikr(todayDhikr);
+      const todayDhikr = await getTodayDhikrCount();
+      setDhikr(todayDhikr);
+    } catch (error) {
+      logger.warn('WorshipScreen: failed to load data', error);
+    }
   };
 
   // ─── Prayer Tab ────────────────────────────────────────────

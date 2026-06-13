@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
+import { logger } from '../utils/logger';
 import { C, Dua, DUA_CATEGORIES, DuaCategory } from '../types';
 type CategoryFilter = DuaCategory | 'all' | 'favorites';
 import { getFavoriteDuas, toggleFavoriteDua } from '../services/StorageService';
@@ -202,13 +203,21 @@ export default function DuaLibraryScreen() {
   }, []);
 
   const loadFavorites = async () => {
-    const favs = await getFavoriteDuas();
-    setFavorites(new Set(favs));
+    try {
+      const favs = await getFavoriteDuas();
+      setFavorites(new Set(favs));
+    } catch (error) {
+      logger.warn('DuaLibrary: failed to load favorites', error);
+    }
   };
 
   const toggleFav = async (duaId: string) => {
-    const favs = await toggleFavoriteDua(duaId);
-    setFavorites(new Set(favs));
+    try {
+      const favs = await toggleFavoriteDua(duaId);
+      setFavorites(new Set(favs));
+    } catch (error) {
+      logger.warn('DuaLibrary: failed to toggle favorite', error);
+    }
   };
 
   const filteredDuas = DUAS.filter(dua => {

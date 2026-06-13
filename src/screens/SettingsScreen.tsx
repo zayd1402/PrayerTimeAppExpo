@@ -6,8 +6,9 @@ import { Ionicons } from '@expo/vector-icons';
 import * as StoreReview from 'expo-store-review';
 import { C, CalculationMethod, Madhab, AppSettings, PRAYER_IDS, PrayerNotificationId } from '../types';
 import { useTranslation } from '../i18n';
+import { useTheme, ThemeMode } from '../context/ThemeContext';
 import { getCurrentLocation } from '../services/LocationService';
-import { initAudio, playAdhan, stopAdhan, getAdhanVariants, getAdhanAttribution, setAdhanVolume } from '../services/AudioService';
+import { initAudio, playAdhan, stopAdhan, getAdhanAttribution, setAdhanVolume } from '../services/AudioService';
 import { requestNotificationPermission } from '../services/NotificationService';
 import { MANUAL_CITIES } from '../data/manualCities';
 
@@ -33,11 +34,11 @@ const METHODS: { value: CalculationMethod; label: string }[] = [
 
 const FAJR_ALARM_OPTIONS = [5, 10, 15, 20, 30];
 const VOLUME_OPTIONS = [0.5, 0.75, 1];
-const ADHAN_VARIANTS = getAdhanVariants();
 const NOTIFICATION_PRAYERS = PRAYER_IDS.filter(id => id !== 'sunrise') as PrayerNotificationId[];
 
 export default function SettingsScreen({ settings, updateSettings }: SettingsScreenProps) {
   const { t } = useTranslation();
+  const { mode: themeMode, setMode: setThemeMode } = useTheme();
   const [manualSearch, setManualSearch] = useState('');
 
   const filteredCities = useMemo(() => {
@@ -280,49 +281,34 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
 
           {settings.adhanEnabled && (
             <View style={styles.subRow}>
-              <Text style={styles.rowLabel}>{t('settings.adhanStyle')}</Text>
-              <View>
-                <View style={styles.pillRow}>
-                  {ADHAN_VARIANTS.map(v => (
-                    <TouchableOpacity
-                      key={v}
-                      style={[styles.pill, settings.adhanVariant === v && styles.pillActive]}
-                      onPress={() => updateSettings({ adhanVariant: v })}
-                    >
-                      <Text style={[styles.pillText, settings.adhanVariant === v && styles.pillTextActive]}>
-                        {v.charAt(0).toUpperCase() + v.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <View style={styles.pillRow}>
-                  {VOLUME_OPTIONS.map(volume => (
-                    <TouchableOpacity
-                      key={volume}
-                      style={[styles.pill, settings.adhanVolume === volume && styles.pillActive]}
-                      onPress={async () => {
-                        await setAdhanVolume(volume);
-                        await updateSettings({ adhanVolume: volume });
-                      }}
-                    >
-                      <Text style={[styles.pillText, settings.adhanVolume === volume && styles.pillTextActive]}>
-                        {Math.round(volume * 100)}%
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                <TouchableOpacity
-                  style={styles.previewBtn}
-                  onPress={async () => {
-                    await initAudio();
-                    await playAdhan(settings.adhanVariant);
-                    setTimeout(() => stopAdhan(), 4000);
-                  }}
-                >
-                  <Ionicons name="play" size={14} color={C.white} />
-                  <Text style={styles.previewBtnText}>{t('settings.adhanPreview')}</Text>
-                </TouchableOpacity>
+              <Text style={styles.rowLabel}>{t('settings.adhanVolume')}</Text>
+              <View style={styles.pillRow}>
+                {VOLUME_OPTIONS.map(volume => (
+                  <TouchableOpacity
+                    key={volume}
+                    style={[styles.pill, settings.adhanVolume === volume && styles.pillActive]}
+                    onPress={async () => {
+                      await setAdhanVolume(volume);
+                      await updateSettings({ adhanVolume: volume });
+                    }}
+                  >
+                    <Text style={[styles.pillText, settings.adhanVolume === volume && styles.pillTextActive]}>
+                      {Math.round(volume * 100)}%
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
+              <TouchableOpacity
+                style={styles.previewBtn}
+                onPress={async () => {
+                  await initAudio();
+                  await playAdhan(settings.adhanVariant);
+                  setTimeout(() => stopAdhan(), 4000);
+                }}
+              >
+                <Ionicons name="play" size={14} color={C.white} />
+                <Text style={styles.previewBtnText}>{t('settings.adhanPreview')}</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -332,6 +318,22 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
               {t('settings.adhanAttribution', { title: attribution.title, author: attribution.author, source: attribution.source, license: attribution.license })} 
             </Text>
           </View>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{t('settings.theme')}</Text>
+        <View style={styles.card}>
+          {(['light', 'dark', 'system'] as ThemeMode[]).map(option => (
+            <TouchableOpacity
+              key={option}
+              style={styles.optionRow}
+              onPress={() => setThemeMode(option)}
+            >
+              <Text style={styles.optionLabel}>{t(`settings.theme${option.charAt(0).toUpperCase() + option.slice(1)}`)}</Text>
+              {themeMode === option && <Ionicons name="checkmark-circle" size={20} color={C.primary} />}
+            </TouchableOpacity>
+          ))}
         </View>
       </View>
 

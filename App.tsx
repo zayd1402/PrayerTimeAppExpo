@@ -13,11 +13,16 @@ import { Jost_300Light, Jost_400Regular, Jost_500Medium, Jost_600SemiBold, Jost_
 
 import { C } from './src/types';
 import { PrayerAppProvider } from './src/context/PrayerAppContext';
-import { ThemeProvider } from './src/context/ThemeContext';
+import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import TabNavigator from './src/navigation/TabNavigator';
 
 SplashScreen.preventAutoHideAsync();
+
+function ThemedStatusBar() {
+  const { isDark } = useTheme();
+  return <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={isDark ? '#1A1410' : C.bgBase} />;
+}
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -40,8 +45,8 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={C.bgBase} />
         <ThemeProvider>
+          <ThemedStatusBar />
           <NavigationContainer>
             <ErrorBoundary>
               <PrayerAppProvider>

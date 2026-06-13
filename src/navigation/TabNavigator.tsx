@@ -16,7 +16,7 @@ const Tab = createBottomTabNavigator();
 const TABS = [
   { name: 'today', label: 'Today', icon: 'today-outline', component: TodayScreen },
   { name: 'worship', label: 'Worship', icon: 'heart-outline', component: WorshipScreen },
-  { name: 'qibla-mosques', label: 'Qibla & Mosques', icon: 'navigate-outline', component: QiblaMosquesScreen },
+  { name: 'qibla-mosques', label: 'Qibla', icon: 'navigate-outline', component: QiblaMosquesScreen },
   { name: 'calendar', label: 'Calendar', icon: 'calendar-outline', component: CalendarScreen },
   { name: 'learn', label: 'Learn', icon: 'book-outline', component: LearnScreen },
 ];

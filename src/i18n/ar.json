@@ -86,6 +86,11 @@
   "settings.notificationsOff": "الإشعارات متوقفة",
   "settings.notificationsOffMessage": "لم يتم منح إذن الإشعارات. يمكنك تمكينها لاحقًا من إعدادات الجهاز.",
   "settings.footer": "PrayerTimeApp © 2024",
+  "settings.theme": "المظهر",
+  "settings.themeLight": "فاتح",
+  "settings.themeDark": "داكن",
+  "settings.themeSystem": "النظام",
+  "settings.adhanAlert": "تنبيهات صوت الأذان أثناء أوقات الصلاة",
 
   "worship.title": "تتبع العبادة",
   "worship.prayers": "الصلوات",

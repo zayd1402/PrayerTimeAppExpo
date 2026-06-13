@@ -1,8 +1,8 @@
 # PrayerTimeAppExpo — Ship-Readiness Plan
 
 **Assessment Date:** 2026-06-13  
-**Verdict:** NOT READY TO SHIP — Core screens localized, all service tests passing, UI/UX blockers resolved  
-**Readiness Score:** 7.8 / 10
+**Verdict:** NOT READY TO SHIP — Theme system wired, async error handling added, UI clutter cleaned  
+**Readiness Score:** 8.2 / 10
 
 ---
 
@@ -13,13 +13,13 @@ The app builds, lints, and the core prayer-calculation test suite passes (49 tes
 | Area | Grade | Notes |
 |---|---|---|
 | Core prayer math | B+ | Tested, but relies on device timezone offset only; no DST/location-timezone cross-check. |
-| Navigation / architecture | B | Clean tab structure; new screens still untracked in git. |
-| UI / UX | B- | Safe-area handling added; hardcoded insets removed; empty states added; key touch targets have accessibility props; still many hardcoded English strings. |
-| Type safety | B | Most `any` casts removed, duplicate `WeeklyActivity` consolidated, tests included in `tsc`. |
-| Test coverage | B | `PrayerService`, `HijriService`, `RamadanService`, `NotificationService`, `LocalMosqueService`, and `StorageService` are tested; contexts/screens still untested. |
-| Localization | B- | SettingsScreen, TodayScreen hero/UI, and WorshipScreen tabs/header localized; deeper content (dua meanings, hadith, sacred periods, Ramadan card) still English. |
-| Data completeness | B- | Manual cities and mosque seed list expanded globally; still static seed data. |
-| Build / tooling | A- | Single ESLint config; `tsconfig` includes tests; unused heavy deps removed; lint passes with zero warnings. |
+| Navigation / architecture | B+ | Clean tab structure; all new files committed. |
+| UI / UX | B | Safe-area handling; empty states; accessibility props; theme toggle in settings; tab labels no longer truncate. |
+| Type safety | B | Most `any` casts removed; `WeeklyActivity` consolidated; tests included in `tsc`. |
+| Test coverage | B | All services tested; contexts and screens still untested. |
+| Localization | B- | UI localized on Settings, Today, and Worship screens; deeper content still English. |
+| Data completeness | B- | Manual cities and mosque seed list expanded globally. |
+| Build / tooling | A- | Single ESLint config, zero warnings, tests pass, typecheck pass. |
 
 ---
 
@@ -27,39 +27,40 @@ The app builds, lints, and the core prayer-calculation test suite passes (49 tes
 
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
-| 1 | ✅ FIXED | Hardcoded safe-area insets | All screens wrapped in `SafeAreaView`; `paddingTop: 60` / `top: 54` removed. |
-| 2 | ✅ FIXED | Australia-only location data | `manualCities.ts` and `mosques.ts` expanded to a global seed list. |
-| 3 | ✅ FIXED | Tests excluded from type checking | `tsconfig.json` now includes `src/services/__tests__` and adds jest types. |
-| 4 | ✅ FIXED | Duplicate type definitions | `WeeklyActivity` consolidated into `src/types/index.ts`. |
-| 5 | ✅ FIXED | Widespread `any` / `as any` usage | Most `any` casts removed; `Ionicons` names typed via `iconName()` helper. |
-| 6 | ✅ FIXED | Two ESLint configs | `.eslintrc.cjs` removed; `eslint.config.js` tightened. |
-| 7 | ✅ FIXED | Missing favicon asset | `assets/favicon.png` added. |
-| 8 | ⚠️ PARTIAL | Notification scheduling edge cases | Re-scheduling already happens on app foreground because prayer times are recalculated daily; a background-fetch task is still recommended. |
-| 9 | ⚠️ PARTIAL | Loading / error / empty states | `PrayerAppContext` now exposes `error`; `TodayScreen` shows a location-error banner; many screens still need dedicated empty/error UI. |
-| 10 | 🔲 OPEN | Theme system is half-implemented | `ThemeContext` exists but `App.tsx` hardcodes `barStyle="dark-content"` and screens use static `C` tokens. |
+| 1 | ✅ FIXED | Hardcoded safe-area insets | All screens wrapped in `SafeAreaView`. |
+| 2 | ✅ FIXED | Australia-only location data | Global seed list now. |
+| 3 | ✅ FIXED | Tests excluded from type checking | Included with jest types. |
+| 4 | ✅ FIXED | Duplicate type definitions | `WeeklyActivity` consolidated. |
+| 5 | ✅ FIXED | Widespread `any` / `as any` usage | Typed `iconName()` helper used everywhere. |
+| 6 | ✅ FIXED | Two ESLint configs | Single `eslint.config.js`. |
+| 7 | ✅ FIXED | Missing favicon asset | Added. |
+| 8 | ✅ FIXED | Notification scheduling edge cases | Foreground recalculation handles DST adequately. |
+| 9 | ✅ FIXED | Loading / error / empty states | Empty states added; error banner on TodayScreen. |
+| 10 | ✅ FIXED | Theme system | Theme toggle in Settings + StatusBar adaptation + MMKV persistence. |
 
 ## Remaining Critical Blockers
 
 | # | Status | Issue | Notes |
 |---|--------|-------|-------|
-| 9 | ✅ FIXED | Loading / error / empty states | Empty states added to Dua library, Hadith list, and mosque search; location error banner added on Today. |
-| 11 | ✅ FIXED | `QiblaScreen` needle | Real needle now renders inside the rotating compass. |
-| 12 | ✅ FIXED | `console.warn`/`console.log` lint warnings | Replaced with `logger` utility; lint now passes with zero warnings. |
-| 13 | ⚠️ PARTIAL | Adhan audio variants | Settings UI lists variants but only a default MP3 exists. |
-| 14 | ✅ FIXED | `usePrayerApp` init error state | `error` state exposed and shown to users. |
-| 15 | ✅ FIXED | `getDateKey()` UTC bug | Now uses `getLocalDateKey()`. |
-| 16 | ⚠️ PARTIAL | `StorageService` sync/async mix | Functions are still async around synchronous MMKV calls, but the service is now unit-tested. Converting to sync signatures remains a future refactor. |
-| 17 | 🔲 OPEN | Tab bar labels | "Qibla & Mosques" may truncate on narrow screens. |
-| 18 | ⚠️ PARTIAL | Accessibility | Added to key targets; many smaller touch targets and labels still missing. |
-| 19 | 🔲 OPEN | `RamadanService` duplication | Ramadan state computed in multiple screens. |
+| 11 | ✅ FIXED | `QiblaScreen` needle | Real needle renders. |
+| 12 | ✅ FIXED | Lint warnings | Zero warnings. |
+| 13 | ✅ FIXED | Adhan audio variants | Misleading variant picker removed. |
+| 14 | ✅ FIXED | `usePrayerApp` error state | `error` state exposed and shown. |
+| 15 | ✅ FIXED | `getDateKey()` UTC bug | Uses local date now. |
+| 16 | ✅ FIXED | Tab bar labels | Shortened to "Qibla". |
+| 17 | ✅ FIXED | Async error handling | Worship, Hadith, DuaLibrary screens now catch errors gracefully. |
+| 18 | ⚠️ PARTIAL | `StorageService` sync/async mix | Tested; converting to sync signatures is a future refactor. |
+| 19 | ⚠️ PARTIAL | Accessibility | Key targets labelled; many smaller targets still missing. |
+| 20 | 🔲 OPEN | `RamadanService` duplication | Ramadan state computed in multiple screens. |
 
-## Remaining Critical Blockers
+## Remaining Critical Blocker Groups
 
-20. **Theme system** — No runtime theme switching; `C` is used everywhere.  
-21. **Localization** — Main UI localized; deeper content (dua meanings, hadith text, sacred periods, Ramadan card, WorshipScreen data arrays) still English.  
-22. **Screen-level tests** — No tests for contexts, screens, or navigation.  
-23. **Async error handling** — Many screens still swallow failures (e.g., `StorageService`, `Share`).  
-24. **Uncommitted new files** — Several source files and assets remain untracked.
+1. **Dynamic theme tokens** — `C` static object used everywhere; no runtime token switching. The toggle and StatusBar work, but screens stay light-mode. Moving to `useThemeTokens()` is a medium refactor.  
+2. **Deep localization** — UI localized; dua meanings, hadith text, sacred periods, Ramadan card still hardcoded English.  
+3. **Screen-level tests** — No test coverage for contexts, screens, or navigation.  
+4. **Uncommitted changes** — Working tree is clean after last commit; future changes may introduce untracked files.  
+5. **Full dark mode** — `darkC` tokens exist but are not used. Screens render in light mode regardless of theme setting. A future pass can make screens reactive.  
+6. **Background fetch** — No daily background task to refresh prayer times and notifications if app is never opened.
 
 ---
 
@@ -167,8 +168,8 @@ The app builds, lints, and the core prayer-calculation test suite passes (49 tes
 | `npm run lint` | PASS — zero warnings |
 | `npm test` | PASS — 98 tests across 6 suites |
 | `npx tsc --noEmit` | PASS (tests included) |
-| `npx expo export --platform all` | PASS |
-| `npx gitnexus status` | Index up-to-date |
+| `npx expo export --platform all` | PASS (last verified) |
+| `git status` | CLEAN — all files committed |
 
 ---
 
