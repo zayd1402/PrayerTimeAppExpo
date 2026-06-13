@@ -19,7 +19,7 @@ import { usePrayerApp } from '../context/PrayerAppContext';
 import SettingsScreen from './SettingsScreen';
 import KhushuModal from '../components/KhushuModal';
 import { getUpcomingSacredPeriods, SacredPeriod } from '../services/SacredTimeService';
-import { getRamadanState, RamadanState } from '../services/RamadanService';
+import { getRamadanState, getRamadanCardInfo, RamadanState } from '../services/RamadanService';
 import { getLessonForDate } from '../data/knowledge';
 
 interface Prayer {
@@ -228,28 +228,13 @@ function DailyHadithCard({ hadith, title }: { hadith: { english: string; source:
 }
 
 function RamadanQuickCard({ state }: { state: RamadanState }) {
-  const title = state.isRamadan
-    ? `Ramadan day ${state.ramadanDay}`
-    : state.isPreRamadan
-      ? `${state.daysUntilRamadan} days until Ramadan`
-      : state.isPostRamadan
-        ? 'Continue Shawwal worship'
-        : `${state.daysUntilRamadan} days until Ramadan`;
-
-  const desc = state.isRamadan
-    ? state.isLast10Nights ? 'Last 10 nights: intensify worship and Quran.' : 'Fast, pray, give, and keep the Quran close.'
-    : state.isPreRamadan
-      ? 'Prepare your intention, routine, and Quran plan.'
-      : state.isPostRamadan
-        ? 'Keep the Ramadan habits alive after Eid.'
-        : 'Plan ahead for the blessed month.';
-
+  const { title, description } = getRamadanCardInfo(state);
   return (
     <View style={styles.ramadanCard}>
       <Ionicons name="moon-outline" size={22} color={C.gold} />
       <View style={styles.ramadanTextWrap}>
         <Text style={styles.ramadanTitle}>{title}</Text>
-        <Text style={styles.ramadanDesc}>{desc}</Text>
+        <Text style={styles.ramadanDesc}>{description}</Text>
       </View>
       {state.isRamadan && (
         <View style={styles.ramadanBadge}>

@@ -82,6 +82,30 @@ export function getTodayJuz(ramadanDay: number): number {
   return ramadanDay;
 }
 
+// Card title and description for the current Ramadan state (used by TodayScreen, CalendarScreen, etc.)
+export function getRamadanCardInfo(state: RamadanState): { title: string; description: string } {
+  let title: string;
+  let description: string;
+
+  if (state.isRamadan) {
+    title = `Ramadan day ${state.ramadanDay}`;
+    description = state.isLast10Nights
+      ? 'Last 10 nights: intensify worship and Quran.'
+      : 'Fast, pray, give, and keep the Quran close.';
+  } else if (state.isPreRamadan) {
+    title = `${state.daysUntilRamadan} days until Ramadan`;
+    description = 'Prepare your intention, routine, and Quran plan.';
+  } else if (state.isPostRamadan) {
+    title = 'Continue Shawwal worship';
+    description = 'Keep the Ramadan habits alive after Eid.';
+  } else {
+    title = `${state.daysUntilRamadan} days until Ramadan`;
+    description = 'Plan ahead for the blessed month.';
+  }
+
+  return { title, description };
+}
+
 // Night power score for last 10 nights (0-100)
 export function getNightVirtue(ramadanDay: number): { score: number; label: string } {
   const oddNights = [21, 23, 25, 27, 29];

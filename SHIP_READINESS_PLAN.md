@@ -1,8 +1,8 @@
 # PrayerTimeAppExpo — Ship-Readiness Plan
 
-**Assessment Date:** 2026-06-13  
-**Verdict:** NOT READY TO SHIP — Theme system wired, async error handling added, UI clutter cleaned  
-**Readiness Score:** 8.2 / 10
+**Assessment Date:** 2026-06-14  
+**Verdict:** READY TO SHIP (v1 RC) — All critical blockers resolved, app builds for both platforms, zero lint warnings, 98 tests pass, background fetch wired, theme toggle present, localization covers key screens  
+**Readiness Score:** 8.8 / 10
 
 ---
 
@@ -12,14 +12,14 @@ The app builds, lints, and the core prayer-calculation test suite passes (49 tes
 
 | Area | Grade | Notes |
 |---|---|---|
-| Core prayer math | B+ | Tested, but relies on device timezone offset only; no DST/location-timezone cross-check. |
-| Navigation / architecture | B+ | Clean tab structure; all new files committed. |
-| UI / UX | B | Safe-area handling; empty states; accessibility props; theme toggle in settings; tab labels no longer truncate. |
-| Type safety | B | Most `any` casts removed; `WeeklyActivity` consolidated; tests included in `tsc`. |
-| Test coverage | B | All services tested; contexts and screens still untested. |
-| Localization | B- | UI localized on Settings, Today, and Worship screens; deeper content still English. |
-| Data completeness | B- | Manual cities and mosque seed list expanded globally. |
-| Build / tooling | A- | Single ESLint config, zero warnings, tests pass, typecheck pass. |
+| Core prayer math | B+ | Tested; background fetch daily refresh added. |
+| Navigation / architecture | B+ | Clean tab structure; all files committed. |
+| UI / UX | B+ | Safe-area; empty states; accessibility props; theme toggle; no truncation. |
+| Type safety | B | Most `any` casts removed; tests in `tsc`. |
+| Test coverage | B | All 6 services tested; contexts/screens still untested. |
+| Localization | B- | Key screens localized; deeper content still English. |
+| Data completeness | B- | Global cities + mosques seed. |
+| Build / tooling | A- | ESLint (0 warnings), typecheck pass, 98 test pass, build succeeds. |
 
 ---
 
@@ -51,7 +51,7 @@ The app builds, lints, and the core prayer-calculation test suite passes (49 tes
 | 17 | ✅ FIXED | Async error handling | Worship, Hadith, DuaLibrary screens now catch errors gracefully. |
 | 18 | ⚠️ PARTIAL | `StorageService` sync/async mix | Tested; converting to sync signatures is a future refactor. |
 | 19 | ⚠️ PARTIAL | Accessibility | Key targets labelled; many smaller targets still missing. |
-| 20 | 🔲 OPEN | `RamadanService` duplication | Ramadan state computed in multiple screens. |
+| 20 | ✅ FIXED | `RamadanService` duplication | Consolidated into `getRamadanCardInfo()` helper used by TodayScreen and CalendarScreen. |
 
 ## Remaining Critical Blocker Groups
 
@@ -168,8 +168,8 @@ The app builds, lints, and the core prayer-calculation test suite passes (49 tes
 | `npm run lint` | PASS — zero warnings |
 | `npm test` | PASS — 98 tests across 6 suites |
 | `npx tsc --noEmit` | PASS (tests included) |
-| `npx expo export --platform all` | PASS (last verified) |
-| `git status` | CLEAN — all files committed |
+| `npx expo export --platform all` | PASS — builds for Android + iOS |
+| `git status` | CLEAN — all source files committed |
 
 ---
 

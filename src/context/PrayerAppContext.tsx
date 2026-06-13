@@ -4,6 +4,8 @@ import { Platform, AppState, AppStateStatus } from 'react-native';
 import { getLocalDateKey } from '../utils/date';
 import { logger } from '../utils/logger';
 import * as NavigationBar from 'expo-navigation-bar';
+import * as TaskManager from 'expo-task-manager';
+import * as BackgroundFetch from 'expo-background-fetch';
 import { PrayerId, PrayerTime, AppSettings, AppLocation, DEFAULT_SETTINGS, PRAYER_ICONS, PRAYER_IDS, PrayerNotificationId } from '../types';
 import {
   getPrayerTimesObject, getNextPrayer, getTimeUntilNext
@@ -98,6 +100,43 @@ export interface PrayerAppState {
 
 const PrayerAppContext = createContext<PrayerAppState | null>(null);
 
+// ─── Background Fetch ────────────────────────────────────────
+const BACKGROUND_FETCH_TASK = 'prayertime-daily-refresh';
+
+TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
+  try {
+    const saved = await loadSettings();
+    const now = new Date();
+    if (!saved.location) return BackgroundFetch.BackgroundFetchResult.NoData;
+
+    const times = getPrayerTimesObject(
+      now, saved.location.latitude, saved.location.longitude,
+      saved.calculationMethod, saved.madhab,
+    );
+    const prayerTimesArray = Object.values(times);
+
+    if (saved.notificationsEnabled) {
+      await cancelAllNotifications();
+      for (const pt of prayerTimesArray) {
+        const notifId = `prayer-${pt.id}` as PrayerNotificationId;
+        await schedulePrayerNotification(notifId, pt.name, Math.floor(pt.minutes / 60), pt.minutes % 60);
+      }
+      if (saved.fajrAlarmEnabled) {
+        const fajrIdx = times.findIndex(pt => pt.id === 'fajr');
+        if (fajrIdx >= 0) {
+          const fajr = times[fajrIdx];
+          const fajrMinute = Math.max(0, fajr.minutes - saved.fajrAlarmMinutes);
+          await schedulePrayerNotification('fajr-alarm' as PrayerNotificationId, 'Fajr', Math.floor(fajrMinute / 60), fajrMinute % 60, true);
+        }
+      }
+      await scheduleFridayReminders();
+    }
+    return BackgroundFetch.BackgroundFetchResult.NewData;
+  } catch {
+    return BackgroundFetch.BackgroundFetchResult.Failed;
+  }
+});
+
 export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [prayerTimes, setPrayerTimes] = useState<PrayerTime[]>([]);
@@ -144,6 +183,17 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
         await scheduleSunnahReminders().catch(() => {});
       } else {
         await cancelAllNotifications().catch(() => {});
+      }
+
+      // Register daily background fetch
+      try {
+        await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+          minimumInterval: 24 * 60, // 24 hours
+          stopOnTerminate: false,
+          startOnBoot: true,
+        });
+      } catch {
+        // Background fetch may not be available on all devices
       }
 
       // Notification response handler

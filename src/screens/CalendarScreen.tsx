@@ -7,7 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { C } from '../types';
 import { HijriService } from '../services/HijriService';
-import { getRamadanState } from '../services/RamadanService';
+import { getRamadanState, getRamadanCardInfo } from '../services/RamadanService';
 import { loadPrayerLog, getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData, getKhushuAverage } from '../services/StorageService';
 import { getEventsForHijriDate, ISLAMIC_EVENTS } from '../data/islamicEvents';
 import { getLocalDateKey } from '../utils/date';
@@ -96,13 +96,7 @@ export default function CalendarScreen() {
   const ramadanState = getRamadanState();
 
   const RamadanSummary = () => {
-    const title = ramadanState.isRamadan
-      ? `Ramadan — day ${ramadanState.ramadanDay}`
-      : ramadanState.isPreRamadan
-        ? `${ramadanState.daysUntilRamadan} days until Ramadan`
-        : ramadanState.isPostRamadan
-          ? 'Shawwal — continue the good deeds'
-          : `${ramadanState.daysUntilRamadan} days until Ramadan`;
+    const { title } = getRamadanCardInfo(ramadanState);
 
     return (
       <View style={styles.ramadanSummary}>
