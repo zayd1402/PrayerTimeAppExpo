@@ -18,15 +18,17 @@ Expo project using Expo with npm.
 - Test directory: None
 - Config: - `tsconfig.json`
 - `babel.config.js`
+- `jest.config.js`
 
 ## Technology Stack
 
 - Language: JavaScript/TypeScript
 - Framework: Expo
 - Package Manager: npm
-- Test Framework: Unknown
+- Test Framework: jest
 
 ## Commands
 
 - `npm start` — `expo start`
 - `npm lint` — `eslint .`
+- `npm test` — `jest`

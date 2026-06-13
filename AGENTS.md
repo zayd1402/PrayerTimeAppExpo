@@ -11,7 +11,7 @@ Add human-maintained project notes here.
 - **Language:** JavaScript/TypeScript
 - **Framework:** Expo
 - **Package Manager:** npm
-- **Test Framework:** Unknown
+- **Test Framework:** jest
 
 ## Engineering Principles
 
@@ -46,6 +46,7 @@ Add human-maintained project notes here.
 
 - `npm start` — `expo start`
 - `npm lint` — `eslint .`
+- `npm test` — `jest`
 
 ## Safety Rules
 

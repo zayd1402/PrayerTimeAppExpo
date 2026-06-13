@@ -10,12 +10,16 @@
     "build:android": "expo run:android",
     "build:ios": "expo run:ios",
     "prebuild": "expo prebuild",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "jest"
   },
   "expo": {
     "doctor": {
       "reactNativeDirectoryCheck": {
-        "exclude": ["expo-av", "expo-modules-jsi"],
+        "exclude": [
+          "expo-av",
+          "expo-modules-jsi"
+        ],
         "listUnknownPackages": false
       }
     }
@@ -61,12 +65,15 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@types/jest": "^30.0.0",
     "@types/react": "^19.2.14",
     "@typescript-eslint/eslint-plugin": "^8.61.0",
     "@typescript-eslint/parser": "^8.61.0",
     "eslint": "^10.4.1",
+    "jest": "^30.4.2",
     "playwright": "^1.60.0",
     "puppeteer": "^24.43.1",
+    "ts-jest": "^29.4.11",
     "typescript": "^6.0.3"
   },
   "private": true

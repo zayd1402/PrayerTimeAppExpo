@@ -54,9 +54,9 @@ function getSunDeclination(jd: number): number {
   const M = 357.52911 + T * (35999.0503 - 0.0001537 * T);
   const e = 0.016708634 - T * (0.000042037 + 0.0000001264 * T);
 
-  const C = Math.sin((Math.PI / 180) * L0) * (1.914602 - T * (0.004817 + 0.000014 * T)) +
-            Math.sin((Math.PI / 180) * 2 * L0) * (0.019993 - 0.000101 * T) +
-            Math.sin((Math.PI / 180) * 3 * L0) * 0.000289;
+  const C = Math.sin((Math.PI / 180) * M) * (1.914602 - T * (0.004817 + 0.000014 * T)) +
+            Math.sin((Math.PI / 180) * 2 * M) * (0.019993 - 0.000101 * T) +
+            Math.sin((Math.PI / 180) * 3 * M) * 0.000289;
 
   const sunTrue = L0 + C;
   const sunApp = sunTrue - 0.00569 - 0.00478 * Math.sin((Math.PI / 180) * 23.439291 * (1 - T / 100));
@@ -79,8 +79,8 @@ function getEquationOfTime(jd: number): number {
 }
 
 // ─── Time Calculation ─────────────────────────────────────────
-function computeTime(ha: number, lat: number, decl: number, t: number): number {
-  // ha = hour angle, lat = latitude, decl = declination, t = equation of time in minutes
+function computeTime(lat: number, decl: number, t: number): number {
+  // lat = latitude, decl = declination, t = equation of time in minutes
   const latRad = (Math.PI / 180) * lat;
   const declRad = (Math.PI / 180) * decl;
   const cosHa = (Math.sin((Math.PI / 180) * -0.8333) - Math.sin(latRad) * Math.sin(declRad)) /
@@ -101,7 +101,7 @@ function computeAsrTime(lat: number, decl: number, t: number, factor: number): n
 }
 
 function computeMaghrib(lat: number, decl: number, t: number): number {
-  return computeTime(0, lat, decl, t);
+  return computeTime(lat, decl, t);
 }
 
 // ─── Main Calculation ─────────────────────────────────────────
@@ -134,7 +134,7 @@ export function calculatePrayerTimes(
   const fajrHour = 12 + tzOff - longitudeCorrection - eqt / 60 - fajrHaDeg / 15;
 
   // Sunrise
-  const sunriseHour = computeTime(0, latitude, decl, eqt) + tzOff - longitudeCorrection;
+  const sunriseHour = computeTime(latitude, decl, eqt) + tzOff - longitudeCorrection;
 
   // Dhuhr
   const dhuhrHour = 12 + tzOff - longitudeCorrection - eqt / 60;
@@ -154,7 +154,7 @@ export function calculatePrayerTimes(
     const ishaCos = (Math.sin((Math.PI / 180) * ishaAngle) - Math.sin(latRad) * Math.sin((Math.PI / 180) * decl)) /
                    (Math.cos(latRad) * Math.cos((Math.PI / 180) * decl));
     const ishaHaDeg = (ishaCos >= -1 && ishaCos <= 1) ? (180 / Math.PI) * Math.acos(ishaCos) : 0;
-    ishaHour = (ishaHaDeg + eqt) / 15 + tzOff;
+    ishaHour = 12 + tzOff - longitudeCorrection - eqt / 60 + ishaHaDeg / 15;
   }
 
   const times: Record<PrayerId, number> = {

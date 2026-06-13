@@ -25,3 +25,4 @@ PrayerTimeAppExpo/
 
 - - `tsconfig.json`
 - `babel.config.js`
+- `jest.config.js`

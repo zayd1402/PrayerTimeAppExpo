@@ -22,6 +22,7 @@ This guide provides AI coding agents with project-specific context and instructi
 
 - `npm start` — `expo start`
 - `npm lint` — `eslint .`
+- `npm test` — `jest`
 
 ## During Work
 

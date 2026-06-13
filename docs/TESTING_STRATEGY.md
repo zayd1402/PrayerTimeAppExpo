@@ -16,9 +16,9 @@ Add human-maintained project notes here.
 
 ## Test Framework
 
-- Framework: Unknown
+- Framework: jest
 - Location: - No test directories detected
-- Run: `Run the project's test suite`
+- Run: `npm run jest`
 
 ## Source Directories
 

@@ -46,6 +46,7 @@ test-results/
 .codex/
 .impeccable/
 .gitnexus/
+.uch_backup_harness_backup/
 
 # Graphify analysis cache — generated artifacts, not tracked
 graphify-out/cache/

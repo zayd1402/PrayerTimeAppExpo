@@ -12,7 +12,7 @@ Add human-maintained project notes here.
 |---|---|---|
 | Lint | Yes | ESLint |
 | Type Check | Yes | TypeScript |
-| Unit Tests | Yes | Unknown |
+| Unit Tests | Yes | jest |
 | Build | Yes | tsc / webpack |
 | Smoke Check | Yes | Manual or scripted |
 | Security Review | For security changes | Manual |
