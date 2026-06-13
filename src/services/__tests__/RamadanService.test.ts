@@ -1,5 +1,6 @@
 import {
   getRamadanState,
+  getRamadanCardInfo,
   calculateKhatmPlan,
   getTodayJuz,
   getNightVirtue,
@@ -48,6 +49,36 @@ describe('RamadanService', () => {
     it('returns 0 for invalid days', () => {
       expect(getTodayJuz(0)).toBe(0);
       expect(getTodayJuz(31)).toBe(0);
+    });
+  });
+
+  describe('getRamadanCardInfo', () => {
+    const baseState = getRamadanState();
+
+    it('returns Ramadan title when isRamadan is true', () => {
+      const state = { ...baseState, isRamadan: true, ramadanDay: 15, isLast10Nights: false };
+      const info = getRamadanCardInfo(state);
+      expect(info.title).toBe('Ramadan day 15');
+      expect(info.description).toBe('Fast, pray, give, and keep the Quran close.');
+    });
+
+    it('returns last-10-nights description when in last 10', () => {
+      const state = { ...baseState, isRamadan: true, ramadanDay: 25, isLast10Nights: true };
+      const info = getRamadanCardInfo(state);
+      expect(info.description).toBe('Last 10 nights: intensify worship and Quran.');
+    });
+
+    it('returns pre-Ramadan info', () => {
+      const state = { ...baseState, isRamadan: false, isPreRamadan: true, daysUntilRamadan: 3 };
+      const info = getRamadanCardInfo(state);
+      expect(info.title).toBe('3 days until Ramadan');
+      expect(info.description).toBe('Prepare your intention, routine, and Quran plan.');
+    });
+
+    it('returns post-Ramadan info', () => {
+      const state = { ...baseState, isRamadan: false, isPreRamadan: false, isPostRamadan: true };
+      const info = getRamadanCardInfo(state);
+      expect(info.title).toBe('Continue Shawwal worship');
     });
   });
 

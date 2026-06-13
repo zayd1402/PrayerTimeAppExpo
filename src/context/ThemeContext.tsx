@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { mmkv } from '../services/StorageService';
+import { C } from '../types';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 
@@ -20,6 +21,14 @@ const ThemeContext = createContext<ThemeContextValue>({
 
 const STORAGE_KEY = '@prayertime:theme_mode';
 
+function updateCTokens(isDark: boolean) {
+  const targets = ['bgBase','bgSurface','bgCard','primary','primaryDark','primaryLight','gold','goldLight','goldPale','surfaceElevated','surfacePressed','heroBg','timerAmber','textPrimary','textSecondary','textMuted','red','white','border','borderStrong'] as const;
+  const src = isDark ? darkC : C;
+  for (const key of targets) {
+    (C as Record<string, unknown>)[key] = src[key];
+  }
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemScheme = useColorScheme();
 
@@ -37,6 +46,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if (mode === 'system') return systemScheme === 'dark';
     return mode === 'dark';
   }, [mode, systemScheme]);
+
+  // Sync the global C token object to current theme
+  useEffect(() => {
+    updateCTokens(isDark);
+  }, [isDark]);
 
   const setMode = useCallback((newMode: ThemeMode) => {
     setModeState(newMode);
@@ -60,6 +74,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export function useTheme(): ThemeContextValue {
   return useContext(ThemeContext);
+}
+
+export type Tokens = typeof C;
+
+export function useTokens(): Tokens {
+  const { isDark } = useTheme();
+  return isDark ? darkC : (C as Tokens);
 }
 
 // Dark variant of design tokens
