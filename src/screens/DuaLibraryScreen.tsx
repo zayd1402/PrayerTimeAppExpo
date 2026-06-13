@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity,
-  TextInput, Dimensions
+  TextInput
 } from 'react-native';
 import Animated, {
   useSharedValue, useAnimatedStyle, withTiming, interpolate
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import { C, Dua, DUA_CATEGORIES, DuaCategory } from '../types';
-import { getFavoriteDuas, toggleFavoriteDua, isFavoriteDua } from '../services/StorageService';
-
-const { width } = Dimensions.get('window');
+type CategoryFilter = DuaCategory | 'all' | 'favorites';
+import { getFavoriteDuas, toggleFavoriteDua } from '../services/StorageService';
 
 // ─── Dua Database ────────────────────────────────────────────
 const DUAS: Dua[] = [
@@ -166,13 +166,16 @@ const duaStyles = StyleSheet.create({
   meaning: { fontSize: 13, color: C.textSecondary, lineHeight: 20, fontStyle: 'italic' }});
 
 // ─── Category Chip ───────────────────────────────────────────
-function CategoryChip({ cat, active, onPress }: { cat: typeof DUA_CATEGORIES[0]; active: boolean; onPress: () => void }) {
+function CategoryChip({ cat, active, onPress }: { cat: { value: CategoryFilter; label: string; icon: string }; active: boolean; onPress: () => void }) {
   return (
     <TouchableOpacity
       style={[catStyles.chip, active && catStyles.chipActive]}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Filter by ${cat.label}`}
+      accessibilityState={{ selected: active }}
     >
-      <Ionicons name={cat.icon as any} size={14} color={active ? '#FFF' : C.textSecondary} />
+      <Ionicons name={iconName(cat.icon)} size={14} color={active ? '#FFF' : C.textSecondary} />
       <Text style={[catStyles.label, active && catStyles.labelActive]}>{cat.label}</Text>
     </TouchableOpacity>
   );
@@ -260,12 +263,12 @@ export default function DuaLibraryScreen() {
       {/* Categories */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categories}>
         <CategoryChip
-          cat={{ value: 'all' as any, label: 'All', icon: 'apps-outline' }}
+          cat={{ value: 'all', label: 'All', icon: 'apps-outline' }}
           active={activeCategory === 'all'}
           onPress={() => setActiveCategory('all')}
         />
         <CategoryChip
-          cat={{ value: 'favorites' as any, label: 'Favorites', icon: 'heart-outline' }}
+          cat={{ value: 'favorites', label: 'Favorites', icon: 'heart-outline' }}
           active={activeCategory === 'favorites'}
           onPress={() => setActiveCategory('favorites')}
         />
@@ -281,14 +284,22 @@ export default function DuaLibraryScreen() {
 
       {/* Dua List */}
       <Text style={styles.listTitle}>{filteredDuas.length} Duas</Text>
-      {filteredDuas.map(dua => (
-        <DuaCard
-          key={dua.id}
-          dua={dua}
-          isFav={favorites.has(dua.id)}
-          onToggleFav={() => toggleFav(dua.id)}
-        />
-      ))}
+      {filteredDuas.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons name="search-outline" size={36} color={C.textMuted} />
+          <Text style={styles.emptyTitle}>No duas found</Text>
+          <Text style={styles.emptyText}>Try a different search or category.</Text>
+        </View>
+      ) : (
+        filteredDuas.map(dua => (
+          <DuaCard
+            key={dua.id}
+            dua={dua}
+            isFav={favorites.has(dua.id)}
+            onToggleFav={() => toggleFav(dua.id)}
+          />
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -296,7 +307,7 @@ export default function DuaLibraryScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
 
@@ -317,4 +328,8 @@ const styles = StyleSheet.create({
   featuredSource: { fontSize: 12, color: C.textMuted, marginTop: 8, textAlign: 'right' },
 
   categories: { paddingHorizontal: 18, paddingBottom: 8 },
-  listTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 }});
+  listTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 },
+  emptyState: { paddingVertical: 28, alignItems: 'center', marginHorizontal: 18 },
+  emptyTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 8 },
+  emptyText: { fontSize: 13, color: C.textMuted, marginTop: 4, textAlign: 'center' },
+});

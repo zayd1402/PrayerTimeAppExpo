@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import { C } from '../types';
 import { HijriService } from '../services/HijriService';
 import { getRamadanState } from '../services/RamadanService';
 import { loadPrayerLog, getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData, getKhushuAverage } from '../services/StorageService';
 import { getEventsForHijriDate, ISLAMIC_EVENTS } from '../data/islamicEvents';
+import { getLocalDateKey } from '../utils/date';
 
 function getDateKey(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return getLocalDateKey(date);
 }
 
 const EVENT_COLORS: Record<string, string> = {
@@ -72,7 +75,6 @@ export default function CalendarScreen() {
   }, [selectedDate]);
 
   const grid = HijriService.getMonthGrid(year, month);
-  const hijriToday = HijriService.gregorianToHijri(today);
   const hijriCurrent = HijriService.gregorianToHijri(new Date(year, month, 15));
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
@@ -123,18 +125,19 @@ export default function CalendarScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Islamic Calendar</Text>
-        <Text style={styles.subtitle}>{hijriMonthStr}</Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.title}>Islamic Calendar</Text>
+          <Text style={styles.subtitle}>{hijriMonthStr}</Text>
+        </View>
 
       {/* Event Countdown */}
       {nextEvent && (
         <View style={styles.countdownCard}>
           <View style={styles.countdownLeft}>
-            <Ionicons name={EVENT_ICONS[nextEvent.type] as any} size={24} color={EVENT_COLORS[nextEvent.type] || C.gold} />
+            <Ionicons name={iconName(EVENT_ICONS[nextEvent.type])} size={24} color={EVENT_COLORS[nextEvent.type] || C.gold} />
             <View style={{ marginLeft: 12 }}>
               <Text style={styles.countdownTitle}>{nextEvent.title}</Text>
               <Text style={styles.countdownDesc}>{nextEvent.description}</Text>
@@ -286,7 +289,7 @@ export default function CalendarScreen() {
                         const isMissed = status === 'missed';
                         return (
                           <View key={p.id} style={styles.prayerStatusRow}>
-                            <Ionicons name={p.icon as any} size={16} color={isPrayed ? C.primary : C.textMuted} />
+                            <Ionicons name={iconName(p.icon)} size={16} color={isPrayed ? C.primary : C.textMuted} />
                             <Text style={[styles.prayerStatusName, isPrayed && styles.prayerStatusNameDone]}>{p.name}</Text>
                             <View style={[
                               styles.prayerStatusBadge,
@@ -318,7 +321,7 @@ export default function CalendarScreen() {
 
                 {events.map(event => (
                   <View key={event.id} style={[styles.eventRow, { backgroundColor: (EVENT_COLORS[event.type] || C.gold) + '10' }]}>
-                    <Ionicons name={EVENT_ICONS[event.type] as any} size={16} color={EVENT_COLORS[event.type] || C.gold} />
+                    <Ionicons name={iconName(EVENT_ICONS[event.type])} size={16} color={EVENT_COLORS[event.type] || C.gold} />
                     <View style={{ marginLeft: 10, flex: 1 }}>
                       <Text style={[styles.eventTitle, { color: EVENT_COLORS[event.type] || C.gold }]}>{event.title}</Text>
                       <Text style={styles.eventDesc}>{event.description}</Text>
@@ -345,14 +348,16 @@ export default function CalendarScreen() {
           </View>
         ))}
       </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
+  scrollView: { flex: 1 },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
 

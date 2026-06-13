@@ -400,7 +400,7 @@ export async function getKhushuAverage(days: number = 7): Promise<{ average: num
 export async function getSunnahStreak(): Promise<number> {
   const raw = storage.getString('@prayertime:sunnah_log');
   if (!raw) return 0;
-  const log: Record<string, any> = JSON.parse(raw);
+  const log: Record<string, Record<string, number>> = JSON.parse(raw);
   const dates = Object.keys(log).sort().reverse();
   if (dates.length === 0) return 0;
 

@@ -5,6 +5,7 @@ import Animated, {
   withRepeat, withSequence, Easing, runOnJS
 } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import * as Location from 'expo-location';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { C } from '../types';
@@ -34,7 +35,7 @@ function AccuracyBadge({ accuracy }: { accuracy: 'high' | 'medium' | 'low' | 'ca
   const c = colors[accuracy];
   return (
     <View style={[accStyles.badge, { backgroundColor: c.bg }]}>
-      <Ionicons name={c.icon as any} size={14} color={c.text} />
+      <Ionicons name={iconName(c.icon)} size={14} color={c.text} />
       <Text style={[accStyles.text, { color: c.text }]}>
         {accuracy === 'calibrating' ? 'Calibrating...' : `${accuracy.charAt(0).toUpperCase() + accuracy.slice(1)} Accuracy`}
       </Text>
@@ -91,7 +92,6 @@ const calStyles = StyleSheet.create({
 // ─── Main Screen ─────────────────────────────────────────────
 export default function QiblaScreen({ coordinate, compact = false, showHeader = true }: QiblaScreenProps) {
   const [qiblaDirection, setQiblaDirection] = useState(0);
-  const [deviceHeading, setDeviceHeading] = useState(0);
   const [rotation, setRotation] = useState(0);
   const [accuracy, setAccuracy] = useState<'high' | 'medium' | 'low' | 'calibrating'>('calibrating');
   const [isAligned, setIsAligned] = useState(false);
@@ -101,7 +101,6 @@ export default function QiblaScreen({ coordinate, compact = false, showHeader = 
   const alignedAnim = useSharedValue(0);
 
   // JS-thread wrappers for state updates from heading callback
-  const updateDeviceHeading = (h: number) => setDeviceHeading(h);
   const updateAccuracy = (a: typeof accuracy) => setAccuracy(a);
   const updateRotation = (r: number) => setRotation(r);
   const updateIsAligned = (a: boolean) => setIsAligned(a);
@@ -132,8 +131,6 @@ export default function QiblaScreen({ coordinate, compact = false, showHeader = 
         subscription = await Location.watchHeadingAsync((heading) => {
           const magHeading = heading.magHeading;
 
-          runOnJS(updateDeviceHeading)(magHeading);
-
           headingHistory.push(magHeading);
           if (headingHistory.length > 10) headingHistory.shift();
           const variance = Math.max(...headingHistory) - Math.min(...headingHistory);
@@ -154,7 +151,7 @@ export default function QiblaScreen({ coordinate, compact = false, showHeader = 
             alignedAnim.value = withTiming(0, { duration: 200 });
           }
         });
-      } catch (error) {
+      } catch {
         setAccuracy('low');
       }
     }
@@ -222,6 +219,10 @@ export default function QiblaScreen({ coordinate, compact = false, showHeader = 
 
           {/* Rotating needle */}
           <Animated.View style={[styles.needleWrap, animatedNeedleStyle]}>
+            <View style={styles.needle}>
+              <View style={styles.needleTop} />
+              <View style={styles.needleBottom} />
+            </View>
             <View style={styles.needleCenter}>
               <Ionicons name="location" size={20} color="#FFF" />
             </View>
@@ -272,7 +273,7 @@ export default function QiblaScreen({ coordinate, compact = false, showHeader = 
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg, alignItems: 'center' },
+  header: { padding: 18, backgroundColor: C.heroBg, alignItems: 'center' },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
 

@@ -1,9 +1,8 @@
 import React from 'react';
-import {
-  View, StatusBar, Platform, StyleSheet
-} from 'react-native';
+import { StatusBar, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
 import {
   useFonts,
@@ -39,18 +38,20 @@ export default function App() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={C.bgBase} />
-      <ThemeProvider>
-        <NavigationContainer>
-          <ErrorBoundary>
-            <PrayerAppProvider>
-              <TabNavigator />
-            </PrayerAppProvider>
-          </ErrorBoundary>
-        </NavigationContainer>
-      </ThemeProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={C.bgBase} />
+        <ThemeProvider>
+          <NavigationContainer>
+            <ErrorBoundary>
+              <PrayerAppProvider>
+                <TabNavigator />
+              </PrayerAppProvider>
+            </ErrorBoundary>
+          </NavigationContainer>
+        </ThemeProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }
 

@@ -1,5 +1,6 @@
 import * as Location from 'expo-location';
 import { AppLocation, LocationSource } from '../types';
+import { logger } from '../utils/logger';
 
 export interface LocationResult extends AppLocation {
   source: LocationSource;
@@ -32,7 +33,8 @@ export async function getCurrentLocation(): Promise<LocationResult | null> {
     }
 
     return { latitude, longitude, name, source: 'device', timezone: Intl.DateTimeFormat().resolvedOptions().timeZone };
-  } catch {
+  } catch (error) {
+    logger.warn('Location detection failed:', error);
     return null;
   }
 }

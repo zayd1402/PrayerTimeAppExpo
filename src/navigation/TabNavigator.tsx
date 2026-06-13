@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import { C } from '../types';
 
 import TodayScreen from '../screens/TodayScreen';
@@ -21,7 +22,7 @@ const TABS = [
 ];
 
 function TabIcon({ name, color, size }: { name: string; color: string; size: number }) {
-  return <Ionicons name={name as any} size={size} color={color} />;
+  return <Ionicons name={iconName(name)} size={size} color={color} />;
 }
 
 export default function TabNavigator() {

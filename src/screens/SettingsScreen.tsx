@@ -5,6 +5,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as StoreReview from 'expo-store-review';
 import { C, CalculationMethod, Madhab, AppSettings, PRAYER_IDS, PrayerNotificationId } from '../types';
+import { useTranslation } from '../i18n';
 import { getCurrentLocation } from '../services/LocationService';
 import { initAudio, playAdhan, stopAdhan, getAdhanVariants, getAdhanAttribution, setAdhanVolume } from '../services/AudioService';
 import { requestNotificationPermission } from '../services/NotificationService';
@@ -36,6 +37,7 @@ const ADHAN_VARIANTS = getAdhanVariants();
 const NOTIFICATION_PRAYERS = PRAYER_IDS.filter(id => id !== 'sunrise') as PrayerNotificationId[];
 
 export default function SettingsScreen({ settings, updateSettings }: SettingsScreenProps) {
+  const { t } = useTranslation();
   const [manualSearch, setManualSearch] = useState('');
 
   const filteredCities = useMemo(() => {
@@ -48,9 +50,9 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
     const loc = await getCurrentLocation();
     if (loc) {
       await updateSettings({ location: loc });
-      Alert.alert('Location Updated', `Set to ${loc.name}`);
+      Alert.alert(t('settings.locationUpdated'), t('settings.locationSetTo', { name: loc.name }));
     } else {
-      Alert.alert('Location Failed', 'Could not detect location. Please choose a manual city below.');
+      Alert.alert(t('settings.locationFailed'), t('settings.couldNotDetect'));
     }
   }, [updateSettings]);
 
@@ -58,7 +60,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
     if (enabled) {
       const granted = await requestNotificationPermission();
       if (!granted) {
-        Alert.alert('Notifications Off', 'Notification permission was not granted. You can enable it later in device settings.');
+        Alert.alert(t('settings.notificationsOff'), t('settings.notificationsOffMessage'));
         return;
       }
     }
@@ -76,20 +78,20 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>Settings</Text>
-        <Text style={styles.subtitle}>Local-only prayer settings for this device.</Text>
+        <Text style={styles.title}>{t('settings.title')}</Text>
+        <Text style={styles.subtitle}>{t('settings.subtitle')}</Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Location</Text>
+        <Text style={styles.sectionTitle}>{t('settings.location')}</Text>
         <View style={styles.card}>
           <View style={styles.row}>
             <View style={styles.rowIconWrap}>
               <Ionicons name="locate-outline" size={18} color={settings.location ? C.primary : C.textMuted} />
             </View>
             <View style={styles.rowText}>
-              <Text style={styles.rowLabel}>Device location</Text>
-              <Text style={styles.rowSubtitle}>{settings.location?.source === 'device' ? settings.location.name : 'Not active'}</Text>
+              <Text style={styles.rowLabel}>{t('settings.deviceLocation')}</Text>
+              <Text style={styles.rowSubtitle}>{settings.location?.source === 'device' ? settings.location.name : t('settings.notActive')}</Text>
             </View>
             <Switch
               value={settings.location?.source === 'device'}
@@ -108,7 +110,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <View style={styles.rowIconWrap}>
               <Ionicons name="navigate-outline" size={18} color={C.primary} />
             </View>
-            <Text style={styles.rowLabel}>Use Current Location</Text>
+            <Text style={styles.rowLabel}>{t('settings.useCurrentLocation')}</Text>
             <Ionicons name="chevron-forward" size={16} color={C.textMuted} />
           </TouchableOpacity>
 
@@ -116,7 +118,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <Ionicons name="search" size={16} color={C.textMuted} />
             <TextInput
               style={styles.manualSearchInput}
-              placeholder="Search manual city"
+              placeholder={t('settings.searchManualCity')}
               placeholderTextColor={C.textMuted}
               value={manualSearch}
               onChangeText={setManualSearch}
@@ -143,7 +145,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Prayer Time Calculations</Text>
+        <Text style={styles.sectionTitle}>{t('settings.calculation')}</Text>
         <View style={styles.card}>
           {METHODS.map(method => (
             <TouchableOpacity
@@ -161,7 +163,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Madhhab</Text>
+        <Text style={styles.sectionTitle}>{t('settings.madhhab')}</Text>
         <View style={styles.card}>
           {(['shafi', 'hanafi'] as Madhab[]).map(madhab => (
             <TouchableOpacity
@@ -170,8 +172,8 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
               onPress={() => updateSettings({ madhab })}
             >
               <View>
-                <Text style={styles.optionLabel}>{madhab === 'shafi' ? 'Shafi' : 'Hanafi'}</Text>
-                <Text style={styles.optionSubtitle}>{madhab === 'shafi' ? 'Standard Asr time' : 'Later Asr time'}</Text>
+                <Text style={styles.optionLabel}>{madhab === 'shafi' ? t('settings.shafi') : t('settings.hanafi')}</Text>
+                <Text style={styles.optionSubtitle}>{madhab === 'shafi' ? t('settings.shafiSubtitle') : t('settings.hanafiSubtitle')}</Text>
               </View>
               {settings.madhab === madhab && <Ionicons name="checkmark-circle" size={20} color={C.primary} />}
             </TouchableOpacity>
@@ -180,13 +182,13 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
+        <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
         <View style={styles.card}>
           <View style={styles.row}>
             <View style={styles.rowIconWrap}>
               <Ionicons name="notifications-outline" size={18} color={settings.notificationsEnabled ? C.primary : C.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>Prayer time alerts</Text>
+            <Text style={styles.rowLabel}>{t('settings.prayerAlerts')}</Text>
             <Switch
               value={settings.notificationsEnabled}
               onValueChange={handleNotificationsEnabled}
@@ -199,7 +201,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
               <View style={styles.rowIconWrap}>
                 <Ionicons name="time-outline" size={18} color={settings.prayerNotifications[prayerId] ? C.primary : C.textMuted} />
               </View>
-              <Text style={[styles.rowLabel, { textTransform: 'capitalize' }]}>{prayerId}</Text>
+              <Text style={[styles.rowLabel, { textTransform: 'capitalize' }]}>{t(`prayer.${prayerId}`)}</Text>
               <Switch
                 disabled={!settings.notificationsEnabled}
                 value={settings.prayerNotifications[prayerId]}
@@ -215,7 +217,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <View style={styles.rowIconWrap}>
               <Ionicons name="alarm-outline" size={18} color={settings.fajrAlarmEnabled ? C.primary : C.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>Fajr alarm</Text>
+            <Text style={styles.rowLabel}>{t('settings.fajrAlarm')}</Text>
             <Switch
               value={settings.fajrAlarmEnabled}
               onValueChange={v => updateSettings({ fajrAlarmEnabled: v })}
@@ -225,7 +227,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
 
           {settings.fajrAlarmEnabled && (
             <View style={styles.subRow}>
-              <Text style={styles.rowLabel}>Minutes before Fajr</Text>
+              <Text style={styles.rowLabel}>{t('settings.minutesBefore')}</Text>
               <View style={styles.pillRow}>
                 {FAJR_ALARM_OPTIONS.map(m => (
                   <TouchableOpacity
@@ -244,7 +246,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <View style={styles.rowIconWrap}>
               <Ionicons name="timer-outline" size={18} color={settings.liveCountdownEnabled ? C.primary : C.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>Live countdown</Text>
+            <Text style={styles.rowLabel}>{t('settings.liveCountdown')}</Text>
             <Switch
               value={settings.liveCountdownEnabled}
               onValueChange={v => updateSettings({ liveCountdownEnabled: v })}
@@ -256,7 +258,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <View style={styles.rowIconWrap}>
               <Ionicons name="time-outline" size={18} color={settings.iqamaCountdownEnabled ? C.primary : C.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>Iqama countdown</Text>
+            <Text style={styles.rowLabel}>{t('settings.iqamaCountdown')}</Text>
             <Switch
               value={settings.iqamaCountdownEnabled}
               onValueChange={v => updateSettings({ iqamaCountdownEnabled: v })}
@@ -268,7 +270,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <View style={styles.rowIconWrap}>
               <Ionicons name="volume-medium-outline" size={18} color={settings.adhanEnabled ? C.primary : C.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>Adhan audio</Text>
+            <Text style={styles.rowLabel}>{t('settings.adhanAudio')}</Text>
             <Switch
               value={settings.adhanEnabled}
               onValueChange={v => updateSettings({ adhanEnabled: v })}
@@ -278,7 +280,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
 
           {settings.adhanEnabled && (
             <View style={styles.subRow}>
-              <Text style={styles.rowLabel}>Adhan style</Text>
+              <Text style={styles.rowLabel}>{t('settings.adhanStyle')}</Text>
               <View>
                 <View style={styles.pillRow}>
                   {ADHAN_VARIANTS.map(v => (
@@ -318,7 +320,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
                   }}
                 >
                   <Ionicons name="play" size={14} color={C.white} />
-                  <Text style={styles.previewBtnText}>Preview</Text>
+                  <Text style={styles.previewBtnText}>{t('settings.adhanPreview')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -327,34 +329,34 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
           <View style={styles.attribution}>
             <Ionicons name="information-circle-outline" size={16} color={C.textMuted} />
             <Text style={styles.attributionText}>
-              Default adhan: {attribution.title} by {attribution.author}, {attribution.source}, {attribution.license}.
+              {t('settings.adhanAttribution', { title: attribution.title, author: attribution.author, source: attribution.source, license: attribution.license })} 
             </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
+        <Text style={styles.sectionTitle}>{t('settings.about')}</Text>
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>Version</Text>
+            <Text style={styles.rowLabel}>{t('settings.version')}</Text>
             <Text style={styles.rowValue}>1.0.0</Text>
           </View>
 
           <TouchableOpacity style={styles.row} onPress={() => Linking.openURL('https://prayertime.app/privacy')}>
-            <Text style={styles.rowLabel}>Privacy Policy</Text>
+            <Text style={styles.rowLabel}>{t('settings.privacy')}</Text>
             <Ionicons name="chevron-forward" size={16} color={C.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.row} onPress={handleRateApp}>
-            <Text style={styles.rowLabel}>Rate App</Text>
+            <Text style={styles.rowLabel}>{t('settings.rateApp')}</Text>
             <Ionicons name="star-outline" size={16} color={C.gold} />
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>PrayerTimeApp © 2024</Text>
+        <Text style={styles.footerText}>{t('settings.footer')}</Text>
       </View>
     </ScrollView>
   );
@@ -370,7 +372,6 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 18,
-    paddingTop: 60,
     backgroundColor: C.heroBg,
   },
   title: {

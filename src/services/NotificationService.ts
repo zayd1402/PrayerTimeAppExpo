@@ -81,7 +81,7 @@ export async function schedulePrayerNotification(
   hour: number,
   minute: number,
   isFajrAlarm: boolean = false,
-  minutesOffset: number = 0
+
 ): Promise<void> {
   const identifier = isFajrAlarm ? 'fajr-alarm' : `prayer-${prayerId}`;
 
@@ -242,7 +242,7 @@ export async function cancelNotification(identifier: string): Promise<void> {
 // ─── Notification Response Handler ───────────────────────────
 export function setupNotificationResponseHandler(
   onMarkPrayed: (prayerId: string) => void,
-  onNotificationTap: (data: any) => void,
+  onNotificationTap: (data: Record<string, unknown> | undefined) => void,
 ): Notifications.Subscription {
   const sub = Notifications.addNotificationResponseReceivedListener(response => {
     const data = response.notification.request.content.data as Record<string, unknown> | undefined;

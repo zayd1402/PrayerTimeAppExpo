@@ -1,4 +1,5 @@
 import { Audio, AVPlaybackSource } from 'expo-av';
+import { logger } from '../utils/logger';
 
 const ADHAN_FILES: Record<string, AVPlaybackSource> = {
   default: require('../../assets/audio/adhan-default.mp3'),
@@ -61,7 +62,7 @@ export async function playAdhan(variant: string = 'default'): Promise<void> {
       }
     });
   } catch (error) {
-    if (__DEV__) console.warn('Failed to play adhan:', error);
+    logger.warn('Failed to play adhan:', error);
     currentSound = null;
   }
 }

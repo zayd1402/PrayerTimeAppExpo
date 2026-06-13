@@ -1,14 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity,
   TextInput, Alert, Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C } from '../types';
+import { iconName } from '../components/Icon';
+import { useTranslation } from '../i18n';
+import { C, FastingLog, QuranLog } from '../types';
 import { getRamadanState } from '../services/RamadanService';
 import {
   loadFastingLog, toggleFast, loadQuranLog, addQuranLog,
-  loadDhikrHistory, addDhikrSession, getTodayDhikrCount,
+  addDhikrSession, getTodayDhikrCount,
   getWeeklyQuranStats
 } from '../services/StorageService';
 
@@ -49,7 +52,7 @@ const FASTING_TYPES = [
 ];
 
 // ─── Helper Components ───────────────────────────────────────
-function TabBar({ active, onChange }: { active: WorshipTab; onChange: (t: WorshipTab) => void }) {
+function TabBar({ active, onChange, t }: { active: WorshipTab; onChange: (t: WorshipTab) => void; t: (key: string) => string }) {
   return (
     <View style={tabStyles.container}>
       {TABS.map(tab => {
@@ -60,8 +63,8 @@ function TabBar({ active, onChange }: { active: WorshipTab; onChange: (t: Worshi
             style={[tabStyles.tab, isActive && tabStyles.tabActive]}
             onPress={() => onChange(tab.id)}
           >
-            <Ionicons name={tab.icon as any} size={18} color={isActive ? '#FFF' : C.textSecondary} />
-            <Text style={[tabStyles.tabLabel, isActive && tabStyles.tabLabelActive]}>{tab.label}</Text>
+            <Ionicons name={iconName(tab.icon)} size={18} color={isActive ? '#FFF' : C.textSecondary} />
+            <Text style={[tabStyles.tabLabel, isActive && tabStyles.tabLabelActive]}>{t(`worship.${tab.id}`)}</Text>
           </TouchableOpacity>
         );
       })}
@@ -135,11 +138,12 @@ const chartStyles = StyleSheet.create({
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function WorshipScreen() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<WorshipTab>('prayers');
   const [completedSunnah, setCompletedSunnah] = useState<Set<string>>(new Set());
   const [dhikr, setDhikr] = useState({ subhanallah: 0, alhamdulillah: 0, allahuakbar: 0 });
-  const [fastingLog, setFastingLog] = useState<Record<string, any>>({});
-  const [quranLog, setQuranLog] = useState<Record<string, any>>({});
+  const [fastingLog, setFastingLog] = useState<Record<string, FastingLog>>({});
+  const [quranLog, setQuranLog] = useState<Record<string, QuranLog>>({});
   const [quranInput, setQuranInput] = useState('');
   const [weeklyQuran, setWeeklyQuran] = useState<number[]>([0,0,0,0,0,0,0]);
   const todayKey = new Date().toISOString().split('T')[0];
@@ -286,7 +290,7 @@ function RamadanWorshipCard() {
   function FastingTab() {
     const isFastToday = (type: string) => fastingLog[todayKey]?.type === type;
 
-    const toggle = async (type: any) => {
+    const toggle = async (type: FastingLog['type']) => {
       const log = await toggleFast(todayKey, type);
       setFastingLog(log);
     };
@@ -303,7 +307,7 @@ function RamadanWorshipCard() {
                 style={[styles.fastCard, active && styles.fastCardActive]}
                 onPress={() => toggle(ft.type)}
               >
-                <Ionicons name={ft.icon as any} size={24} color={active ? C.primary : C.textMuted} />
+                <Ionicons name={iconName(ft.icon)} size={24} color={active ? C.primary : C.textMuted} />
                 <Text style={[styles.fastLabel, active && styles.fastLabelActive]}>{ft.label}</Text>
                 <Text style={styles.fastDesc}>{ft.desc}</Text>
                 {active && <View style={styles.fastCheck}><Ionicons name="checkmark" size={12} color="#FFF" /></View>}
@@ -366,26 +370,29 @@ function RamadanWorshipCard() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Worship Tracker</Text>
-        <Text style={styles.subtitle}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
-      </View>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('worship.title')}</Text>
+          <Text style={styles.subtitle}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</Text>
+        </View>
 
-      <TabBar active={activeTab} onChange={setActiveTab} />
+        <TabBar active={activeTab} onChange={setActiveTab} t={t} />
 
-      {activeTab === 'prayers' && <PrayerTab />}
-      {activeTab === 'dhikr' && <DhikrTab />}
-      {activeTab === 'fasting' && <FastingTab />}
-      {activeTab === 'quran' && <QuranTab />}
-    </ScrollView>
+        {activeTab === 'prayers' && <PrayerTab />}
+        {activeTab === 'dhikr' && <DhikrTab />}
+        {activeTab === 'fasting' && <FastingTab />}
+        {activeTab === 'quran' && <QuranTab />}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
+  scrollView: { flex: 1 },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
   sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 18, marginBottom: 10 },

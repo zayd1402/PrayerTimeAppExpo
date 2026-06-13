@@ -1,8 +1,10 @@
 // ─── PrayerAppContext — Global state for the app ──────────────
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
+import { getLocalDateKey } from '../utils/date';
+import { logger } from '../utils/logger';
 import * as NavigationBar from 'expo-navigation-bar';
-import { C, PrayerId, PrayerTime, AppSettings, AppLocation, DEFAULT_SETTINGS, PRAYER_ICONS, PRAYER_IDS, PrayerNotificationId } from '../types';
+import { PrayerId, PrayerTime, AppSettings, AppLocation, DEFAULT_SETTINGS, PRAYER_ICONS, PRAYER_IDS, PrayerNotificationId } from '../types';
 import {
   getPrayerTimesObject, getNextPrayer, getTimeUntilNext
 } from '../services/PrayerService';
@@ -25,19 +27,12 @@ import { getDailyHadith } from '../data/hadiths';
 import { initAudio, playAdhan } from '../services/AudioService';
 
 function getDateKey(date: Date): string {
-  return date.toISOString().split('T')[0];
+  return getLocalDateKey(date);
 }
 
 function minutesFromMidnight(): number {
   const now = new Date();
   return now.getHours() * 60 + now.getMinutes();
-}
-
-function formatCountdown(diffMinutes: number): string {
-  if (diffMinutes <= 0) return '0:00';
-  const h = Math.floor(diffMinutes / 60);
-  const m = diffMinutes % 60;
-  return `${h}:${m.toString().padStart(2, '0')}`;
 }
 
 function getHourMinute(minutes: number): { hour: number; minute: number } {
@@ -89,6 +84,7 @@ export interface PrayerAppState {
   nextPrayer: PrayerTime | null;
   location: AppLocation | null;
   loading: boolean;
+  error: string | null;
   completedPrayers: Set<string>;
   timerDisplay: string;
   dailyHadith: { english: string; source: string } | null;
@@ -108,6 +104,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   const [nextPrayer, setNextPrayer] = useState<PrayerTime | null>(null);
   const [location, setLocation] = useState<AppLocation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [completedPrayers, setCompletedPrayers] = useState<Set<string>>(new Set());
   const [timerDisplay, setTimerDisplay] = useState('');
   const [dailyHadith, setDailyHadith] = useState<{ english: string; source: string } | null>(null);
@@ -125,13 +122,16 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       const loc = await getCurrentLocation();
       if (loc) {
         setLocation(loc);
+        setError(null);
         const newSettings = { ...saved, location: loc };
         setSettings(newSettings);
         await saveSettings(newSettings);
       } else if (saved.location) {
         setLocation(saved.location);
+        setError(null);
       } else {
         setLocation(null);
+        setError('Location access is needed for accurate prayer times. Please choose a manual city in Settings.');
       }
       const hadith = getDailyHadith();
       setDailyHadith({ english: hadith.english, source: hadith.source });
@@ -165,7 +165,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
           }
         },
         (data) => {
-          if (__DEV__) console.log('Notification tapped:', data);
+          logger.log('Notification tapped:', data);
         },
       );
 
@@ -324,7 +324,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <PrayerAppContext.Provider value={{
-      settings, prayerTimes, nextPrayer, location, loading,
+      settings, prayerTimes, nextPrayer, location, loading, error,
       completedPrayers, timerDisplay, dailyHadith,
       prayersObj, nextPrayerObj, nextPrayerTime, hijriDateStr,
       handleTogglePrayer, handleUpdateSettings,

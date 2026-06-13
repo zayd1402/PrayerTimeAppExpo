@@ -5,7 +5,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { C, Hadith } from '../types';
 import { HADITHS, getDailyHadith, getHadithCategories, getHadithByCategory } from '../data/hadiths';
-import { getFavoriteHadiths, toggleFavoriteHadith, setLastHadithIndex, getLastHadithIndex } from '../services/StorageService';
+import { getFavoriteHadiths, toggleFavoriteHadith } from '../services/StorageService';
 
 function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boolean; onToggleFav: () => void }) {
   const handleShare = async () => {
@@ -54,23 +54,16 @@ export default function HadithScreen() {
   const [dailyHadith, setDailyHadith] = useState<Hadith | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     const dh = getDailyHadith();
     setDailyHadith(dh);
     loadFavorites();
-    loadLastIndex();
   }, []);
 
   const loadFavorites = async () => {
     const favs = await getFavoriteHadiths();
     setFavorites(new Set(favs));
-  };
-
-  const loadLastIndex = async () => {
-    const idx = await getLastHadithIndex();
-    setCurrentIndex(idx);
   };
 
   const toggleFav = async (id: string) => {
@@ -106,6 +99,9 @@ export default function HadithScreen() {
         <TouchableOpacity
           style={[styles.catChip, !activeCategory && styles.catChipActive]}
           onPress={() => setActiveCategory(null)}
+          accessibilityRole="button"
+          accessibilityLabel="Show all hadiths"
+          accessibilityState={{ selected: !activeCategory }}
         >
           <Text style={[styles.catLabel, !activeCategory && styles.catLabelActive]}>All</Text>
         </TouchableOpacity>
@@ -114,6 +110,9 @@ export default function HadithScreen() {
             key={cat}
             style={[styles.catChip, activeCategory === cat && styles.catChipActive]}
             onPress={() => setActiveCategory(cat === activeCategory ? null : cat)}
+            accessibilityRole="button"
+            accessibilityLabel={`Filter by ${cat}`}
+            accessibilityState={{ selected: activeCategory === cat }}
           >
             <Text style={[styles.catLabel, activeCategory === cat && styles.catLabelActive]}>
               {cat.charAt(0).toUpperCase() + cat.slice(1)}
@@ -124,14 +123,22 @@ export default function HadithScreen() {
 
       {/* Hadith List */}
       <Text style={styles.listTitle}>{displayedHadiths.length} Hadiths</Text>
-      {displayedHadiths.map(hadith => (
-        <HadithCard
-          key={hadith.id}
-          hadith={hadith}
-          isFav={favorites.has(hadith.id)}
-          onToggleFav={() => toggleFav(hadith.id)}
-        />
-      ))}
+      {displayedHadiths.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Ionicons name="document-text-outline" size={36} color={C.textMuted} />
+          <Text style={styles.emptyTitle}>No hadiths found</Text>
+          <Text style={styles.emptyText}>Try another category.</Text>
+        </View>
+      ) : (
+        displayedHadiths.map(hadith => (
+          <HadithCard
+            key={hadith.id}
+            hadith={hadith}
+            isFav={favorites.has(hadith.id)}
+            onToggleFav={() => toggleFav(hadith.id)}
+          />
+        ))
+      )}
     </ScrollView>
   );
 }
@@ -139,7 +146,7 @@ export default function HadithScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
 
@@ -154,6 +161,9 @@ const styles = StyleSheet.create({
   catLabelActive: { color: '#FFF', fontFamily: 'Jost_600SemiBold' },
 
   listTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 },
+  emptyState: { paddingVertical: 28, alignItems: 'center', marginHorizontal: 18 },
+  emptyTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 8 },
+  emptyText: { fontSize: 13, color: C.textMuted, marginTop: 4, textAlign: 'center' },
 
   card: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12},
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },

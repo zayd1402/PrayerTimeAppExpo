@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, View, Text, ScrollView, TouchableOpacity, Dimensions
+  StyleSheet, View, Text, ScrollView, TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import { C } from '../types';
 import { SUNNAH_ROUTINE, SunnahItem } from '../data/sunnahRoutine';
 import { mmkv, getStreak } from '../services/StorageService';
+import { getLocalDateKey } from '../utils/date';
 
-const { width } = Dimensions.get('window');
 const SUNNAH_LOG_KEY = '@prayertime:sunnah_log';
 
 type Category = 'morning' | 'evening' | 'night';
@@ -19,7 +20,7 @@ const CATEGORIES: { id: Category; label: string; icon: string }[] = [
 ];
 
 function getDateKey(): string {
-  return new Date().toISOString().split('T')[0];
+  return getLocalDateKey();
 }
 
 function getTodayLog(): Record<string, number> {
@@ -59,18 +60,6 @@ export default function SunnahRoutineScreen() {
     });
   };
 
-  const incrementCount = (item: SunnahItem) => {
-    const current = todayLog[item.id] || 0;
-    if (current >= item.count) return;
-    setTodayLog(prev => {
-      const nextLog = { ...prev, [item.id]: current + 1 };
-      const fullLog = JSON.parse(mmkv.getString(SUNNAH_LOG_KEY) || '{}');
-      fullLog[dateKey] = nextLog;
-      saveLog(fullLog);
-      return nextLog;
-    });
-  };
-
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -101,14 +90,14 @@ export default function SunnahRoutineScreen() {
               style={[styles.tab, isActive && styles.tabActive]}
               onPress={() => setActiveTab(cat.id)}
             >
-              <Ionicons name={cat.icon as any} size={16} color={isActive ? C.white : C.textSecondary} />
+              <Ionicons name={iconName(cat.icon)} size={16} color={isActive ? C.white : C.textSecondary} />
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{cat.label}</Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      {items.map((item, index) => {
+      {items.map(item => {
         const current = todayLog[item.id] || 0;
         const isComplete = current >= item.count;
         return (
@@ -173,7 +162,7 @@ export default function SunnahRoutineScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
 

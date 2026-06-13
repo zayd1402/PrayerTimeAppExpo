@@ -3,6 +3,7 @@ import {
   StyleSheet, View, Text, TouchableOpacity, Modal, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import { C, PrayerId, KhushuLevel, DistractionType, KhushuEntry } from '../types';
 import { addKhushuEntry } from '../services/StorageService';
 
@@ -109,7 +110,7 @@ export default function KhushuModal({ visible, prayerId, prayerName, onClose }: 
                   style={[styles.distractionChip, selected && styles.distractionChipActive]}
                   onPress={() => toggleDistraction(d.value)}
                 >
-                  <Ionicons name={d.icon as any} size={14} color={selected ? C.white : C.textSecondary} />
+                  <Ionicons name={iconName(d.icon)} size={14} color={selected ? C.white : C.textSecondary} />
                   <Text style={[styles.distractionText, selected && styles.distractionTextActive]}>{d.label}</Text>
                 </TouchableOpacity>
               );

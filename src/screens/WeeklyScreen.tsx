@@ -3,18 +3,10 @@ import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C } from '../types';
+import { iconName } from '../components/Icon';
+import { C, WeeklyActivity, FastingLog } from '../types';
 import { loadFastingLog, toggleFast } from '../services/StorageService';
-
-interface WeeklyActivity {
-  id: string;
-  title: string;
-  description: string;
-  dayOfWeek: number; // 0 = Sunday
-  type: 'fasting' | 'sunnah' | 'quran' | 'dhikr' | 'charity' | 'reminder';
-  icon: string;
-  action?: string;
-}
+import { getLocalDateKey } from '../utils/date';
 
 const WEEKLY_ACTIVITIES: WeeklyActivity[] = [
   { id: 'monday-fast', title: 'Monday Fast', description: 'Sunnah fasting on Monday — the day the Prophet ﷺ was born', dayOfWeek: 1, type: 'fasting', icon: 'water-outline', action: 'monday' },
@@ -36,7 +28,7 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function WeeklyScreen() {
-  const [fastingLog, setFastingLog] = useState<Record<string, any>>({});
+  const [fastingLog, setFastingLog] = useState<Record<string, FastingLog>>({});
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
   const today = new Date().getDay();
 
@@ -49,12 +41,12 @@ export default function WeeklyScreen() {
     const diff = dayOfWeek - now.getDay();
     const target = new Date(now);
     target.setDate(now.getDate() + diff);
-    return target.toISOString().split('T')[0];
+    return getLocalDateKey(target);
   };
 
-  const toggleFasting = async (type: string) => {
+  const toggleFasting = async (type: FastingLog['type']) => {
     const dateKey = getDateKeyForDay(selectedDay);
-    const log = await toggleFast(dateKey, type as any);
+    const log = await toggleFast(dateKey, type);
     setFastingLog(log);
   };
 
@@ -109,7 +101,7 @@ export default function WeeklyScreen() {
         todaysActivities.map(activity => (
           <View key={activity.id} style={styles.activityCard}>
             <View style={[styles.activityIconWrap, { backgroundColor: activity.type === 'fasting' ? C.primaryLight : activity.type === 'reminder' ? C.goldPale : C.primaryLight }]}>
-              <Ionicons name={activity.icon as any} size={22} color={activity.type === 'fasting' ? C.primary : activity.type === 'reminder' ? C.gold : C.textSecondary} />
+              <Ionicons name={iconName(activity.icon ?? 'help-outline')} size={22} color={activity.type === 'fasting' ? C.primary : activity.type === 'reminder' ? C.gold : C.textSecondary} />
             </View>
             <View style={styles.activityInfo}>
               <Text style={styles.activityTitle}>{activity.title}</Text>
@@ -137,7 +129,7 @@ export default function WeeklyScreen() {
         </View>
         <View style={styles.sunnahContent}>
           <View style={[styles.sunnahIconWrap, { backgroundColor: C.goldPale }]}>
-            <Ionicons name={weeklySunnah.icon as any} size={24} color={C.gold} />
+            <Ionicons name={iconName(weeklySunnah.icon)} size={24} color={C.gold} />
           </View>
           <View style={styles.sunnahInfo}>
             <Text style={styles.sunnahName}>{weeklySunnah.title}</Text>
@@ -154,7 +146,7 @@ export default function WeeklyScreen() {
           return (
             <View key={activity.id} style={[styles.overviewItem, isTodayActivity && styles.overviewItemToday]}>
               <View style={styles.overviewDot}>
-                <Ionicons name={activity.icon as any} size={12} color={isTodayActivity ? '#FFF' : C.textMuted} />
+                <Ionicons name={iconName(activity.icon ?? 'help-outline')} size={12} color={isTodayActivity ? '#FFF' : C.textMuted} />
               </View>
               <View style={styles.overviewInfo}>
                 <Text style={[styles.overviewTitle, isTodayActivity && styles.overviewTitleToday]}>{activity.title}</Text>
@@ -172,7 +164,7 @@ export default function WeeklyScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
 

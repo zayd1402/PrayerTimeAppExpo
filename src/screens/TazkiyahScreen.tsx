@@ -3,8 +3,10 @@ import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import { C } from '../types';
 import { mmkv } from '../services/StorageService';
+import { getLocalDateKey } from '../utils/date';
 
 const TAZKIYAH_KEY = '@prayertime:tazkiyah_log';
 
@@ -34,7 +36,7 @@ const DEATH_REMINDERS = [
 ];
 
 function getDateKey(): string {
-  return new Date().toISOString().split('T')[0];
+  return getLocalDateKey();
 }
 
 export default function TazkiyahScreen() {
@@ -130,7 +132,7 @@ export default function TazkiyahScreen() {
               style={[styles.heartBtn, todayEntry.heartCheck === h.value && styles.heartBtnActive]}
               onPress={() => setTodayEntry(prev => ({ ...prev, heartCheck: h.value }))}
             >
-              <Ionicons name={h.icon as any} size={20} color={todayEntry.heartCheck === h.value ? C.white : C.textSecondary} />
+              <Ionicons name={iconName(h.icon)} size={20} color={todayEntry.heartCheck === h.value ? C.white : C.textSecondary} />
               <Text style={[styles.heartLabel, todayEntry.heartCheck === h.value && styles.heartLabelActive]}>{h.label}</Text>
             </TouchableOpacity>
           ))}
@@ -221,7 +223,7 @@ export default function TazkiyahScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
 

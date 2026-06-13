@@ -4,6 +4,7 @@ import {
   TextInput, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import { C, ZakatRecord, CharityRecord } from '../types';
 import {
   loadZakatRecords, addZakatRecord,
@@ -147,7 +148,7 @@ export default function ZakatScreen() {
             { label: 'Debts Owed ($)', value: debts, setter: setDebts, icon: 'card-outline' },
           ].map(field => (
             <View key={field.label} style={styles.inputRow}>
-              <Ionicons name={field.icon as any} size={18} color={C.textMuted} style={{ marginRight: 10 }} />
+              <Ionicons name={iconName(field.icon)} size={18} color={C.textMuted} style={{ marginRight: 10 }} />
               <Text style={styles.inputLabel}>{field.label}</Text>
               <TextInput
                 style={styles.input}
@@ -271,7 +272,7 @@ export default function ZakatScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
 

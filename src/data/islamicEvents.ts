@@ -24,8 +24,7 @@ export function getEventsForHijriDate(day: number, month: number): IslamicEvent[
   });
 }
 
-export function getUpcomingEvents(daysAhead: number = 30): IslamicEvent[] {
-  const now = new Date();
+export function getUpcomingEvents(_daysAhead: number = 30): IslamicEvent[] {
   // Simplified - in production would calculate actual Hijri dates
   return ISLAMIC_EVENTS.slice(0, 3);
 }

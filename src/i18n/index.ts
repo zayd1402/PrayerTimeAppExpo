@@ -4,11 +4,9 @@ import { useLocales } from 'expo-localization';
 import en from './en.json';
 import ar from './ar.json';
 
-type TranslationKey = keyof typeof en;
-
 const translations: Record<string, Record<string, string>> = {
-  en: en as any,
-  ar: ar as any,
+  en,
+  ar,
 };
 
 export function getDeviceLocale(): string {

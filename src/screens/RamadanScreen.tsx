@@ -1,17 +1,14 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput,
-  Alert, Dimensions
+  StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
-import { HijriService } from '../services/HijriService';
 import { mmkv } from '../services/StorageService';
 import {
   getRamadanState, getTodayJuz, calculateKhatmPlan, getNightVirtue
 } from '../services/RamadanService';
 
-const { width } = Dimensions.get('window');
 const RAMADAN_LOG_KEY = '@prayertime:ramadan_log';
 const RAMADAN_TARGET_KEY = '@prayertime:ramadan_targets';
 
@@ -72,7 +69,6 @@ export default function RamadanScreen() {
     setAllLogs(logs);
   };
 
-  const totalDaysLogged = Object.keys(allLogs).length;
   const completedDays = Object.values(allLogs).filter(
     d => d.suhoor && d.fajrOnTime && d.taraweehRakahs >= 8 && d.iftarDuaDone
   ).length;
@@ -290,7 +286,7 @@ export default function RamadanScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
 

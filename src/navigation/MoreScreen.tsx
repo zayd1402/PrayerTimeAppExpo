@@ -1,7 +1,9 @@
 // ─── MoreScreen — Grid menu + inline sub-screen rendering ─────
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Dimensions } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import { C } from '../types';
 
 import HadithScreen from '../screens/HadithScreen';
@@ -47,12 +49,12 @@ export default function MoreScreen() {
 
   if (!activeLocation) {
     return (
-      <View style={styles.screen}>
+      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <View style={styles.moreHeader}>
           <Text style={styles.moreTitle}>Location needed</Text>
           <Text style={styles.moreLabel}>Choose a manual city or enable device location in Settings.</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -86,43 +88,45 @@ export default function MoreScreen() {
     })();
 
     return (
-      <View style={styles.screen}>
+      <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <TouchableOpacity style={styles.backButton} onPress={handleBack}>
           <Ionicons name="arrow-back" size={20} color="#FFF" />
           <Text style={styles.backText}>Back</Text>
         </TouchableOpacity>
         {subScreen}
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.screen} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
-      <View style={styles.moreHeader}>
-        <Text style={styles.moreTitle}>More</Text>
-      </View>
-      <View style={styles.moreGrid}>
-        {MORE_MENU.map(item => (
-          <TouchableOpacity
-            key={item.id}
-            style={styles.moreCard}
-            onPress={() => setActiveScreen(item.id)}
-          >
-            <View style={[styles.moreIconWrap, { backgroundColor: item.color + '12' }]}>
-              <Ionicons name={item.icon as any} size={24} color={item.color} />
-            </View>
-            <Text style={styles.moreLabel}>{item.label}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+    <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.screenPadding} showsVerticalScrollIndicator={false}>
+        <View style={styles.moreHeader}>
+          <Text style={styles.moreTitle}>More</Text>
+        </View>
+        <View style={styles.moreGrid}>
+          {MORE_MENU.map(item => (
+            <TouchableOpacity
+              key={item.id}
+              style={styles.moreCard}
+              onPress={() => setActiveScreen(item.id)}
+            >
+              <View style={[styles.moreIconWrap, { backgroundColor: item.color + '12' }]}>
+                <Ionicons name={iconName(item.icon)} size={24} color={item.color} />
+              </View>
+              <Text style={styles.moreLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: C.bgBase },
   screenPadding: { paddingBottom: 100 },
-  moreHeader: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  moreHeader: { padding: 18, backgroundColor: C.heroBg },
   moreTitle: { fontSize: 26, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   moreGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 14, gap: 10 },
   moreCard: {
@@ -131,9 +135,10 @@ const styles = StyleSheet.create({
   },
   moreIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
   moreLabel: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, textAlign: 'center' },
+  scrollView: { flex: 1 },
   backButton: {
     position: 'absolute', zIndex: 10,
-    top: Platform.OS === 'ios' ? 50 : 40,
+    top: 18,
     left: 18, flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: 'rgba(58,44,26,0.55)',
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,

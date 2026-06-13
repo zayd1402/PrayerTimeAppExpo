@@ -296,5 +296,7 @@ export interface WeeklyActivity {
   description: string;
   dayOfWeek: number;
   type: 'fasting' | 'sunnah' | 'quran' | 'dhikr' | 'charity' | 'reminder';
-  isEnabled: boolean;
+  icon?: string;
+  action?: FastingLog['type'];
+  isEnabled?: boolean;
 }

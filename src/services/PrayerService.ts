@@ -52,7 +52,6 @@ function getSunDeclination(jd: number): number {
   const T = getJulianCentury(jd);
   const L0 = 280.46646 + T * (36000.76983 + 0.0003032 * T);
   const M = 357.52911 + T * (35999.0503 - 0.0001537 * T);
-  const e = 0.016708634 - T * (0.000042037 + 0.0000001264 * T);
 
   const C = Math.sin((Math.PI / 180) * M) * (1.914602 - T * (0.004817 + 0.000014 * T)) +
             Math.sin((Math.PI / 180) * 2 * M) * (0.019993 - 0.000101 * T) +
@@ -67,14 +66,14 @@ function getEquationOfTime(jd: number): number {
   const T = getJulianCentury(jd);
   const L0 = 280.46646 + T * (36000.76983 + 0.0003032 * T);
   const M = 357.52911 + T * (35999.0503 - 0.0001537 * T);
-  const e = 0.016708634 - T * (0.000042037 + 0.0000001264 * T);
+  const eccentricity = 0.016708634 - T * (0.000042037 + 0.0000001264 * T);
   const L = L0 + (1.914602 - T * (0.004817 + 0.000014 * T)) * Math.sin((Math.PI / 180) * M) +
             0.019993 * Math.sin((Math.PI / 180) * 2 * M) - 0.000289 * Math.sin((Math.PI / 180) * 3 * M);
   const obliq = 23.439291 - 0.0130042 * T;
   const y = Math.tan((Math.PI / 180) * obliq / 2) ** 2;
-  const eot = y * Math.sin((Math.PI / 180) * 2 * L) - 2 * e * Math.sin((Math.PI / 180) * M) +
-              4 * e * y * Math.sin((Math.PI / 180) * M) * Math.cos((Math.PI / 180) * 2 * L) -
-              0.5 * y * y * Math.sin((Math.PI / 180) * 4 * L) - 1.25 * e * e * Math.sin((Math.PI / 180) * 2 * M);
+  const eot = y * Math.sin((Math.PI / 180) * 2 * L) - 2 * eccentricity * Math.sin((Math.PI / 180) * M) +
+              4 * eccentricity * y * Math.sin((Math.PI / 180) * M) * Math.cos((Math.PI / 180) * 2 * L) -
+              0.5 * y * y * Math.sin((Math.PI / 180) * 4 * L) - 1.25 * eccentricity * eccentricity * Math.sin((Math.PI / 180) * 2 * M);
   return eot * (180 / Math.PI) * 4; // minutes
 }
 

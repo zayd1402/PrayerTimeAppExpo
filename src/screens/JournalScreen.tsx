@@ -4,7 +4,8 @@ import {
   TextInput, Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C, PrayerId, PRAYER_IDS } from '../types';
+import { iconName } from '../components/Icon';
+import { C, PrayerId, PrayerJournalEntry } from '../types';
 import { loadPrayerJournal, addJournalEntry, getKhushuAverage } from '../services/StorageService';
 
 const MOODS = [
@@ -21,9 +22,9 @@ const PRAYER_NAMES: Record<string, string> = {
 };
 
 export default function JournalScreen() {
-  const [entries, setEntries] = useState<Record<string, any[]>>({});
+  const [entries, setEntries] = useState<Record<string, PrayerJournalEntry[]>>({});
   const [selectedPrayer, setSelectedPrayer] = useState<PrayerId>('fajr');
-  const [selectedMood, setSelectedMood] = useState<string>('');
+  const [selectedMood, setSelectedMood] = useState<PrayerJournalEntry['mood'] | ''>('');
   const [reflection, setReflection] = useState('');
   const [gratitude, setGratitude] = useState('');
   const [improvement, setImprovement] = useState('');
@@ -49,7 +50,7 @@ export default function JournalScreen() {
       id: Date.now().toString(),
       date: todayKey,
       prayerId: selectedPrayer,
-      mood: selectedMood as any,
+      mood: selectedMood as PrayerJournalEntry['mood'],
       reflection: reflection || undefined,
       gratitude: gratitude || undefined,
       improvement: improvement || undefined};
@@ -140,7 +141,7 @@ export default function JournalScreen() {
             style={[styles.moodChip, selectedMood === mood.value && { backgroundColor: mood.color + '15', borderColor: mood.color }]}
             onPress={() => setSelectedMood(mood.value)}
           >
-            <Ionicons name={mood.icon as any} size={20} color={selectedMood === mood.value ? mood.color : C.textMuted} />
+            <Ionicons name={iconName(mood.icon)} size={20} color={selectedMood === mood.value ? mood.color : C.textMuted} />
             <Text style={[styles.moodLabel, selectedMood === mood.value && { color: mood.color, fontFamily: 'Jost_700Bold' }]}>
               {mood.label}
             </Text>
@@ -197,7 +198,7 @@ export default function JournalScreen() {
       {allEntries.length > 0 && (
         <>
           <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Recent Entries</Text>
-          {allEntries.slice(0, 10).map((entry, index) => {
+          {allEntries.slice(0, 10).map(entry => {
             const mood = MOODS.find(m => m.value === entry.mood);
             return (
               <View key={entry.id} style={styles.entryCard}>
@@ -209,7 +210,7 @@ export default function JournalScreen() {
                 </View>
                 {mood && (
                   <View style={[styles.moodBadge, { backgroundColor: mood.color + '10' }]}>
-                    <Ionicons name={mood.icon as any} size={12} color={mood.color} />
+                    <Ionicons name={iconName(mood.icon)} size={12} color={mood.color} />
                     <Text style={[styles.moodBadgeText, { color: mood.color }]}>{mood.label}</Text>
                   </View>
                 )}
@@ -240,7 +241,7 @@ export default function JournalScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
 

@@ -19,7 +19,7 @@ import {
   haversineDistance,
 } from '../PrayerService';
 
-import type { PrayerId, PrayerTime } from '../../types';
+import type { PrayerId, PrayerTime, CalculationMethod } from '../../types';
 
 // ─── Helpers ─────────────────────────────────────────────────
 
@@ -398,8 +398,9 @@ describe('Bug fix regression: getSunDeclination uses M not L0', () => {
 describe('Bug fix regression: Isha formula', () => {
   test('Isha is after Maghrib (not before)', () => {
     const date = new Date(Date.UTC(2024, 5, 1)); // June
-    for (const method of ['muslim_world_league', 'isna', 'egyptian', 'karachi'] as const) {
-      const times = calculatePrayerTimes(date, 48.8566, 2.3522, method as any, 'shafi');
+    const methods: CalculationMethod[] = ['muslim_world_league', 'isna', 'egyptian', 'karachi'];
+    for (const method of methods) {
+      const times = calculatePrayerTimes(date, 48.8566, 2.3522, method, 'shafi');
       expect(times.isha).toBeGreaterThan(times.maghrib);
     }
   });

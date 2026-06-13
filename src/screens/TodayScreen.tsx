@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  StyleSheet, View, Text, TouchableOpacity, ScrollView,
-  Dimensions, Alert, AccessibilityInfo
+  StyleSheet, View, Text, TouchableOpacity,
+  Alert, AccessibilityInfo
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
+import { useTranslation } from '../i18n';
 import { C, PrayerId, PRAYER_ICONS } from '../types';
 import Animated, {
   useSharedValue, useAnimatedStyle, useAnimatedScrollHandler,
@@ -19,34 +22,11 @@ import { getUpcomingSacredPeriods, SacredPeriod } from '../services/SacredTimeSe
 import { getRamadanState, RamadanState } from '../services/RamadanService';
 import { getLessonForDate } from '../data/knowledge';
 
-const { width } = Dimensions.get('window');
-
-interface PrayerTimes {
-  fajr: Date;
-  sunrise: Date;
-  dhuhr: Date;
-  asr: Date;
-  maghrib: Date;
-  isha: Date;
-}
-
 interface Prayer {
   id: string;
   name: string;
   arabicName: string;
   icon: string;
-}
-
-interface TodayScreenProps {
-  prayerTimes: PrayerTimes;
-  nextPrayer: Prayer | null;
-  nextPrayerTime: Date | null;
-  completedPrayers: Set<string>;
-  locationName: string;
-  hijriDate: string;
-  timerDisplay: string;
-  togglePrayer: (id: string) => void;
-  dailyHadith?: { english: string; source: string } | null;
 }
 
 const PRAYERS: Prayer[] = [
@@ -88,10 +68,7 @@ function getTimeUntil(target: Date): string {
 function PrayerRing({ completed, total }: { completed: number; total: number }) {
   const size = 58;
   const strokeWidth = 5;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
   const progress = completed / total;
-  const strokeDashoffset = circumference * (1 - progress);
 
   return (
     <View style={[styles.ringContainer, { width: size, height: size }]}>
@@ -117,11 +94,11 @@ function PrayerRing({ completed, total }: { completed: number; total: number }) 
 // ─── Prayer Row with Swipe (Reanimated + Gesture Handler) ─────
 function PrayerRow({
   prayer, time, isTrackable, isCompleted, isNext, isActive,
-  onToggle, onLongPress, index, reduceMotion
+  onToggle, onLongPress, reduceMotion, t
 }: {
   prayer: Prayer; time: Date; isTrackable: boolean; isCompleted: boolean;
   isNext: boolean; isActive: boolean; onToggle: () => void; onLongPress: () => void;
-  index: number; reduceMotion: boolean;
+  reduceMotion: boolean; t: (key: string, params?: Record<string, string>) => string;
 }) {
   const translateX = useSharedValue(0);
   const rowScale = useSharedValue(1);
@@ -180,13 +157,16 @@ function PrayerRow({
         {/* Swipe reveal background */}
         <View style={[styles.swipeBg, isCompleted ? styles.swipeBgUndo : styles.swipeBgDone]}>
           <Ionicons name={isCompleted ? 'arrow-undo' : 'checkmark'} size={24} color="#FFF" />
-          <Text style={styles.swipeText}>{isCompleted ? 'Undo' : 'Prayed'}</Text>
+          <Text style={styles.swipeText}>{isCompleted ? t('home.undo') : t('home.prayed')}</Text>
         </View>
 
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={isTrackable ? onToggle : undefined}
           onLongPress={onLongPress}
+          accessibilityRole="button"
+          accessibilityLabel={`${prayer.name} prayer, ${isCompleted ? 'completed' : 'not completed'}`}
+          accessibilityHint={isTrackable ? 'Double-tap to mark as prayed' : undefined}
           style={[
             styles.prayerRow,
             isNext && styles.prayerRowNext,
@@ -195,7 +175,7 @@ function PrayerRow({
           ]}
         >
           <View style={[styles.prayerIconWrap, isActive && styles.prayerIconWrapActive]}>
-            <Ionicons name={(isActive ? PRAYER_ICONS[prayer.id as PrayerId].iconActive : prayer.icon) as any} size={22} color={isActive ? C.primary : C.textSecondary} />
+            <Ionicons name={iconName((isActive ? PRAYER_ICONS[prayer.id as PrayerId].iconActive : prayer.icon))} size={22} color={isActive ? C.primary : C.textSecondary} />
             {isActive && <View style={styles.activePulse} />}
           </View>
 
@@ -207,7 +187,7 @@ function PrayerRow({
             {iqamaCountdown && (
               <View style={styles.iqamaBadge}>
                 <Ionicons name="time-outline" size={10} color={C.primary} />
-                <Text style={styles.iqamaText}>Iqama in {iqamaCountdown}</Text>
+                <Text style={styles.iqamaText}>{t('home.iqamaIn', { time: iqamaCountdown })}</Text>
               </View>
             )}
           </View>
@@ -233,13 +213,13 @@ function PrayerRow({
 }
 
 // ─── Daily Hadith Card ───────────────────────────────────────
-function DailyHadithCard({ hadith }: { hadith: { english: string; source: string } | null }) {
+function DailyHadithCard({ hadith, title }: { hadith: { english: string; source: string } | null; title: string }) {
   if (!hadith) return null;
   return (
     <View style={styles.hadithCard}>
       <View style={styles.hadithHeader}>
         <Ionicons name="book-outline" size={16} color={C.gold} />
-        <Text style={styles.hadithTitle}>Hadith of the Day</Text>
+        <Text style={styles.hadithTitle}>{title}</Text>
       </View>
       <Text style={styles.hadithText} numberOfLines={3}>{hadith.english}</Text>
       <Text style={styles.hadithSource}>— {hadith.source}</Text>
@@ -285,7 +265,7 @@ export default function TodayScreen() {
   const {
     prayersObj: prayerTimes, nextPrayerObj: nextPrayer, nextPrayerTime,
     completedPrayers, location, timerDisplay, dailyHadith, hijriDateStr,
-    settings,
+    settings, error,
     handleTogglePrayer: togglePrayer,
     handleUpdateSettings,
   } = usePrayerApp();
@@ -294,6 +274,7 @@ export default function TodayScreen() {
   const [sunnahStreak, setSunnahStreak] = useState(0);
   const [khushuPrayer, setKhushuPrayer] = useState<{ id: string; name: string } | null>(null);
   const [sacredPeriods, setSacredPeriods] = useState<SacredPeriod[]>([]);
+  const { t } = useTranslation();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const ramadanState = getRamadanState();
   const todayLesson = useMemo(() => getLessonForDate(), []);
@@ -364,18 +345,30 @@ export default function TodayScreen() {
 
   return (
     <>
-      <Animated.ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        scrollEventThrottle={16}
-        onScroll={scrollHandler}
-      >
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        {error && (
+          <View style={styles.errorBanner}>
+            <Ionicons name="warning-outline" size={16} color={C.bgBase} />
+            <Text style={styles.errorText}>{t('home.locationError')}</Text>
+          </View>
+        )}
+        <Animated.ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={scrollHandler}
+        >
         {settingsOpen && (
           <View style={styles.settingsOverlay}>
-            <TouchableOpacity style={styles.settingsBackButton} onPress={() => setSettingsOpen(false)}>
+            <TouchableOpacity
+              style={styles.settingsBackButton}
+              onPress={() => setSettingsOpen(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Close settings"
+            >
               <Ionicons name="arrow-back" size={20} color={C.white} />
-              <Text style={styles.settingsBackText}>Back</Text>
+              <Text style={styles.settingsBackText}>{t('common.back')}</Text>
             </TouchableOpacity>
             <SettingsScreen settings={settings} updateSettings={handleUpdateSettings} />
           </View>
@@ -388,7 +381,12 @@ export default function TodayScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.heroGradient}
         >
-          <TouchableOpacity style={styles.heroSettingsButton} onPress={() => setSettingsOpen(true)}>
+          <TouchableOpacity
+            style={styles.heroSettingsButton}
+            onPress={() => setSettingsOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Open settings"
+          >
             <Ionicons name="settings-outline" size={20} color={C.heroBg} />
           </TouchableOpacity>
 
@@ -396,13 +394,13 @@ export default function TodayScreen() {
             <View style={styles.heroLeft}>
               <View style={styles.locationRow}>
                 <Ionicons name="location" size={14} color={C.textSecondary} />
-                <Text style={styles.locationText}>{location?.name ?? 'Choose location'}</Text>
+                <Text style={styles.locationText}>{location?.name ?? t('home.chooseLocation')}</Text>
               </View>
               <Text style={styles.nextPrayerText}>
-                {nextPrayer ? nextPrayer.name : 'All Complete'}
+                {nextPrayer ? nextPrayer.name : t('home.allComplete')}
               </Text>
               <Text style={styles.nextPrayerTime}>
-                {nextPrayer && nextPrayerTime ? `at ${formatTime(nextPrayerTime)}` : 'All prayers tracked'}
+                {nextPrayer && nextPrayerTime ? t('home.atTime', { time: formatTime(nextPrayerTime) }) : t('home.prayersTracked')}
               </Text>
             </View>
             <PrayerRing completed={completedCount} total={5} />
@@ -411,20 +409,20 @@ export default function TodayScreen() {
           {nextPrayerTime && timerDisplay ? (
             <Text style={styles.timerText}>{timerDisplay}</Text>
           ) : (
-            <Text style={styles.timerHint}>Live countdown is off</Text>
+            <Text style={styles.timerHint}>{t('home.liveCountdownOff')}</Text>
           )}
 
           <View style={styles.progressRow}>
             <View style={styles.progressBar}>
               <Animated.View style={[styles.progressFill, { width: `${(completedCount / 5) * 100}%` }]} />
             </View>
-            <Text style={styles.progressText}>{completedCount}/5</Text>
+            <Text style={styles.progressText}>{t('home.progress', { count: String(completedCount) })}</Text>
           </View>
 
           {sunnahStreak > 0 && (
             <View style={styles.sunnahStreakRow}>
               <Ionicons name="leaf-outline" size={11} color={C.gold} />
-              <Text style={styles.sunnahStreakText}>{sunnahStreak}-day sunnah streak</Text>
+              <Text style={styles.sunnahStreakText}>{t('home.sunnahStreak', { count: String(sunnahStreak) })}</Text>
             </View>
           )}
         </LinearGradient>
@@ -441,7 +439,7 @@ export default function TodayScreen() {
       {/* Sacred Time Awareness */}
       {sacredPeriods.length > 0 && sacredPeriods[0].daysUntil <= 14 && (
         <View style={styles.sacredCard}>
-          <Ionicons name={sacredPeriods[0].icon as any} size={18} color={C.gold} />
+          <Ionicons name={iconName(sacredPeriods[0].icon)} size={18} color={C.gold} />
           <View style={{ marginLeft: 10, flex: 1 }}>
             <Text style={styles.sacredTitle}>
               {sacredPeriods[0].isActive ? `${sacredPeriods[0].title} is here!` : `${sacredPeriods[0].title} in ${sacredPeriods[0].daysUntil} days`}
@@ -453,7 +451,7 @@ export default function TodayScreen() {
 
       {/* Prayer List */}
       <View style={styles.prayerList}>
-        {entries.map(({ prayer, time }, index) => {
+        {entries.map(({ prayer, time }) => {
           const isTrackable = TRACKABLE.includes(prayer.id);
           const isCompleted = completedPrayers.has(prayer.id);
           const isNext = nextPrayer?.id === prayer.id;
@@ -470,21 +468,21 @@ export default function TodayScreen() {
               isActive={isActive}
               onToggle={() => handleToggle(prayer.id)}
               onLongPress={() => handleLongPress(prayer)}
-              index={index}
               reduceMotion={reduceMotion}
+              t={t}
             />
           );
         })}
       </View>
 
       {/* Daily Hadith */}
-      <DailyHadithCard hadith={dailyHadith} />
+      <DailyHadithCard hadith={dailyHadith} title={t('home.hadithOfDay')} />
 
       {/* Today I Learned */}
       <View style={styles.learnCard}>
         <View style={styles.learnHeader}>
           <Ionicons name="bulb-outline" size={16} color={C.gold} />
-          <Text style={styles.learnTitle}>Today I Learned</Text>
+          <Text style={styles.learnTitle}>{t('home.todayILearned')}</Text>
         </View>
         <Text style={styles.learnLesson}>{todayLesson.title}</Text>
         <Text style={styles.learnContent} numberOfLines={4}>{todayLesson.content}</Text>
@@ -492,7 +490,7 @@ export default function TodayScreen() {
       </View>
 
       {/* Hint */}
-      <Text style={styles.hintText}>Swipe right to mark • Long press for options</Text>
+      <Text style={styles.hintText}>{t('home.swipeHint')}</Text>
 
       {khushuPrayer && (
         <KhushuModal
@@ -503,17 +501,19 @@ export default function TodayScreen() {
         />
       )}
     </Animated.ScrollView>
+      </SafeAreaView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
+  scrollView: { flex: 1 },
   content: { padding: 18, paddingBottom: 120 },
   settingsOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, backgroundColor: C.bgBase },
   settingsBackButton: {
     position: 'absolute',
-    top: 54,
+    top: 18,
     left: 18,
     zIndex: 60,
     flexDirection: 'row',
@@ -525,6 +525,19 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   settingsBackText: { color: C.white, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: C.gold,
+    marginHorizontal: 18,
+    marginTop: 8,
+    marginBottom: -8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  errorText: { flex: 1, color: C.bgBase, fontSize: 13, fontFamily: 'Jost_500Medium' },
 
   // Hero — Neumorphic
   heroCard: {

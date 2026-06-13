@@ -18,7 +18,8 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "strict": true,
-    "target": "ESNext"
+    "target": "ESNext",
+    "types": ["jest"]
   },
   "include": [
     "**/*.ts",
@@ -30,8 +31,7 @@
     "ios",
     "babel.config.js",
     "metro.config.js",
-    "jest.config.js",
-    "src/services/__tests__"
+    "jest.config.js"
   ],
   "extends": "expo/tsconfig.base"
 }

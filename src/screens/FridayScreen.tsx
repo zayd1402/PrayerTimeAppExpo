@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity,
-  TextInput, Animated
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { iconName } from '../components/Icon';
 import { C } from '../types';
 import {
   getFridayChecklist, setFridayChecklist as persistChecklist,
@@ -92,7 +93,7 @@ export default function FridayScreen() {
             style={[styles.tab, activeSection === tab.id && styles.tabActive]}
             onPress={() => setActiveSection(tab.id)}
           >
-            <Ionicons name={tab.icon as any} size={16} color={activeSection === tab.id ? '#FFF' : C.textSecondary} />
+            <Ionicons name={iconName(tab.icon)} size={16} color={activeSection === tab.id ? '#FFF' : C.textSecondary} />
             <Text style={[styles.tabLabel, activeSection === tab.id && styles.tabLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
@@ -124,7 +125,7 @@ export default function FridayScreen() {
                 <View style={[styles.checkBox, done && styles.checkBoxDone]}>
                   {done && <Ionicons name="checkmark" size={14} color="#FFF" />}
                 </View>
-                <Ionicons name={item.icon as any} size={18} color={done ? C.primary : C.textSecondary} style={{ marginHorizontal: 12 }} />
+                <Ionicons name={iconName(item.icon)} size={18} color={done ? C.primary : C.textSecondary} style={{ marginHorizontal: 12 }} />
                 <Text style={[styles.checkLabel, done && styles.checkLabelDone]}>{item.label}</Text>
               </TouchableOpacity>
             );
@@ -245,7 +246,7 @@ export default function FridayScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
-  header: { padding: 18, paddingTop: 60, backgroundColor: C.heroBg },
+  header: { padding: 18, backgroundColor: C.heroBg },
   title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
   subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
 

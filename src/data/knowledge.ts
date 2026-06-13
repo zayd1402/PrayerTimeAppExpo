@@ -7,10 +7,6 @@ export interface KnowledgeLesson {
   lessonNumber: number;
 }
 
-const TOPIC_ORDER: KnowledgeLesson['topic'][] = [
-  'aqeedah', 'seerah', 'names_of_allah', 'fiqh', 'tafsir', 'adab',
-];
-
 const ALL_LESSONS: KnowledgeLesson[] = [
   {
     id: 'aqeedah-1', topic: 'aqeedah',

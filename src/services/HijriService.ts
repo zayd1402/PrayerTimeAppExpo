@@ -64,26 +64,52 @@ export function gregorianToHijri(date: Date): HijriDate {
 }
 
 export function hijriToGregorian(hijriYear: number, hijriMonth: number, hijriDay: number): Date {
-  // Convert Hijri to Julian Day
-  const jd = hijriDay +
-             Math.ceil(29.5 * (hijriMonth - 1)) +
-             (hijriYear - 1) * 354 +
-             Math.floor((3 + (11 * hijriYear)) / 30) +
-             1948440 - 385;
+  // Approximate days since the Hijri epoch (16 July 622 CE). This estimate is
+  // within a few days of the true Umm al-Qura date, which is refined by binary
+  // searching against the exact gregorianToHijri conversion.
+  const hijriEpoch = new Date(622, 6, 16);
+  const daysSinceEpoch =
+    (hijriYear - 1) * 354 +
+    Math.floor(((hijriYear - 1) * 11) / 30) +
+    Math.ceil(29.5 * (hijriMonth - 1)) +
+    (hijriDay - 1);
 
-  // Julian Day to Gregorian
-  const l = jd + 68569;
-  const n = Math.floor(4 * l / 146097);
-  const i = Math.floor(l / 4) - Math.floor((146097 * n + 3) / 4);
-  const j = l - Math.floor((146097 * n) / 4);
-  const k = Math.floor(4000 * (i + 1) / 1461001);
-  const d = i - Math.floor(1461 * k / 4) + 31;
-  const m = Math.floor(80 * d / 2447);
-  const day = d - Math.floor(2447 * m / 80);
-  const y = n * 100 + k - 30 + Math.floor(m / 11);
-  const month = m + 2 - 12 * Math.floor(m / 11);
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const estimate = hijriEpoch.getTime() + daysSinceEpoch * msPerDay;
+  let low = new Date(estimate - 30 * msPerDay);
+  let high = new Date(estimate + 30 * msPerDay);
 
-  return new Date(y, month - 1, day);
+  const minDate = new Date(1900, 0, 1);
+  const maxDate = new Date(2100, 0, 1);
+  if (low < minDate) low = minDate;
+  if (high > maxDate) high = maxDate;
+
+  const targetKey = `${hijriYear}-${hijriMonth}-${hijriDay}`;
+  let best: Date | null = null;
+  let left = low.getTime();
+  let right = high.getTime();
+
+  while (left <= right) {
+    const mid = left + Math.floor((right - left) / 2);
+    const candidate = new Date(mid);
+    const candidateHijri = gregorianToHijri(candidate);
+    const candidateKey = `${candidateHijri.year}-${candidateHijri.month}-${candidateHijri.day}`;
+
+    if (candidateKey === targetKey) {
+      best = candidate;
+      right = mid - 1; // find earliest matching instant
+    } else if (
+      candidateHijri.year > hijriYear ||
+      (candidateHijri.year === hijriYear && candidateHijri.month > hijriMonth) ||
+      (candidateHijri.year === hijriYear && candidateHijri.month === hijriMonth && candidateHijri.day > hijriDay)
+    ) {
+      right = mid - 1;
+    } else {
+      left = mid + 1;
+    }
+  }
+
+  return best ?? new Date(left);
 }
 
 // Get days in a Hijri month

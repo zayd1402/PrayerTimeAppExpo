@@ -54,7 +54,7 @@ export default function MosquesScreen({ coordinate, embedded = false }: MosquesS
       <View style={[styles.header, embedded && styles.embeddedHeader]}>
         <View>
           <Text style={styles.title}>Mosques</Text>
-          <Text style={styles.subtitle}>Local Australia seed list with distance from your selected city.</Text>
+          <Text style={styles.subtitle}>Global seed list with distance from your selected city. Add your local mosque in Settings if it is missing.</Text>
         </View>
         <TouchableOpacity style={styles.refreshButton} onPress={() => setQuery('')}>
           <Ionicons name="refresh-outline" size={18} color={C.primary} />
@@ -90,7 +90,13 @@ export default function MosquesScreen({ coordinate, embedded = false }: MosquesS
           contentContainerStyle={styles.list}
           scrollEnabled={false}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.mosqueCard} onPress={() => openInMaps(item)} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={styles.mosqueCard}
+              onPress={() => openInMaps(item)}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={`${item.name}, ${formatDistance(item.distanceKm)} away`}
+            >
               <View style={styles.mosqueIcon}>
                 <Ionicons name="business" size={24} color={C.primary} />
               </View>
