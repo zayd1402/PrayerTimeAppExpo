@@ -5,6 +5,7 @@ export interface SacredPeriod {
   id: string;
   title: string;
   description: string;
+  descriptionArabic: string;
   startDate: Date | null;
   endDate: Date | null;
   isActive: boolean;
@@ -32,6 +33,7 @@ export function getUpcomingSacredPeriods(maxDays: number = 60): SacredPeriod[] {
         id: event.id,
         title: event.title,
         description: event.description || '',
+        descriptionArabic: event.descriptionArabic || event.description || '',
         startDate: gregDate,
         endDate: null,
         isActive,

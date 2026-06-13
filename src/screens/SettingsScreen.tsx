@@ -4,9 +4,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as StoreReview from 'expo-store-review';
-import { C, CalculationMethod, Madhab, AppSettings, PRAYER_IDS, PrayerNotificationId } from '../types';
+import { CalculationMethod, Madhab, AppSettings, PRAYER_IDS, PrayerNotificationId } from '../types';
 import { useTranslation } from '../i18n';
-import { useTheme, ThemeMode } from '../context/ThemeContext';
+import { useTheme, useTokens, ThemeMode, Tokens } from '../context/ThemeContext';
 import { getCurrentLocation } from '../services/LocationService';
 import { initAudio, playAdhan, stopAdhan, getAdhanAttribution, setAdhanVolume } from '../services/AudioService';
 import { requestNotificationPermission } from '../services/NotificationService';
@@ -37,8 +37,10 @@ const VOLUME_OPTIONS = [0.5, 0.75, 1];
 const NOTIFICATION_PRAYERS = PRAYER_IDS.filter(id => id !== 'sunrise') as PrayerNotificationId[];
 
 export default function SettingsScreen({ settings, updateSettings }: SettingsScreenProps) {
-  const { t } = useTranslation();
+  const { t: translate } = useTranslation();
   const { mode: themeMode, setMode: setThemeMode } = useTheme();
+  const t = useTokens();
+  const styles = useMemo(() => createStyles(t), [t]);
   const [manualSearch, setManualSearch] = useState('');
 
   const filteredCities = useMemo(() => {
@@ -51,9 +53,9 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
     const loc = await getCurrentLocation();
     if (loc) {
       await updateSettings({ location: loc });
-      Alert.alert(t('settings.locationUpdated'), t('settings.locationSetTo', { name: loc.name }));
+      Alert.alert(translate('settings.locationUpdated'), translate('settings.locationSetTo', { name: loc.name }));
     } else {
-      Alert.alert(t('settings.locationFailed'), t('settings.couldNotDetect'));
+      Alert.alert(translate('settings.locationFailed'), translate('settings.couldNotDetect'));
     }
   }, [updateSettings]);
 
@@ -61,7 +63,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
     if (enabled) {
       const granted = await requestNotificationPermission();
       if (!granted) {
-        Alert.alert(t('settings.notificationsOff'), t('settings.notificationsOffMessage'));
+        Alert.alert(translate('settings.notificationsOff'), translate('settings.notificationsOffMessage'));
         return;
       }
     }
@@ -79,20 +81,20 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={styles.header}>
-        <Text style={styles.title}>{t('settings.title')}</Text>
-        <Text style={styles.subtitle}>{t('settings.subtitle')}</Text>
+        <Text style={styles.title}>{translate('settings.title')}</Text>
+        <Text style={styles.subtitle}>{translate('settings.subtitle')}</Text>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('settings.location')}</Text>
+        <Text style={styles.sectionTitle}>{translate('settings.location')}</Text>
         <View style={styles.card}>
           <View style={styles.row}>
             <View style={styles.rowIconWrap}>
-              <Ionicons name="locate-outline" size={18} color={settings.location ? C.primary : C.textMuted} />
+              <Ionicons name="locate-outline" size={18} color={settings.location ? t.primary : t.textMuted} />
             </View>
             <View style={styles.rowText}>
-              <Text style={styles.rowLabel}>{t('settings.deviceLocation')}</Text>
-              <Text style={styles.rowSubtitle}>{settings.location?.source === 'device' ? settings.location.name : t('settings.notActive')}</Text>
+              <Text style={styles.rowLabel}>{translate('settings.deviceLocation')}</Text>
+              <Text style={styles.rowSubtitle}>{settings.location?.source === 'device' ? settings.location.name : translate('settings.notActive')}</Text>
             </View>
             <Switch
               value={settings.location?.source === 'device'}
@@ -103,24 +105,24 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
                   handleLocationDetect();
                 }
               }}
-              trackColor={{ true: C.primary }}
+              trackColor={{ true: t.primary }}
             />
           </View>
 
           <TouchableOpacity style={styles.row} onPress={handleLocationDetect}>
             <View style={styles.rowIconWrap}>
-              <Ionicons name="navigate-outline" size={18} color={C.primary} />
+              <Ionicons name="navigate-outline" size={18} color={t.primary} />
             </View>
-            <Text style={styles.rowLabel}>{t('settings.useCurrentLocation')}</Text>
-            <Ionicons name="chevron-forward" size={16} color={C.textMuted} />
+            <Text style={styles.rowLabel}>{translate('settings.useCurrentLocation')}</Text>
+            <Ionicons name="chevron-forward" size={16} color={t.textMuted} />
           </TouchableOpacity>
 
           <View style={styles.manualSearchWrap}>
-            <Ionicons name="search" size={16} color={C.textMuted} />
+            <Ionicons name="search" size={16} color={t.textMuted} />
             <TextInput
               style={styles.manualSearchInput}
-              placeholder={t('settings.searchManualCity')}
-              placeholderTextColor={C.textMuted}
+              placeholder={translate('settings.searchManualCity')}
+              placeholderTextColor={t.textMuted}
               value={manualSearch}
               onChangeText={setManualSearch}
             />
@@ -138,7 +140,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
                   <Text style={[styles.manualCityName, selected && styles.manualCityNameSelected]}>{city.name}</Text>
                   <Text style={styles.manualCityMeta}>{city.timezone}</Text>
                 </View>
-                {selected && <Ionicons name="checkmark-circle" size={20} color={C.primary} />}
+                {selected && <Ionicons name="checkmark-circle" size={20} color={t.primary} />}
               </TouchableOpacity>
             );
           })}
@@ -146,7 +148,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('settings.calculation')}</Text>
+        <Text style={styles.sectionTitle}>{translate('settings.calculation')}</Text>
         <View style={styles.card}>
           {METHODS.map(method => (
             <TouchableOpacity
@@ -156,7 +158,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             >
               <Text style={styles.optionLabel}>{method.label}</Text>
               {settings.calculationMethod === method.value && (
-                <Ionicons name="checkmark-circle" size={20} color={C.primary} />
+                <Ionicons name="checkmark-circle" size={20} color={t.primary} />
               )}
             </TouchableOpacity>
           ))}
@@ -164,7 +166,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('settings.madhhab')}</Text>
+        <Text style={styles.sectionTitle}>{translate('settings.madhhab')}</Text>
         <View style={styles.card}>
           {(['shafi', 'hanafi'] as Madhab[]).map(madhab => (
             <TouchableOpacity
@@ -173,62 +175,62 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
               onPress={() => updateSettings({ madhab })}
             >
               <View>
-                <Text style={styles.optionLabel}>{madhab === 'shafi' ? t('settings.shafi') : t('settings.hanafi')}</Text>
-                <Text style={styles.optionSubtitle}>{madhab === 'shafi' ? t('settings.shafiSubtitle') : t('settings.hanafiSubtitle')}</Text>
+                <Text style={styles.optionLabel}>{madhab === 'shafi' ? translate('settings.shafi') : translate('settings.hanafi')}</Text>
+                <Text style={styles.optionSubtitle}>{madhab === 'shafi' ? translate('settings.shafiSubtitle') : translate('settings.hanafiSubtitle')}</Text>
               </View>
-              {settings.madhab === madhab && <Ionicons name="checkmark-circle" size={20} color={C.primary} />}
+              {settings.madhab === madhab && <Ionicons name="checkmark-circle" size={20} color={t.primary} />}
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('settings.notifications')}</Text>
+        <Text style={styles.sectionTitle}>{translate('settings.notifications')}</Text>
         <View style={styles.card}>
           <View style={styles.row}>
             <View style={styles.rowIconWrap}>
-              <Ionicons name="notifications-outline" size={18} color={settings.notificationsEnabled ? C.primary : C.textMuted} />
+              <Ionicons name="notifications-outline" size={18} color={settings.notificationsEnabled ? t.primary : t.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>{t('settings.prayerAlerts')}</Text>
+            <Text style={styles.rowLabel}>{translate('settings.prayerAlerts')}</Text>
             <Switch
               value={settings.notificationsEnabled}
               onValueChange={handleNotificationsEnabled}
-              trackColor={{ true: C.primary }}
+              trackColor={{ true: t.primary }}
             />
           </View>
 
           {NOTIFICATION_PRAYERS.map(prayerId => (
             <View key={prayerId} style={styles.row}>
               <View style={styles.rowIconWrap}>
-                <Ionicons name="time-outline" size={18} color={settings.prayerNotifications[prayerId] ? C.primary : C.textMuted} />
+                <Ionicons name="time-outline" size={18} color={settings.prayerNotifications[prayerId] ? t.primary : t.textMuted} />
               </View>
-              <Text style={[styles.rowLabel, { textTransform: 'capitalize' }]}>{t(`prayer.${prayerId}`)}</Text>
+              <Text style={[styles.rowLabel, { textTransform: 'capitalize' }]}>{translate(`prayer.${prayerId}`)}</Text>
               <Switch
                 disabled={!settings.notificationsEnabled}
                 value={settings.prayerNotifications[prayerId]}
                 onValueChange={v => updateSettings({
                   prayerNotifications: { ...settings.prayerNotifications, [prayerId]: v },
                 })}
-                trackColor={{ true: C.primary }}
+                trackColor={{ true: t.primary }}
               />
             </View>
           ))}
 
           <View style={styles.row}>
             <View style={styles.rowIconWrap}>
-              <Ionicons name="alarm-outline" size={18} color={settings.fajrAlarmEnabled ? C.primary : C.textMuted} />
+              <Ionicons name="alarm-outline" size={18} color={settings.fajrAlarmEnabled ? t.primary : t.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>{t('settings.fajrAlarm')}</Text>
+            <Text style={styles.rowLabel}>{translate('settings.fajrAlarm')}</Text>
             <Switch
               value={settings.fajrAlarmEnabled}
               onValueChange={v => updateSettings({ fajrAlarmEnabled: v })}
-              trackColor={{ true: C.primary }}
+              trackColor={{ true: t.primary }}
             />
           </View>
 
           {settings.fajrAlarmEnabled && (
             <View style={styles.subRow}>
-              <Text style={styles.rowLabel}>{t('settings.minutesBefore')}</Text>
+              <Text style={styles.rowLabel}>{translate('settings.minutesBefore')}</Text>
               <View style={styles.pillRow}>
                 {FAJR_ALARM_OPTIONS.map(m => (
                   <TouchableOpacity
@@ -245,43 +247,43 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
 
           <View style={styles.row}>
             <View style={styles.rowIconWrap}>
-              <Ionicons name="timer-outline" size={18} color={settings.liveCountdownEnabled ? C.primary : C.textMuted} />
+              <Ionicons name="timer-outline" size={18} color={settings.liveCountdownEnabled ? t.primary : t.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>{t('settings.liveCountdown')}</Text>
+            <Text style={styles.rowLabel}>{translate('settings.liveCountdown')}</Text>
             <Switch
               value={settings.liveCountdownEnabled}
               onValueChange={v => updateSettings({ liveCountdownEnabled: v })}
-              trackColor={{ true: C.primary }}
+              trackColor={{ true: t.primary }}
             />
           </View>
 
           <View style={styles.row}>
             <View style={styles.rowIconWrap}>
-              <Ionicons name="time-outline" size={18} color={settings.iqamaCountdownEnabled ? C.primary : C.textMuted} />
+              <Ionicons name="time-outline" size={18} color={settings.iqamaCountdownEnabled ? t.primary : t.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>{t('settings.iqamaCountdown')}</Text>
+            <Text style={styles.rowLabel}>{translate('settings.iqamaCountdown')}</Text>
             <Switch
               value={settings.iqamaCountdownEnabled}
               onValueChange={v => updateSettings({ iqamaCountdownEnabled: v })}
-              trackColor={{ true: C.primary }}
+              trackColor={{ true: t.primary }}
             />
           </View>
 
           <View style={styles.row}>
             <View style={styles.rowIconWrap}>
-              <Ionicons name="volume-medium-outline" size={18} color={settings.adhanEnabled ? C.primary : C.textMuted} />
+              <Ionicons name="volume-medium-outline" size={18} color={settings.adhanEnabled ? t.primary : t.textMuted} />
             </View>
-            <Text style={styles.rowLabel}>{t('settings.adhanAudio')}</Text>
+            <Text style={styles.rowLabel}>{translate('settings.adhanAudio')}</Text>
             <Switch
               value={settings.adhanEnabled}
               onValueChange={v => updateSettings({ adhanEnabled: v })}
-              trackColor={{ true: C.primary }}
+              trackColor={{ true: t.primary }}
             />
           </View>
 
           {settings.adhanEnabled && (
             <View style={styles.subRow}>
-              <Text style={styles.rowLabel}>{t('settings.adhanVolume')}</Text>
+              <Text style={styles.rowLabel}>{translate('settings.adhanVolume')}</Text>
               <View style={styles.pillRow}>
                 {VOLUME_OPTIONS.map(volume => (
                   <TouchableOpacity
@@ -306,23 +308,23 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
                   setTimeout(() => stopAdhan(), 4000);
                 }}
               >
-                <Ionicons name="play" size={14} color={C.white} />
-                <Text style={styles.previewBtnText}>{t('settings.adhanPreview')}</Text>
+                <Ionicons name="play" size={14} color={t.white} />
+                <Text style={styles.previewBtnText}>{translate('settings.adhanPreview')}</Text>
               </TouchableOpacity>
             </View>
           )}
 
           <View style={styles.attribution}>
-            <Ionicons name="information-circle-outline" size={16} color={C.textMuted} />
+            <Ionicons name="information-circle-outline" size={16} color={t.textMuted} />
             <Text style={styles.attributionText}>
-              {t('settings.adhanAttribution', { title: attribution.title, author: attribution.author, source: attribution.source, license: attribution.license })} 
+              {translate('settings.adhanAttribution', { title: attribution.title, author: attribution.author, source: attribution.source, license: attribution.license })} 
             </Text>
           </View>
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('settings.theme')}</Text>
+        <Text style={styles.sectionTitle}>{translate('settings.theme')}</Text>
         <View style={styles.card}>
           {(['light', 'dark', 'system'] as ThemeMode[]).map(option => (
             <TouchableOpacity
@@ -330,60 +332,61 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
               style={styles.optionRow}
               onPress={() => setThemeMode(option)}
             >
-              <Text style={styles.optionLabel}>{t(`settings.theme${option.charAt(0).toUpperCase() + option.slice(1)}`)}</Text>
-              {themeMode === option && <Ionicons name="checkmark-circle" size={20} color={C.primary} />}
+              <Text style={styles.optionLabel}>{translate(`settings.theme${option.charAt(0).toUpperCase() + option.slice(1)}`)}</Text>
+              {themeMode === option && <Ionicons name="checkmark-circle" size={20} color={t.primary} />}
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{t('settings.about')}</Text>
+        <Text style={styles.sectionTitle}>{translate('settings.about')}</Text>
         <View style={styles.card}>
           <View style={styles.row}>
-            <Text style={styles.rowLabel}>{t('settings.version')}</Text>
+            <Text style={styles.rowLabel}>{translate('settings.version')}</Text>
             <Text style={styles.rowValue}>1.0.0</Text>
           </View>
 
           <TouchableOpacity style={styles.row} onPress={() => Linking.openURL('https://prayertime.app/privacy')}>
-            <Text style={styles.rowLabel}>{t('settings.privacy')}</Text>
-            <Ionicons name="chevron-forward" size={16} color={C.textMuted} />
+            <Text style={styles.rowLabel}>{translate('settings.privacy')}</Text>
+            <Ionicons name="chevron-forward" size={16} color={t.textMuted} />
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.row} onPress={handleRateApp}>
-            <Text style={styles.rowLabel}>{t('settings.rateApp')}</Text>
-            <Ionicons name="star-outline" size={16} color={C.gold} />
+            <Text style={styles.rowLabel}>{translate('settings.rateApp')}</Text>
+            <Ionicons name="star-outline" size={16} color={t.gold} />
           </TouchableOpacity>
         </View>
       </View>
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>{t('settings.footer')}</Text>
+        <Text style={styles.footerText}>{translate('settings.footer')}</Text>
       </View>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(t: Tokens) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: C.bgSurface,
+    backgroundColor: t.bgSurface,
   },
   content: {
     paddingBottom: 100,
   },
   header: {
     padding: 18,
-    backgroundColor: C.heroBg,
+    backgroundColor: t.heroBg,
   },
   title: {
     fontSize: 22,
     fontFamily: 'Jost_700Bold',
-    color: C.white,
+    color: t.white,
   },
   subtitle: {
     fontSize: 13,
-    color: C.goldLight,
+    color: t.goldLight,
     fontFamily: 'Jost_400Regular',
     marginTop: 4,
   },
@@ -394,13 +397,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontFamily: 'Jost_600SemiBold',
-    color: C.textMuted,
+    color: t.textMuted,
     marginBottom: 10,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   card: {
-    backgroundColor: C.bgSurface,
+    backgroundColor: t.bgSurface,
     borderRadius: 14,
     overflow: 'hidden',
   },
@@ -411,24 +414,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: t.border,
   },
   rowIconWrap: { width: 28, justifyContent: 'center', alignItems: 'center' },
   rowText: { flex: 1, marginLeft: 8 },
   rowLabel: {
     fontSize: 15,
-    color: C.textPrimary,
+    color: t.textPrimary,
     fontFamily: 'Jost_500Medium',
     flex: 1,
   },
   rowSubtitle: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.textMuted,
     marginTop: 2,
   },
   rowValue: {
     fontSize: 14,
-    color: C.textMuted,
+    color: t.textMuted,
   },
   optionRow: {
     flexDirection: 'row',
@@ -437,16 +440,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: t.border,
   },
   optionLabel: {
     fontSize: 15,
-    color: C.textPrimary,
+    color: t.textPrimary,
     fontFamily: 'Jost_500Medium',
   },
   optionSubtitle: {
     fontSize: 13,
-    color: C.textMuted,
+    color: t.textMuted,
     marginTop: 2,
   },
   manualSearchWrap: {
@@ -458,9 +461,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: C.bgBase,
+    backgroundColor: t.bgBase,
   },
-  manualSearchInput: { flex: 1, fontSize: 14, color: C.textPrimary },
+  manualSearchInput: { flex: 1, fontSize: 14, color: t.textPrimary },
   manualCityRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -468,12 +471,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    borderBottomColor: t.border,
   },
-  manualCityRowSelected: { backgroundColor: C.goldPale },
-  manualCityName: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
-  manualCityNameSelected: { color: C.primary },
-  manualCityMeta: { fontSize: 12, color: C.textMuted, marginTop: 2 },
+  manualCityRowSelected: { backgroundColor: t.goldPale },
+  manualCityName: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: t.textPrimary },
+  manualCityNameSelected: { color: t.primary },
+  manualCityMeta: { fontSize: 12, color: t.textMuted, marginTop: 2 },
   subRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -481,46 +484,47 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: C.border,
-    backgroundColor: C.bgBase,
+    borderBottomColor: t.border,
+    backgroundColor: t.bgBase,
   },
   pillRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 8 },
   pill: {
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: C.bgSurface,
+    backgroundColor: t.bgSurface,
     borderWidth: 1,
-    borderColor: C.borderStrong,
+    borderColor: t.borderStrong,
   },
-  pillActive: { backgroundColor: C.primary, borderColor: C.primary },
-  pillText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
-  pillTextActive: { color: C.white },
+  pillActive: { backgroundColor: t.primary, borderColor: t.primary },
+  pillText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: t.textSecondary },
+  pillTextActive: { color: t.white },
   previewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: C.primary,
+    backgroundColor: t.primary,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 10,
     marginTop: 8,
     alignSelf: 'flex-end',
   },
-  previewBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.white },
+  previewBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: t.white },
   attribution: {
     flexDirection: 'row',
     gap: 8,
     padding: 14,
-    backgroundColor: C.bgBase,
+    backgroundColor: t.bgBase,
   },
-  attributionText: { flex: 1, fontSize: 12, color: C.textMuted, lineHeight: 18 },
+  attributionText: { flex: 1, fontSize: 12, color: t.textMuted, lineHeight: 18 },
   footer: {
     padding: 40,
     alignItems: 'center',
   },
   footerText: {
     fontSize: 12,
-    color: C.textMuted,
+    color: t.textMuted,
   },
-});
+  });
+}

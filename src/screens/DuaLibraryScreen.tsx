@@ -9,6 +9,7 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { logger } from '../utils/logger';
+import { useTranslation } from '../i18n';
 import { C, Dua, DUA_CATEGORIES, DuaCategory } from '../types';
 type CategoryFilter = DuaCategory | 'all' | 'favorites';
 import { getFavoriteDuas, toggleFavoriteDua } from '../services/StorageService';
@@ -110,7 +111,7 @@ const counterStyles = StyleSheet.create({
   btnDone: { backgroundColor: C.textMuted }});
 
 // ─── Dua Card ────────────────────────────────────────────────
-function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onToggleFav: () => void }) {
+function DuaCard({ dua, isFav, onToggleFav, hideMeaning }: { dua: Dua; isFav: boolean; onToggleFav: () => void; hideMeaning?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const heightAnim = useSharedValue(0);
 
@@ -143,7 +144,7 @@ function DuaCard({ dua, isFav, onToggleFav }: { dua: Dua; isFav: boolean; onTogg
       {expanded && (
         <Animated.View style={[duaStyles.body, animatedBodyStyle]}>
           <Text style={duaStyles.arabic}>{dua.arabic}</Text>
-          <Text style={duaStyles.meaning}>{dua.meaning}</Text>
+          {!hideMeaning && <Text style={duaStyles.meaning}>{dua.meaning}</Text>}
           {dua.repeatCount && dua.repeatCount > 1 && (
             <DuaCounter target={dua.repeatCount} />
           )}
@@ -194,6 +195,7 @@ const catStyles = StyleSheet.create({
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function DuaLibraryScreen() {
+  const { isRTL } = useTranslation();
   const [activeCategory, setActiveCategory] = useState<DuaCategory | 'all' | 'favorites'>('all');
   const [search, setSearch] = useState('');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -306,6 +308,7 @@ export default function DuaLibraryScreen() {
             dua={dua}
             isFav={favorites.has(dua.id)}
             onToggleFav={() => toggleFav(dua.id)}
+            hideMeaning={isRTL}
           />
         ))
       )}

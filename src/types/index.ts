@@ -271,6 +271,7 @@ export interface IslamicEvent {
   gregorianDate?: string;
   type: 'ramadan' | 'eid' | 'hajj' | 'ashura' | 'mawlid' | 'laylatul_qadr' | 'white_days' | 'jumuah' | 'general';
   description?: string;
+  descriptionArabic?: string;
   isFixedHijri: boolean;
 }
 

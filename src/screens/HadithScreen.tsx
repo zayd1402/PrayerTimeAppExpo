@@ -4,11 +4,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { logger } from '../utils/logger';
+import { useTranslation } from '../i18n';
 import { C, Hadith } from '../types';
 import { HADITHS, getDailyHadith, getHadithCategories, getHadithByCategory } from '../data/hadiths';
 import { getFavoriteHadiths, toggleFavoriteHadith } from '../services/StorageService';
 
-function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boolean; onToggleFav: () => void }) {
+function HadithCard({ hadith, isFav, onToggleFav, hideMeaning }: { hadith: Hadith; isFav: boolean; onToggleFav: () => void; hideMeaning?: boolean }) {
   const handleShare = async () => {
     try {
       await Share.share({
@@ -37,7 +38,7 @@ function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boo
       </View>
 
       <Text style={styles.arabic}>{hadith.arabic}</Text>
-      <Text style={styles.english}>{hadith.english}</Text>
+      {!hideMeaning && <Text style={styles.english}>{hadith.english}</Text>}
 
       <View style={styles.meta}>
         <Ionicons name="person-outline" size={12} color={C.textMuted} />
@@ -56,6 +57,7 @@ function HadithCard({ hadith, isFav, onToggleFav }: { hadith: Hadith; isFav: boo
 }
 
 export default function HadithScreen() {
+  const { isRTL } = useTranslation();
   const [dailyHadith, setDailyHadith] = useState<Hadith | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -103,7 +105,7 @@ export default function HadithScreen() {
             <Ionicons name="sunny" size={16} color={C.gold} />
             <Text style={styles.dailyTitle}>Hadith of the Day</Text>
           </View>
-          <HadithCard hadith={dailyHadith} isFav={favorites.has(dailyHadith.id)} onToggleFav={() => toggleFav(dailyHadith.id)} />
+          <HadithCard hadith={dailyHadith} isFav={favorites.has(dailyHadith.id)} onToggleFav={() => toggleFav(dailyHadith.id)} hideMeaning={isRTL} />
         </View>
       )}
 
@@ -149,6 +151,7 @@ export default function HadithScreen() {
             hadith={hadith}
             isFav={favorites.has(hadith.id)}
             onToggleFav={() => toggleFav(hadith.id)}
+            hideMeaning={isRTL}
           />
         ))
       )}

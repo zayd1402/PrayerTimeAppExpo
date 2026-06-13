@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from '../i18n';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity
@@ -39,6 +40,7 @@ const EVENT_ICONS: Record<string, string> = {
   general: 'calendar-outline'};
 
 export default function CalendarScreen() {
+  const { isRTL } = useTranslation();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [prayerLog, setPrayerLog] = useState<Record<string, Record<string, string>>>({});
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -134,7 +136,7 @@ export default function CalendarScreen() {
             <Ionicons name={iconName(EVENT_ICONS[nextEvent.type])} size={24} color={EVENT_COLORS[nextEvent.type] || C.gold} />
             <View style={{ marginLeft: 12 }}>
               <Text style={styles.countdownTitle}>{nextEvent.title}</Text>
-              <Text style={styles.countdownDesc}>{nextEvent.description}</Text>
+              <Text style={styles.countdownDesc}>{isRTL && nextEvent.descriptionArabic ? nextEvent.descriptionArabic : nextEvent.description}</Text>
             </View>
           </View>
           <View style={[styles.countdownBadge, { backgroundColor: (EVENT_COLORS[nextEvent.type] || C.gold) + '15' }]}>
@@ -318,7 +320,7 @@ export default function CalendarScreen() {
                     <Ionicons name={iconName(EVENT_ICONS[event.type])} size={16} color={EVENT_COLORS[event.type] || C.gold} />
                     <View style={{ marginLeft: 10, flex: 1 }}>
                       <Text style={[styles.eventTitle, { color: EVENT_COLORS[event.type] || C.gold }]}>{event.title}</Text>
-                      <Text style={styles.eventDesc}>{event.description}</Text>
+                      <Text style={styles.eventDesc}>{isRTL && event.descriptionArabic ? event.descriptionArabic : event.description}</Text>
                     </View>
                   </View>
                 ))}
