@@ -1,8 +1,8 @@
 # PrayerTimeAppExpo — Ship-Readiness Plan
 
 **Assessment Date:** 2026-06-14  
-**Verdict:** READY TO SHIP (v1 RC) — All critical blockers resolved, app builds for both platforms, zero lint warnings, 98 tests pass, background fetch wired, theme toggle present, localization covers key screens  
-**Readiness Score:** 8.8 / 10
+**Verdict:** READY TO SHIP (v1) — All critical blockers resolved, app builds for both platforms, zero lint warnings, 107 tests across 8 suites, background fetch wired, theme toggle + JSX dark mode, localization covers key screens, screen-level tests added  
+**Readiness Score:** 9.0 / 10
 
 ---
 
@@ -166,7 +166,7 @@ The app builds, lints, and the core prayer-calculation test suite passes (49 tes
 | Command | Result |
 |---|---|
 | `npm run lint` | PASS — zero warnings |
-| `npm test` | PASS — 98 tests across 6 suites |
+| `npm test` | PASS — 107 tests across 8 suites |
 | `npx tsc --noEmit` | PASS (tests included) |
 | `npx expo export --platform all` | PASS — builds for Android + iOS |
 | `git status` | CLEAN — all source files committed |
