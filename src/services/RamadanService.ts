@@ -30,7 +30,7 @@ export function getRamadanState(): RamadanState {
   if (hijri.month < RAMADAN_MONTH) {
     // Before Ramadan — calculate days remaining
     for (let m = hijri.month; m < RAMADAN_MONTH; m++) {
-      daysUntilRamadan += HijriService.getDaysInHijriMonth(1447, m + 1);
+      daysUntilRamadan += HijriService.getDaysInHijriMonth(hijri.year, m + 1);
     }
     daysUntilRamadan -= hijri.day;
     daysUntilRamadan += 1;
