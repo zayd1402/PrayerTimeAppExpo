@@ -178,11 +178,11 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       await setupNotificationChannels();
       await setupNotificationCategories();
       if (saved.notificationsEnabled) {
-        await scheduleFridayReminders().catch(() => {});
-        await scheduleWeeklyReminders().catch(() => {});
-        await scheduleSunnahReminders().catch(() => {});
+        await scheduleFridayReminders().catch((err) => logger.warn('Notification operation failed:', err));
+        await scheduleWeeklyReminders().catch((err) => logger.warn('Notification operation failed:', err));
+        await scheduleSunnahReminders().catch((err) => logger.warn('Notification operation failed:', err));
       } else {
-        await cancelAllNotifications().catch(() => {});
+        await cancelAllNotifications().catch((err) => logger.warn('Notification operation failed:', err));
       }
 
       // Register daily background fetch
@@ -234,10 +234,10 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       setTimerDisplay('');
       if (settings.notificationsEnabled) {
         lastScheduledRef.current = '';
-        cancelAllNotifications().catch(() => {});
+        cancelAllNotifications().catch((err) => logger.warn('Notification operation failed:', err));
       } else {
         lastScheduledRef.current = '';
-        cancelAllNotifications().catch(() => {});
+        cancelAllNotifications().catch((err) => logger.warn('Notification operation failed:', err));
       }
       return;
     }
@@ -263,10 +263,10 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (settings.notificationsEnabled) {
-      scheduleEnabledNotifications(settings, times, lastScheduledRef).catch(() => {});
+      scheduleEnabledNotifications(settings, times, lastScheduledRef).catch((err) => logger.warn('Notification operation failed:', err));
     } else {
       lastScheduledRef.current = '';
-      cancelAllNotifications().catch(() => {});
+      cancelAllNotifications().catch((err) => logger.warn('Notification operation failed:', err));
     }
   }, [settings.calculationMethod, settings.madhab, location, settings.notificationsEnabled, settings.prayerNotifications, settings.fajrAlarmEnabled, settings.fajrAlarmMinutes]);
 
