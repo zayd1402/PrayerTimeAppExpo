@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — PrayerTimeApp</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #FDF8F0;
+            color: #2D2010;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+        h1 {
+            font-size: 2rem;
+            color: #3D2415;
+            margin-bottom: 8px;
+        }
+        h2 {
+            font-size: 1.25rem;
+            color: #9E5C1A;
+            margin-top: 32px;
+            margin-bottom: 12px;
+        }
+        .updated {
+            color: #8C7855;
+            font-size: 0.875rem;
+            margin-bottom: 32px;
+        }
+        p, li {
+            font-size: 1rem;
+            color: #2D2010;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(45,32,16,0.08);
+            font-size: 0.9rem;
+        }
+        th {
+            color: #6B5030;
+            font-weight: 600;
+        }
+        code {
+            background: #F2E8D5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        strong {
+            color: #3D2415;
+        }
+        hr {
+            border: none;
+            border-top: 1px solid rgba(45,32,16,0.08);
+            margin: 32px 0;
+        }
+        .footer {
+            color: #8C7855;
+            font-size: 0.85rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Privacy Policy — PrayerTimeApp</h1>
+        <p class="updated">Last updated: June 22, 2026</p>
+
+        <p>This Privacy Policy describes how PrayerTimeApp ("we", "the app") handles your information. By using PrayerTimeApp, you agree to the practices described below.</p>
+
+        <h2>1. Overview</h2>
+        <p>PrayerTimeApp is a cross-platform Islamic prayer companion app. It provides prayer times, Qibla direction, Hijri calendar, daily hadith, duas, and worship tracking. The app is designed with a <strong>privacy-first, local-only</strong> approach.</p>
+        <p><strong>In short:</strong> We do not collect, transmit, sell, or share your personal data. All your information stays on your device.</p>
+
+        <h2>2. Information We Access</h2>
+
+        <h3>Location</h3>
+        <ul>
+            <li><strong>What:</strong> Your device's approximate or precise geographic coordinates (latitude, longitude).</li>
+            <li><strong>Why:</strong> To calculate accurate prayer times and Qibla direction for your location, and to find nearby mosques from a built-in static list.</li>
+            <li><strong>How:</strong> We request location permission through your device's standard permission system. Location data is used only for calculation within the app and is <strong>never transmitted to any server</strong>.</li>
+            <li><strong>Control:</strong> You can deny location permission and manually select a city from the built-in list. The app functions fully without device location access.</li>
+        </ul>
+
+        <h3>Notifications</h3>
+        <ul>
+            <li><strong>What:</strong> Prayer time reminders and adhan alerts.</li>
+            <li><strong>Why:</strong> To notify you when it is time for each prayer.</li>
+            <li><strong>How:</strong> We request notification permission through your device's standard system. Notifications are scheduled locally on your device. No push tokens are sent to any server.</li>
+        </ul>
+
+        <h3>Local Storage</h3>
+        <ul>
+            <li><strong>What:</strong> Your prayer log, worship tracking data, journal entries, dhikr counts, Quran reading progress, fasting records, zakat calculations, app settings, and theme preferences.</li>
+            <li><strong>Why:</strong> To power the app's tracking and personalization features.</li>
+            <li><strong>How:</strong> All data is stored locally on your device using MMKV (Mega-MMKV key-value storage). <strong>No data is ever transmitted to any server, cloud service, or third party.</strong></li>
+        </ul>
+
+        <h2>3. What We Do NOT Do</h2>
+        <ul>
+            <li><strong>We do not collect personal data.</strong> No account, no email, no name required.</li>
+            <li><strong>We do not transmit data off your device.</strong> No analytics, no telemetry, no crash reporting SDKs.</li>
+            <li><strong>We do not use third-party tracking or advertising SDKs.</strong> No Firebase Analytics, no Google Analytics, no Facebook SDK, no AdMob.</li>
+            <li><strong>We do not sell or share your data.</strong> There is no server to sell data from.</li>
+            <li><strong>We do not access your microphone, camera, contacts, photos, or motion sensors.</strong> The app does not use these capabilities.</li>
+            <li><strong>We do not track you across other apps or websites.</strong></li>
+        </ul>
+
+        <h2>4. Data Storage and Deletion</h2>
+        <ul>
+            <li>All data is stored locally on your device.</li>
+            <li><strong>Deleting the app permanently removes all your data.</strong> There is no cloud backup.</li>
+            <li>You can also clear all data from within the app via <strong>Settings &gt; Clear All Data</strong>.</li>
+        </ul>
+
+        <h2>5. Permissions Used</h2>
+        <table>
+            <thead>
+                <tr><th>Permission</th><th>Platform</th><th>Purpose</th><th>Required?</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Location (When In Use)</td><td>iOS + Android</td><td>Calculate prayer times, Qibla direction, find nearby mosques</td><td>No — manual city selection available</td></tr>
+                <tr><td>Notifications</td><td>iOS + Android</td><td>Prayer time reminders</td><td>No — app works without notifications</td></tr>
+                <tr><td>Vibrate</td><td>Android</td><td>Vibration for notifications</td><td>Only if notifications enabled</td></tr>
+                <tr><td>Audio Playback</td><td>Android</td><td>Play adhan sound for prayer alerts</td><td>Only if adhan enabled</td></tr>
+            </tbody>
+        </table>
+
+        <h2>6. Children's Privacy</h2>
+        <p>PrayerTimeApp is suitable for all ages. It does not knowingly collect any data from anyone, including children. No age restriction is required.</p>
+
+        <h2>7. Changes to This Policy</h2>
+        <p>If we update this Privacy Policy, we will revise the "Last updated" date at the top of this page and notify you within the app if material changes are made.</p>
+
+        <h2>8. Contact</h2>
+        <p>For privacy questions or concerns, please open an issue at <a href="https://github.com/zayd1402/PrayerTimeAppExpo/issues">PrayerTimeApp support</a>.</p>
+
+        <hr>
+        <p class="footer">This privacy policy is hosted via GitHub Pages.</p>
+    </div>
+</body>
+</html>
