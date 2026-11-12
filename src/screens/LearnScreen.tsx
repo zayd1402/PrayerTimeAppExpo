@@ -11,16 +11,51 @@ import HadithScreen from './HadithScreen';
 import FridayScreen from './FridayScreen';
 import WeeklyScreen from './WeeklyScreen';
 import SettingsScreen from './SettingsScreen';
+import SunnahRoutineScreen from './SunnahRoutineScreen';
+import HifdhScreen from './HifdhScreen';
+import TazkiyahScreen from './TazkiyahScreen';
+import JournalScreen from './JournalScreen';
+import ZakatScreen from './ZakatScreen';
+import HajjScreen from './HajjScreen';
 
-type LearnSection = 'ramadan' | 'duas' | 'hadith' | 'friday' | 'weekly' | 'settings';
+type LearnSection =
+  | 'ramadan' | 'duas' | 'hadith' | 'friday' | 'weekly' | 'settings'
+  | 'sunnah' | 'hifdh' | 'tazkiyah' | 'journal' | 'zakat' | 'hajj';
 
-const LEARN_ITEMS: { id: LearnSection; title: string; description: string; icon: string; color: string }[] = [
+type LearnItem = { id: LearnSection; title: string; description: string; icon: string; color: string };
+
+const LEARN_ITEMS: LearnItem[] = [
   { id: 'ramadan', title: 'Ramadan', description: 'Tracker, khatm plan, last 10 nights, and Ramadan dua.', icon: 'moon-outline', color: C.gold },
   { id: 'duas', title: 'Dua Library', description: 'Searchable supplications for daily moments.', icon: 'book-outline', color: C.primary },
   { id: 'hadith', title: 'Hadith', description: 'Daily hadith, categories, favorites, and sharing.', icon: 'document-text-outline', color: C.gold },
   { id: 'friday', title: 'Friday', description: 'Jumu\'ah checklist, Al-Kahf progress, and dua times.', icon: 'star-outline', color: C.primaryLight },
   { id: 'weekly', title: 'Weekly Sunnah', description: 'Simple weekly practices and fasting reminders.', icon: 'calendar-clear-outline', color: C.gold },
 ];
+
+const PRACTICE_ITEMS: LearnItem[] = [
+  { id: 'sunnah', title: 'Daily Sunnah', description: 'Morning, evening, and night adhkar checklist.', icon: 'sunny-outline', color: C.primary },
+  { id: 'hifdh', title: 'Hifdh', description: 'Track memorisation and revision by surah.', icon: 'book-outline', color: C.primary },
+  { id: 'tazkiyah', title: 'Tazkiyah', description: 'Daily self-reflection on character and heart.', icon: 'leaf-outline', color: C.primary },
+  { id: 'journal', title: 'Journal', description: 'Private reflections and gratitude notes.', icon: 'create-outline', color: C.textSecondary },
+  { id: 'zakat', title: 'Zakat', description: 'Calculate zakat on savings, gold, and silver.', icon: 'wallet-outline', color: C.gold },
+  { id: 'hajj', title: 'Hajj & Umrah', description: 'Step-by-step rites and duas.', icon: 'airplane-outline', color: C.gold },
+];
+
+function ItemGrid({ items, onSelect }: { items: LearnItem[]; onSelect: (id: LearnSection) => void }) {
+  return (
+    <View style={styles.grid}>
+      {items.map(item => (
+        <TouchableOpacity key={item.id} style={styles.card} onPress={() => onSelect(item.id)}>
+          <View style={[styles.iconWrap, { backgroundColor: item.color + '18' }]}>
+            <Ionicons name={iconName(item.icon)} size={24} color={item.color} />
+          </View>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          <Text style={styles.cardDesc}>{item.description}</Text>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
+}
 
 export default function LearnScreen() {
   const { settings, handleUpdateSettings } = usePrayerApp();
@@ -39,6 +74,12 @@ export default function LearnScreen() {
         {activeSection === 'friday' && <FridayScreen />}
         {activeSection === 'weekly' && <WeeklyScreen />}
         {activeSection === 'settings' && <SettingsScreen settings={settings} updateSettings={handleUpdateSettings} />}
+        {activeSection === 'sunnah' && <SunnahRoutineScreen />}
+        {activeSection === 'hifdh' && <HifdhScreen />}
+        {activeSection === 'tazkiyah' && <TazkiyahScreen />}
+        {activeSection === 'journal' && <JournalScreen />}
+        {activeSection === 'zakat' && <ZakatScreen />}
+        {activeSection === 'hajj' && <HajjScreen />}
       </SafeAreaView>
     );
   }
@@ -62,17 +103,10 @@ export default function LearnScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.grid}>
-        {LEARN_ITEMS.map(item => (
-          <TouchableOpacity key={item.id} style={styles.card} onPress={() => setActiveSection(item.id)}>
-            <View style={[styles.iconWrap, { backgroundColor: item.color + '18' }]}>
-              <Ionicons name={iconName(item.icon)} size={24} color={item.color} />
-            </View>
-            <Text style={styles.cardTitle}>{item.title}</Text>
-            <Text style={styles.cardDesc}>{item.description}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <ItemGrid items={LEARN_ITEMS} onSelect={setActiveSection} />
+
+      <Text style={styles.sectionTitle}>Practice & tools</Text>
+      <ItemGrid items={PRACTICE_ITEMS} onSelect={setActiveSection} />
 
       <TouchableOpacity style={styles.settingsCard} onPress={() => setActiveSection('settings')}>
         <Ionicons name="settings-outline" size={24} color={C.primary} />
@@ -110,6 +144,7 @@ const styles = StyleSheet.create({
   featuredDesc: { fontSize: 12, color: C.textSecondary, lineHeight: 18, marginTop: 2 },
   featuredButton: { backgroundColor: C.heroBg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14 },
   featuredButtonText: { color: C.goldPale, fontSize: 12, fontFamily: 'Jost_700Bold' },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 22, marginBottom: 10 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 12 },
   card: {
     width: '47%',

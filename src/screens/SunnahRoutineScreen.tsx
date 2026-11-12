@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { C } from '../types';
 import { SUNNAH_ROUTINE, SunnahItem } from '../data/sunnahRoutine';
-import { mmkv, getStreak } from '../services/StorageService';
+import { mmkv } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
 
 const SUNNAH_LOG_KEY = '@prayertime:sunnah_log';
@@ -19,18 +19,44 @@ const CATEGORIES: { id: Category; label: string; icon: string }[] = [
   { id: 'night', label: 'Night', icon: 'bed-outline' },
 ];
 
-function getDateKey(): string {
-  return getLocalDateKey();
+type SunnahLog = Record<string, Record<string, number>>;
+
+function getDateKey(date: Date = new Date()): string {
+  return getLocalDateKey(date);
+}
+
+function loadLog(): SunnahLog {
+  try {
+    const raw = mmkv.getString(SUNNAH_LOG_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
 }
 
 function getTodayLog(): Record<string, number> {
-  const raw = mmkv.getString(SUNNAH_LOG_KEY);
-  if (raw) return JSON.parse(raw);
-  return {};
+  return loadLog()[getDateKey()] ?? {};
 }
 
-function saveLog(log: Record<string, Record<string, number>>): void {
+function saveLog(log: SunnahLog): void {
   mmkv.set(SUNNAH_LOG_KEY, JSON.stringify(log));
+}
+
+function dayHasCompletedItem(day: Record<string, number> | undefined): boolean {
+  if (!day) return false;
+  return SUNNAH_ROUTINE.some(item => (day[item.id] || 0) >= item.count);
+}
+
+/** Consecutive days with at least one completed Sunnah item. Today counts once started; an untouched today doesn't break the streak. */
+function getSunnahStreak(log: SunnahLog): number {
+  const cursor = new Date();
+  if (!dayHasCompletedItem(log[getDateKey(cursor)])) cursor.setDate(cursor.getDate() - 1);
+  let streak = 0;
+  while (dayHasCompletedItem(log[getDateKey(cursor)])) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
 }
 
 export default function SunnahRoutineScreen() {
@@ -40,8 +66,15 @@ export default function SunnahRoutineScreen() {
 
   useEffect(() => {
     setTodayLog(getTodayLog());
-    getStreak().then(setStreak);
+    setStreak(getSunnahStreak(loadLog()));
   }, []);
+
+  const persistToday = (nextLog: Record<string, number>) => {
+    const fullLog = loadLog();
+    fullLog[dateKey] = nextLog;
+    saveLog(fullLog);
+    setStreak(getSunnahStreak(fullLog));
+  };
 
   const dateKey = getDateKey();
   const items = SUNNAH_ROUTINE.filter(i => i.category === activeTab);
@@ -53,9 +86,7 @@ export default function SunnahRoutineScreen() {
     const next = current < item.count ? item.count : 0;
     setTodayLog(prev => {
       const nextLog = { ...prev, [item.id]: next };
-      const fullLog = JSON.parse(mmkv.getString(SUNNAH_LOG_KEY) || '{}');
-      fullLog[dateKey] = nextLog;
-      saveLog(fullLog);
+      persistToday(nextLog);
       return nextLog;
     });
   };
@@ -132,9 +163,7 @@ export default function SunnahRoutineScreen() {
                         onPress={() => {
                           setTodayLog(prev => {
                             const nextLog = { ...prev, [item.id]: Math.max(current, i + 1) };
-                            const fullLog = JSON.parse(mmkv.getString(SUNNAH_LOG_KEY) || '{}');
-                            fullLog[dateKey] = nextLog;
-                            saveLog(fullLog);
+                            persistToday(nextLog);
                             return nextLog;
                           });
                         }}
