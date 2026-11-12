@@ -5,6 +5,12 @@ const cancelScheduledNotificationAsync = jest.fn();
 const cancelAllScheduledNotificationsAsync = jest.fn();
 const setNotificationChannelAsync = jest.fn();
 const setNotificationCategoryAsync = jest.fn();
+const dismissNotificationAsync = jest.fn(() => Promise.resolve());
+let responseListener: ((response: unknown) => void) | null = null;
+const addNotificationResponseReceivedListener = jest.fn((cb: (response: unknown) => void) => {
+  responseListener = cb;
+  return { remove: jest.fn() };
+});
 
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
@@ -13,6 +19,8 @@ jest.mock('expo-notifications', () => ({
   scheduleNotificationAsync,
   cancelScheduledNotificationAsync,
   cancelAllScheduledNotificationsAsync,
+  dismissNotificationAsync,
+  addNotificationResponseReceivedListener,
   getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
   requestPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
   AndroidImportance: { HIGH: 'high', DEFAULT: 'default' },
@@ -20,6 +28,7 @@ jest.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: {
     DAILY: 'daily',
     WEEKLY: 'weekly',
+    TIME_INTERVAL: 'timeInterval',
   },
   IosAuthorizationStatus: { AUTHORIZED: 2, PROVISIONAL: 3 },
   DEFAULT_ACTION_IDENTIFIER: 'expo.modules.notifications.actions.DEFAULT',
@@ -36,11 +45,29 @@ import {
   schedulePrayerNotification,
   cancelAllNotifications,
   scheduleFridayReminders,
+  snoozePrayerNotification,
+  setupNotificationResponseHandler,
 } from '../NotificationService';
 
 beforeEach(() => {
   jest.clearAllMocks();
+  scheduleNotificationAsync.mockImplementation(() => Promise.resolve('id'));
+  cancelScheduledNotificationAsync.mockImplementation(() => Promise.resolve());
 });
+
+const flush = () => new Promise(resolve => setTimeout(resolve, 0));
+
+function respond(actionIdentifier: string) {
+  responseListener?.({
+    actionIdentifier,
+    notification: {
+      request: {
+        identifier: 'prayer-dhuhr',
+        content: { title: 'Dhuhr Prayer Time', body: "It's time for Dhuhr prayer", data: { prayerId: 'dhuhr', action: 'time' } },
+      },
+    },
+  });
+}
 
 describe('NotificationService', () => {
   describe('setupNotificationChannels', () => {
@@ -127,6 +154,48 @@ describe('NotificationService', () => {
       );
       expect(calls).toContain('friday-kahf');
       expect(calls).toContain('friday-dua');
+    });
+  });
+
+  describe('snoozePrayerNotification', () => {
+    it('re-schedules the prayer notification 10 minutes out in the same category', async () => {
+      await snoozePrayerNotification({ title: 'Asr Prayer Time', body: 'body', data: { prayerId: 'asr' } });
+      expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('snooze-asr');
+      expect(scheduleNotificationAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          identifier: 'snooze-asr',
+          content: expect.objectContaining({
+            title: 'Asr Prayer Time',
+            categoryIdentifier: 'prayer-action',
+            data: { prayerId: 'asr', snoozed: true },
+          }),
+          trigger: { type: 'timeInterval', seconds: 600, repeats: false },
+        })
+      );
+    });
+  });
+
+  describe('setupNotificationResponseHandler', () => {
+    it('snoozes and dismisses on the Snooze action without marking prayed', async () => {
+      const onMarkPrayed = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, jest.fn());
+      respond('SNOOZE_10');
+      await flush();
+      expect(onMarkPrayed).not.toHaveBeenCalled();
+      expect(dismissNotificationAsync).toHaveBeenCalledWith('prayer-dhuhr');
+      expect(scheduleNotificationAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ identifier: 'snooze-dhuhr' })
+      );
+    });
+
+    it('marks prayed and clears any pending snooze on Mark as Prayed', async () => {
+      const onMarkPrayed = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, jest.fn());
+      respond('MARK_PRAYED');
+      await flush();
+      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr');
+      expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('snooze-dhuhr');
+      expect(scheduleNotificationAsync).not.toHaveBeenCalled();
     });
   });
 });
