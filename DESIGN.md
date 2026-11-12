@@ -2,10 +2,10 @@
 name: PrayerTimeApp
 description: A calm, trustworthy companion for daily Islamic practice — prayer times, duas, hadith, and spiritual growth.
 colors:
-  primary: "#C27A2D"
-  primary-dark: "#9E5C1A"
+  primary: "#A8641F"
+  primary-dark: "#8F5418"
   primary-light: "#F0D9B0"
-  gold: "#B8860B"
+  gold: "#946A06"
   gold-light: "#D4A843"
   gold-pale: "#FBF0D5"
   hero-bg: "#3D2415"
@@ -16,7 +16,7 @@ colors:
   neutral-pressed: "#EBDFC5"
   text-primary: "#2D2010"
   text-secondary: "#6B5030"
-  text-muted: "#8C7855"
+  text-muted: "#7A6247"
   red: "#C4553B"
   border: "rgba(45,32,16,0.08)"
   border-strong: "rgba(45,32,16,0.15)"
@@ -91,12 +91,12 @@ The visual language draws from Islamic material heritage through warmth and prop
 
 The palette is drawn from a sun-warmed courtyard: amber tile, gold inscription, dark walnut wood, warm stone.
 
-### Primary — Burnished Amber (#C27A2D)
+### Primary — Burnished Amber (#A8641F)
 Active states, confirmation, navigation indicators, the "now" prayer. Used on tab indicators, check circles, active backgrounds, and success states. Covers ~8-12% of any given screen.
-- **Amber Dark** (#9E5C1A): Pressed states, emphasis
+- **Amber Dark** (#8F5418): Pressed states, emphasis
 - **Amber Pale** (#F0D9B0): Tinted backgrounds for today highlight, active rows
 
-### Accent — Inscription Gold (#B8860B)
+### Accent — Inscription Gold (#946A06)
 Sacred content markers, the daily hadith accent, timer countdowns. Used sparingly — a hadith card accent, the progress ring, section headers. Its rarity is the point.
 - **Gold Light** (#D4A843): Hover and secondary gold states
 - **Gold Wash** (#FBF0D5): Gold-tinted backgrounds for sacred content cards
@@ -114,7 +114,7 @@ Deep warm brown-black for the hero card and More menu header. The darkest surfac
 ### Text — Warm Brown Spectrum
 - **Primary** (#2D2010): Body text. 10.5:1 contrast on bgBase.
 - **Secondary** (#6B5030): Supporting text, metadata.
-- **Muted** (#8C7855): Hints, Arabic transliterations, inactive states. 5.2:1 contrast on bgBase — meets WCAG AA.
+- **Muted** (#7A6247): Hints, Arabic transliterations, inactive states. 5.4:1 contrast on bgBase — meets WCAG AA. (The earlier #8C7855 only reached 4.0:1.)
 
 ### Semantic
 - **Red/Terracotta** (#C4553B): Errors and danger states.
@@ -133,6 +133,12 @@ Deep warm brown-black for the hero card and More menu header. The darkest surfac
 **The One Accent Family Rule.** Amber appears on ≤12% of any given screen. Gold appears on ≤8%. Together they never exceed 18% of the visible surface. The restraint is what makes them feel premium.
 
 **The Flat-By-Default Rule.** Surfaces rest flat. The only shadow is on the hero card. Everything else uses background warmth for depth.
+
+### Theming in code
+
+Screens never read `C` from `src/types` directly, because a module-level `StyleSheet.create` freezes the light colours at import time. Build styles with `const makeStyles = (C: Tokens) => StyleSheet.create({...})` and read them in the component with `useThemedStyles(makeStyles)`; read single colours with `useTokens()`. Both themes live in `src/types` (`C` and `darkC`), and `src/__tests__/theme.test.ts` checks that text pairs meet 4.5:1 in both and that no screen imports the static palette.
+
+Text on a filled amber surface uses `onPrimary`; text on walnut headers uses `onHero` and `onHeroMuted`. Arabic text uses `fontArabic` (Amiri) at 15px or larger.
 
 ## 3. Typography
 
@@ -221,3 +227,13 @@ Tonal layering exclusively. No drop shadows on cards, rows, or surfaces at rest:
 - **Don't** ship motion without a `prefers-reduced-motion` fallback.
 - **Don't** use 1px border + shadow on the same element (ghost-card pattern).
 - **Don't** use side-stripe borders greater than 1px.
+
+## Screens and shared pieces (redesign, November 2026)
+
+- Four tabs: Today, Habits, Qibla, Library. Every other page is a stack screen (`src/navigation/RootNavigator.tsx`), so back works. Settings opens from the profile button on each tab.
+- `src/design/palette.ts`: the five time-of-day skies (light and dark) and the 0 to 5 heat-map ramp.
+- `src/design/dayState.ts`: which prayer is open, the sky, and the hero text for a given minute. Tested in `dayState.test.ts`.
+- `src/design/habits.ts`: heat levels, per-prayer rates and insights for Habits. Tested in `habits.test.ts`.
+- `src/design/ui.tsx`: page title, profile button, tick, segmented control, mini ring, primary button. `src/design/Glyph.tsx`: the line icons.
+- `src/components/MarkSheet.tsx`: on time or qaza plus khushu', opened by a long press or by tapping a prayer that's already logged or whose time has passed.
+- Sub-pages use a large serif title in text colour, never a walnut header box. No all-caps labels.

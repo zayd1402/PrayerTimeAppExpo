@@ -10,9 +10,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { logger } from '../utils/logger';
 import { useTranslation } from '../i18n';
-import { C, Dua, DUA_CATEGORIES, DuaCategory } from '../types';
+import { Dua, DUA_CATEGORIES, DuaCategory } from '../types';
 type CategoryFilter = DuaCategory | 'all' | 'favorites';
 import { getFavoriteDuas, toggleFavoriteDua } from '../services/StorageService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 // ─── Dua Database ────────────────────────────────────────────
 const DUAS: Dua[] = [
@@ -75,6 +76,8 @@ const DUAS: Dua[] = [
 
 // ─── Dua Counter ─────────────────────────────────────────────
 function DuaCounter({ target, onComplete }: { target: number; onComplete?: () => void }) {
+  const C = useTokens();
+  const counterStyles = useThemedStyles(makeCounterStyles);
   const [count, setCount] = useState(0);
   const progress = count / target;
 
@@ -94,14 +97,14 @@ function DuaCounter({ target, onComplete }: { target: number; onComplete?: () =>
             }
           }}
         >
-          <Ionicons name="add" size={18} color="#FFF" />
+          <Ionicons name="add" size={18} color={C.onPrimary} />
         </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-const counterStyles = StyleSheet.create({
+const makeCounterStyles = (C: Tokens) => StyleSheet.create({
   container: { marginTop: 12 },
   track: { height: 4, backgroundColor: C.border, borderRadius: 2, marginBottom: 8 },
   fill: { height: 4, backgroundColor: C.primary, borderRadius: 2 },
@@ -112,6 +115,8 @@ const counterStyles = StyleSheet.create({
 
 // ─── Dua Card ────────────────────────────────────────────────
 function DuaCard({ dua, isFav, onToggleFav, hideMeaning }: { dua: Dua; isFav: boolean; onToggleFav: () => void; hideMeaning?: boolean }) {
+  const C = useTokens();
+  const duaStyles = useThemedStyles(makeDuaStyles);
   const [expanded, setExpanded] = useState(false);
   const heightAnim = useSharedValue(0);
 
@@ -154,7 +159,7 @@ function DuaCard({ dua, isFav, onToggleFav, hideMeaning }: { dua: Dua; isFav: bo
   );
 }
 
-const duaStyles = StyleSheet.create({
+const makeDuaStyles = (C: Tokens) => StyleSheet.create({
   card: {
     backgroundColor: C.surfaceElevated, borderRadius: 16, padding: 16, marginBottom: 10,
   },
@@ -164,11 +169,13 @@ const duaStyles = StyleSheet.create({
   title: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   source: { fontSize: 12, color: C.textMuted, marginTop: 2 },
   body: { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
-  arabic: { fontSize: 18, color: C.primary, textAlign: 'right', lineHeight: 30, marginBottom: 10 },
+  arabic: { fontSize: 20, fontFamily: C.fontArabic, color: C.primary, textAlign: 'right', writingDirection: 'rtl', lineHeight: 36, marginBottom: 10 },
   meaning: { fontSize: 13, color: C.textSecondary, lineHeight: 20, fontStyle: 'italic' }});
 
 // ─── Category Chip ───────────────────────────────────────────
 function CategoryChip({ cat, active, onPress }: { cat: { value: CategoryFilter; label: string; icon: string }; active: boolean; onPress: () => void }) {
+  const C = useTokens();
+  const catStyles = useThemedStyles(makeCatStyles);
   return (
     <TouchableOpacity
       style={[catStyles.chip, active && catStyles.chipActive]}
@@ -177,13 +184,13 @@ function CategoryChip({ cat, active, onPress }: { cat: { value: CategoryFilter; 
       accessibilityLabel={`Filter by ${cat.label}`}
       accessibilityState={{ selected: active }}
     >
-      <Ionicons name={iconName(cat.icon)} size={14} color={active ? '#FFF' : C.textSecondary} />
+      <Ionicons name={iconName(cat.icon)} size={14} color={active ? C.onPrimary : C.textSecondary} />
       <Text style={[catStyles.label, active && catStyles.labelActive]}>{cat.label}</Text>
     </TouchableOpacity>
   );
 }
 
-const catStyles = StyleSheet.create({
+const makeCatStyles = (C: Tokens) => StyleSheet.create({
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
@@ -191,10 +198,12 @@ const catStyles = StyleSheet.create({
   },
   chipActive: { backgroundColor: C.primary },
   label: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  labelActive: { color: '#FFF', fontFamily: 'Jost_600SemiBold' }});
+  labelActive: { color: C.onPrimary, fontFamily: 'Jost_600SemiBold' }});
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function DuaLibraryScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const { isRTL } = useTranslation();
   const [activeCategory, setActiveCategory] = useState<DuaCategory | 'all' | 'favorites'>('all');
   const [search, setSearch] = useState('');
@@ -316,12 +325,12 @@ export default function DuaLibraryScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
   searchWrap: {
     flexDirection: 'row', alignItems: 'center',
@@ -335,7 +344,7 @@ const styles = StyleSheet.create({
   },
   featuredHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
   featuredTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
-  featuredArabic: { fontSize: 16, color: C.textPrimary, textAlign: 'right', lineHeight: 26, marginBottom: 10 },
+  featuredArabic: { fontSize: 18, fontFamily: C.fontArabic, color: C.textPrimary, textAlign: 'right', writingDirection: 'rtl', lineHeight: 32, marginBottom: 10 },
   featuredMeaning: { fontSize: 13, color: C.textSecondary, lineHeight: 20, fontStyle: 'italic' },
   featuredSource: { fontSize: 12, color: C.textMuted, marginTop: 8, textAlign: 'right' },
 

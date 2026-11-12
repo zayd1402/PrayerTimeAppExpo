@@ -120,7 +120,8 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       }
       const saved = await loadSettings();
       setSettings(saved);
-      const loc = await getCurrentLocation();
+      // A city the user picked by hand stays put; only device locations refresh on launch.
+      const loc = saved.location?.source === 'manual-city' ? null : await getCurrentLocation();
       if (loc) {
         setLocation(loc);
         setError(null);
@@ -137,9 +138,17 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       const hadith = getDailyHadith();
       setDailyHadith({ english: hadith.english, source: hadith.source });
 
+      // Prayer times only need the location. Show them now, so a slow or failing
+      // audio or notification setup below can never leave Today empty.
+      setLoading(false);
+
       await setAdhanVolume(saved.adhanVolume ?? 1).catch(() => {});
-      await setupNotificationChannels();
-      await setupNotificationCategories();
+      try {
+        await setupNotificationChannels();
+        await setupNotificationCategories();
+      } catch (err) {
+        logger.warn('Notification setup failed:', err);
+      }
 
       // Register daily background fetch
       try {
@@ -169,8 +178,6 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         logger.warn('Notification action failed:', err);
       }
-
-      setLoading(false);
     };
     init();
     return () => {
@@ -308,6 +315,8 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       },
     };
     setSettings(updated);
+    // A city picked in Settings must move the prayer times straight away, not on the next launch.
+    if (partial.location) setLocation(partial.location);
     await saveSettings(updated);
   };
 

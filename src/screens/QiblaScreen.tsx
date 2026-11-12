@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, Dimensions, Vibration } from 'react-native';
-import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming, withSpring,
-  withRepeat, withSequence, Easing, runOnJS
-} from 'react-native-reanimated';
-import { Ionicons } from '@expo/vector-icons';
-import { iconName } from '../components/Icon';
+// Qibla compass. The dial turns with the phone so north on the dial matches real north, and the
+// Kaaba marker sits at the Qibla bearing. When the phone points at it, the marker fills and it buzzes once.
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, View, Vibration, useWindowDimensions } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 import * as Location from 'expo-location';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { C } from '../types';
-import { calculateQiblaDirection, haversineDistance, bearingToCompassDirection } from '../services/PrayerService';
 
-const { width } = Dimensions.get('window');
-const COMPASS_SIZE = Math.min(width - 80, 300);
+import { calculateQiblaDirection, haversineDistance, bearingToCompassDirection } from '../services/PrayerService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
+import { Glyph } from '../design/Glyph';
+import { F } from '../design/palette';
 
 interface Coordinate {
   latitude: number;
@@ -25,295 +23,181 @@ interface QiblaScreenProps {
   showHeader?: boolean;
 }
 
-// ─── Accuracy Indicator ──────────────────────────────────────
-function AccuracyBadge({ accuracy }: { accuracy: 'high' | 'medium' | 'low' | 'calibrating' }) {
-  const colors = {
-    high: { bg: C.primaryLight, text: C.primary, icon: 'checkmark-circle' },
-    medium: { bg: C.goldPale, text: C.gold, icon: 'alert-circle' },
-    low: { bg: C.primaryLight, text: C.red, icon: 'warning' },
-    calibrating: { bg: C.goldPale, text: C.textSecondary, icon: 'refresh' }};
-  const c = colors[accuracy];
-  return (
-    <View style={[accStyles.badge, { backgroundColor: c.bg }]}>
-      <Ionicons name={iconName(c.icon)} size={14} color={c.text} />
-      <Text style={[accStyles.text, { color: c.text }]}>
-        {accuracy === 'calibrating' ? 'Calibrating...' : `${accuracy.charAt(0).toUpperCase() + accuracy.slice(1)} Accuracy`}
-      </Text>
-    </View>
-  );
-}
+type CompassState = 'starting' | 'live' | 'unavailable';
 
-const accStyles = StyleSheet.create({
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'center', marginTop: 12 },
-  text: { fontSize: 13, fontFamily: 'Jost_600SemiBold' }});
+const DIRECTION_WORDS: Record<string, string> = {
+  N: 'north', NE: 'north-east', E: 'east', SE: 'south-east', S: 'south', SW: 'south-west', W: 'west', NW: 'north-west',
+};
 
-// ─── Calibration Overlay ─────────────────────────────────────
-function CalibrationOverlay({ visible }: { visible: boolean }) {
-  const rotation = useSharedValue(0);
-
-  useEffect(() => {
-    if (visible) {
-      rotation.value = withRepeat(
-        withSequence(
-          withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.sin) }),
-          withTiming(0, { duration: 1000, easing: Easing.inOut(Easing.sin) })
-        ),
-        -1, // infinite
-        false
-      );
-    } else {
-      rotation.value = 0;
-    }
-  }, [visible]);
-
-  const animatedPhoneStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value * 30 - 15}deg` }]
-  }));
-
-  if (!visible) return null;
-
-  return (
-    <View style={calStyles.overlay}>
-      <Animated.View style={[calStyles.phone, animatedPhoneStyle]}>
-        <Ionicons name="phone-portrait-outline" size={48} color={C.gold} />
-      </Animated.View>
-      <Text style={calStyles.title}>Calibrate Compass</Text>
-      <Text style={calStyles.desc}>Move your phone in a figure-8 motion</Text>
-    </View>
-  );
-}
-
-const calStyles = StyleSheet.create({
-  overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(250,246,239,0.95)', justifyContent: 'center', alignItems: 'center', zIndex: 100, borderRadius: 24 },
-  phone: { marginBottom: 20 },
-  title: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 8 },
-  desc: { fontSize: 14, color: C.textSecondary }});
-
-// ─── Main Screen ─────────────────────────────────────────────
 export default function QiblaScreen({ coordinate, compact = false, showHeader = true }: QiblaScreenProps) {
-  const [qiblaDirection, setQiblaDirection] = useState(0);
-  const [rotation, setRotation] = useState(0);
-  const [accuracy, setAccuracy] = useState<'high' | 'medium' | 'low' | 'calibrating'>('calibrating');
-  const [isAligned, setIsAligned] = useState(false);
-  const [distance, setDistance] = useState(0);
-
-  const rotationAnim = useSharedValue(0);
-  const alignedAnim = useSharedValue(0);
-
-  // JS-thread wrappers for state updates from heading callback
-  const updateAccuracy = (a: typeof accuracy) => setAccuracy(a);
-  const updateRotation = (r: number) => setRotation(r);
-  const updateIsAligned = (a: boolean) => setIsAligned(a);
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
+  const { width } = useWindowDimensions();
+  const size = Math.min(width - 72, 300);
+  const qibla = calculateQiblaDirection(coordinate.latitude, coordinate.longitude);
+  const distance = Math.round(haversineDistance(coordinate.latitude, coordinate.longitude, 21.4225, 39.8262));
+  const [heading, setHeading] = useState<number | null>(null);
+  const [state, setState] = useState<CompassState>('starting');
+  const wasAligned = useRef(false);
+  const dial = useSharedValue(0);
 
   useEffect(() => {
-    const qibla = calculateQiblaDirection(coordinate.latitude, coordinate.longitude);
-    setQiblaDirection(qibla);
-    const dist = haversineDistance(coordinate.latitude, coordinate.longitude, 21.4225, 39.8262);
-    setDistance(dist);
-  }, [coordinate]);
-
-  useEffect(() => {
-    let subscription: Location.LocationSubscription | null = null;
-    let headingHistory: number[] = [];
-
-    async function startCompass() {
-      await activateKeepAwakeAsync();
+    let sub: Location.LocationSubscription | null = null;
+    let cancelled = false;
+    (async () => {
+      activateKeepAwakeAsync().catch(() => {});
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setAccuracy('low');
-          return;
-        }
-
-        setAccuracy('calibrating');
-        setTimeout(() => setAccuracy('high'), 2000);
-
-        subscription = await Location.watchHeadingAsync((heading) => {
-          const magHeading = heading.magHeading;
-
-          headingHistory.push(magHeading);
-          if (headingHistory.length > 10) headingHistory.shift();
-          const variance = Math.max(...headingHistory) - Math.min(...headingHistory);
-          let newAccuracy: typeof accuracy = 'high';
-          if (variance > 15) newAccuracy = 'low';
-          else if (variance > 5) newAccuracy = 'medium';
-          runOnJS(updateAccuracy)(newAccuracy);
-
-          const relative = (qiblaDirection - magHeading + 360) % 360;
-          runOnJS(updateRotation)(relative);
-
-          const aligned = relative < 8 || relative > 352;
-          runOnJS(updateIsAligned)(aligned);
-          if (aligned) {
-            Vibration.vibrate(50);
-            alignedAnim.value = withSpring(1, { damping: 15 });
-          } else {
-            alignedAnim.value = withTiming(0, { duration: 200 });
-          }
+        if (status !== 'granted') { setState('unavailable'); return; }
+        sub = await Location.watchHeadingAsync(h => {
+          if (cancelled) return;
+          const value = h.trueHeading >= 0 ? h.trueHeading : h.magHeading;
+          setHeading(value);
+          setState('live');
         });
       } catch {
-        setAccuracy('low');
+        setState('unavailable');
       }
-    }
-
-    startCompass();
+    })();
+    const fallback = setTimeout(() => setState(s => (s === 'starting' ? 'unavailable' : s)), 4000);
     return () => {
-      subscription?.remove();
+      cancelled = true;
+      clearTimeout(fallback);
+      sub?.remove();
       deactivateKeepAwake();
     };
-  }, [qiblaDirection]);
+  }, []);
 
-  // Smooth rotation animation
+  // Turn the dial the short way round so it never spins a full circle at 359° to 0°.
   useEffect(() => {
-    rotationAnim.value = withSpring(rotation, { damping: 15, stiffness: 100 });
-  }, [rotation]);
+    if (heading === null) return;
+    const target = -heading;
+    const cur = dial.value;
+    const delta = ((target - cur + 540) % 360) - 180;
+    dial.value = withSpring(cur + delta, { damping: 18, stiffness: 120 });
+  }, [heading, dial]);
 
-  const animatedNeedleStyle = useAnimatedStyle(() => ({
-    transform: [
-      { rotate: `${rotationAnim.value}deg` },
-      { scale: 1 + alignedAnim.value * 0.15 }
-    ]
-  }));
+  const offset = heading === null ? null : ((qibla - heading + 540) % 360) - 180;
+  const aligned = offset !== null && Math.abs(offset) < 5;
+  useEffect(() => {
+    if (aligned && !wasAligned.current) Vibration.vibrate(40);
+    wasAligned.current = aligned;
+  }, [aligned]);
 
-  const animatedAlignedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + alignedAnim.value * 0.15 }]
-  }));
+  const dialStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${dial.value}deg` }] }));
+
+  const r = size / 2;
+  const dirWord = DIRECTION_WORDS[bearingToCompassDirection(qibla)] ?? '';
+  const hint = state === 'live'
+    ? aligned ? 'You are facing the Qibla' : offset !== null ? `Turn ${offset > 0 ? 'right' : 'left'} ${Math.round(Math.abs(offset))}°` : ''
+    : state === 'starting' ? 'Finding your heading…' : `Compass unavailable. Face ${Math.round(qibla)}° from north.`;
 
   return (
-    <View style={[styles.container, compact && { flex: 0 }]}>
+    <View style={[styles.container, !compact && { flex: 1 }]}>
       {showHeader && (
         <View style={styles.header}>
-          <Text style={styles.title}>Qibla Direction</Text>
-          <Text style={styles.subtitle}>{Math.round(qiblaDirection)}° {bearingToCompassDirection(qiblaDirection)} from North</Text>
+          <Text style={styles.title}>Qibla</Text>
         </View>
       )}
 
-      <View style={[styles.compassContainer, compact && { flex: 0, paddingVertical: 10 }]}>
-        <View style={[styles.compass, isAligned && styles.compassAligned]}>
-          <CalibrationOverlay visible={accuracy === 'calibrating'} />
-
-          {/* Compass rings */}
-          <View style={[styles.compassRing, styles.ring1]} />
-          <View style={[styles.compassRing, styles.ring2]} />
-          <View style={[styles.compassRing, styles.ring3]} />
-
-          {/* Degree markers */}
-          {Array.from({ length: 12 }, (_, i) => {
-            const deg = i * 30;
-            return (
-              <View key={deg} style={[styles.degMarker, { transform: [{ rotate: `${deg}deg` }] }]}>
-                <View style={styles.degTick} />
-              </View>
-            );
-          })}
-
-          {/* Direction markers */}
-          {['N', 'E', 'S', 'W'].map((d) => {
-            const angles: Record<string, number> = { N: 0, E: 90, S: 180, W: 270 };
-            return (
-              <View key={d} style={[styles.dirMarker, { transform: [{ rotate: `${angles[d]}deg` }] }]}>
-                <Text style={[styles.dirText, d === 'N' && styles.dirNorth]}>{d}</Text>
-              </View>
-            );
-          })}
-
-          {/* Rotating needle */}
-          <Animated.View style={[styles.needleWrap, animatedNeedleStyle]}>
-            <View style={styles.needle}>
-              <View style={styles.needleTop} />
-              <View style={styles.needleBottom} />
-            </View>
-            <View style={styles.needleCenter}>
-              <Ionicons name="location" size={20} color="#FFF" />
-            </View>
-          </Animated.View>
-
-          {/* Center info */}
-          <View style={styles.centerInfo}>
-            <Text style={styles.centerDeg}>{Math.round(qiblaDirection)}°</Text>
-            <Text style={styles.centerLabel}>QIBLA</Text>
+      <View style={styles.dialWrap} accessible accessibilityLabel={`Qibla is ${Math.round(qibla)} degrees ${dirWord}. ${hint}`}>
+        {/* Fixed pointer at the top: where the phone is facing */}
+        <View style={[styles.pointer, { borderBottomColor: aligned ? C.primary : C.textPrimary }]} />
+        <Animated.View style={[{ width: size, height: size }, dialStyle]}>
+          <Svg width={size} height={size}>
+            <Circle cx={r} cy={r} r={r - 1} fill={C.bgSurface} stroke={C.border} strokeWidth={1} />
+            <Circle cx={r} cy={r} r={r - 34} fill="none" stroke={C.border} strokeWidth={1} />
+            {Array.from({ length: 72 }, (_, i) => {
+              const major = i % 18 === 0;
+              const mid = i % 6 === 0;
+              const a = (i * 5 * Math.PI) / 180;
+              const r1 = r - 8;
+              const r2 = r - (major ? 22 : mid ? 18 : 13);
+              return (
+                <Line key={i}
+                  x1={r + r1 * Math.sin(a)} y1={r - r1 * Math.cos(a)}
+                  x2={r + r2 * Math.sin(a)} y2={r - r2 * Math.cos(a)}
+                  stroke={major ? C.textSecondary : C.textMuted} strokeOpacity={major ? 1 : 0.5}
+                  strokeWidth={major ? 2 : 1.2} strokeLinecap="round" />
+              );
+            })}
+            {(['N', 'E', 'S', 'W'] as const).map((d, i) => {
+              const a = (i * 90 * Math.PI) / 180;
+              const rr = r - 48;
+              return (
+                <SvgText key={d} x={r + rr * Math.sin(a)} y={r - rr * Math.cos(a) + 6} fontSize={17}
+                  fontFamily={F.semibold} fontWeight="600" textAnchor="middle" fill={d === 'N' ? C.red : C.textSecondary}>
+                  {d}
+                </SvgText>
+              );
+            })}
+            {/* Qibla line and Kaaba marker */}
+            <G>
+              <Line
+                x1={r} y1={r}
+                x2={r + (r - 70) * Math.sin((qibla * Math.PI) / 180)} y2={r - (r - 70) * Math.cos((qibla * Math.PI) / 180)}
+                stroke={C.primary} strokeWidth={3} strokeLinecap="round" />
+              <Circle
+                cx={r + (r - 70) * Math.sin((qibla * Math.PI) / 180)} cy={r - (r - 70) * Math.cos((qibla * Math.PI) / 180)}
+                r={16} fill={aligned ? C.primary : C.bgBase} stroke={C.primary} strokeWidth={2.5} />
+              <Circle cx={r} cy={r} r={6} fill={C.primary} />
+            </G>
+          </Svg>
+          <View pointerEvents="none" style={[styles.kaaba, {
+            left: r + (r - 70) * Math.sin((qibla * Math.PI) / 180) - 9,
+            top: r - (r - 70) * Math.cos((qibla * Math.PI) / 180) - 9,
+          }]}>
+            <Glyph name="kaaba" size={18} color={aligned ? C.onPrimary : C.primaryDark} strokeWidth={2} />
           </View>
+        </Animated.View>
+      </View>
+
+      <View style={styles.readout}>
+        <Text style={styles.deg}>{Math.round(qibla)}°</Text>
+        <Text style={styles.degSub}>from north, towards the {dirWord}</Text>
+        <View style={[styles.hint, aligned && { backgroundColor: C.primary }]}>
+          <Text style={[styles.hintText, aligned && { color: C.onPrimary }]}>{hint}</Text>
         </View>
+      </View>
 
-        <AccuracyBadge accuracy={accuracy} />
-
-        {isAligned && (
-          <Animated.View style={[styles.alignedBadge, animatedAlignedStyle]}>
-            <Ionicons name="checkmark-circle" size={16} color="#FFF" />
-            <Text style={styles.alignedText}>Aligned with Qibla</Text>
-          </Animated.View>
+      <View style={styles.stats}>
+        <View style={styles.stat}>
+          <Text style={styles.statNum}>{distance.toLocaleString()} km</Text>
+          <Text style={styles.statLbl}>to Makkah</Text>
+        </View>
+        {state === 'live' && heading !== null && (
+          <View style={styles.stat}>
+            <Text style={styles.statNum}>{Math.round(heading)}°</Text>
+            <Text style={styles.statLbl}>you are facing</Text>
+          </View>
         )}
       </View>
 
-      {/* Info Cards */}
-      <View style={styles.infoGrid}>
-        <View style={styles.infoCard}>
-          <Ionicons name="navigate" size={20} color={C.gold} />
-          <Text style={styles.infoValue}>{distance.toLocaleString()}</Text>
-          <Text style={styles.infoLabel}>km to Makkah</Text>
-        </View>
-        <View style={styles.infoCard}>
-          <Ionicons name="location" size={20} color={C.primary} />
-          <Text style={styles.infoValue}>{coordinate.latitude.toFixed(2)}°</Text>
-          <Text style={styles.infoLabel}>Your Latitude</Text>
-        </View>
-      </View>
-
       {!compact && (
-        <View style={styles.howToCard}>
-          <Ionicons name="information-circle-outline" size={20} color={C.textSecondary} />
-          <Text style={styles.howToText}>
-            Hold your phone flat and rotate until the needle points to Qibla. The compass uses your device's magnetometer.
-          </Text>
-        </View>
+        <Text style={styles.howTo}>Hold your phone flat, away from metal. If the compass seems off, move it in a figure 8.</Text>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bgBase },
-  header: { padding: 18, backgroundColor: C.heroBg, alignItems: 'center' },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
-
-  compassContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
-  compass: {
-    width: COMPASS_SIZE, height: COMPASS_SIZE, borderRadius: COMPASS_SIZE / 2,
-    backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 3, borderColor: C.border
+const makeStyles = (C: Tokens) => StyleSheet.create({
+  container: { backgroundColor: C.bgBase, gap: 14 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 4 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: F.display, color: C.textPrimary },
+  dialWrap: { alignItems: 'center', paddingTop: 14 },
+  pointer: {
+    width: 0, height: 0, borderLeftWidth: 9, borderRightWidth: 9, borderBottomWidth: 14,
+    borderLeftColor: 'transparent', borderRightColor: 'transparent', marginBottom: 4,
   },
-  compassAligned: { borderColor: C.primary, shadowColor: C.primary, shadowOpacity: 0.2 },
-  compassRing: { position: 'absolute', borderRadius: 999, borderWidth: 1, borderColor: 'rgba(232,130,107,0.08)' },
-  ring1: { width: COMPASS_SIZE - 40, height: COMPASS_SIZE - 40 },
-  ring2: { width: COMPASS_SIZE - 80, height: COMPASS_SIZE - 80 },
-  ring3: { width: COMPASS_SIZE - 120, height: COMPASS_SIZE - 120 },
-
-  degMarker: { position: 'absolute', width: COMPASS_SIZE - 30, height: 8, justifyContent: 'center', alignItems: 'flex-start' },
-  degTick: { width: 6, height: 2, backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: 1 },
-
-  dirMarker: { position: 'absolute', width: COMPASS_SIZE - 50, height: 24, justifyContent: 'center', alignItems: 'flex-start' },
-  dirText: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textSecondary },
-  dirNorth: { color: C.red, fontSize: 18 },
-
-  needleWrap: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
-  needle: { width: 40, height: 160, justifyContent: 'center', alignItems: 'center' },
-  needleTop: { position: 'absolute', top: 0, width: 0, height: 0, borderLeftWidth: 12, borderRightWidth: 12, borderBottomWidth: 70, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: C.primary },
-  needleBottom: { position: 'absolute', bottom: 0, width: 0, height: 0, borderLeftWidth: 12, borderRightWidth: 12, borderTopWidth: 70, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: C.border },
-  needleCenter: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center', zIndex: 10 },
-
-  centerInfo: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
-  centerDeg: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary },
-  centerLabel: { fontSize: 10, color: C.textMuted, letterSpacing: 2 },
-
-  alignedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 16 },
-  alignedText: { color: '#FFF', fontSize: 14, fontFamily: 'Jost_600SemiBold' },
-
-  infoGrid: { flexDirection: 'row', paddingHorizontal: 18, gap: 12, marginBottom: 12 },
-  infoCard: { flex: 1, backgroundColor: C.bgSurface, borderRadius: 16, padding: 16, alignItems: 'center'},
-  infoValue: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 8 },
-  infoLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-
-  howToCard: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: C.bgSurface, borderRadius: 16, padding: 16, marginHorizontal: 18, gap: 10 },
-  howToText: { flex: 1, fontSize: 13, color: C.textSecondary, lineHeight: 20 }
+  kaaba: { position: 'absolute', width: 18, height: 18 },
+  readout: { alignItems: 'center', gap: 2 },
+  deg: { fontFamily: F.display, fontSize: 40, lineHeight: 46, color: C.textPrimary },
+  degSub: { fontFamily: F.body, fontSize: 14, color: C.textMuted },
+  hint: { marginTop: 10, backgroundColor: C.primaryLight, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  hintText: { fontFamily: F.medium, fontSize: 13.5, color: C.primaryDark, textAlign: 'center' },
+  stats: { flexDirection: 'row', gap: 8 },
+  stat: { flex: 1, backgroundColor: C.bgSurface, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14 },
+  statNum: { fontFamily: F.semibold, fontSize: 16, color: C.textPrimary },
+  statLbl: { fontFamily: F.body, fontSize: 12, color: C.textMuted },
+  howTo: { fontFamily: F.body, fontSize: 13, lineHeight: 19, color: C.textMuted, textAlign: 'center', paddingHorizontal: 12 },
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { StatusBar, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme, Theme } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen';
@@ -10,18 +10,34 @@ import {
   BodoniModa_600SemiBold, BodoniModa_700Bold,
 } from '@expo-google-fonts/bodoni-moda';
 import { Jost_300Light, Jost_400Regular, Jost_500Medium, Jost_600SemiBold, Jost_700Bold } from '@expo-google-fonts/jost';
+import { Amiri_400Regular, Amiri_700Bold } from '@expo-google-fonts/amiri';
 
-import { C } from './src/types';
 import { PrayerAppProvider } from './src/context/PrayerAppContext';
-import { ThemeProvider, useTheme } from './src/context/ThemeContext';
+import { ThemeProvider, useTheme, useTokens } from './src/context/ThemeContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
-import TabNavigator from './src/navigation/TabNavigator';
+import RootNavigator from './src/navigation/RootNavigator';
+import { hydrateStorage } from './src/services/StorageService';
 
 SplashScreen.preventAutoHideAsync();
 
 function ThemedStatusBar() {
   const { isDark } = useTheme();
-  return <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={isDark ? '#1A1410' : C.bgBase} />;
+  const t = useTokens();
+  return <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={t.bgBase} />;
+}
+
+/** Navigation container with the app's own background, so screen transitions never flash white in dark mode. */
+function ThemedNavigation({ children }: { children: React.ReactNode }) {
+  const { isDark } = useTheme();
+  const t = useTokens();
+  const theme = React.useMemo<Theme>(() => {
+    const base = isDark ? DarkTheme : DefaultTheme;
+    return {
+      ...base,
+      colors: { ...base.colors, background: t.bgBase, card: t.bgBase, text: t.textPrimary, border: t.border, primary: t.primary },
+    };
+  }, [isDark, t]);
+  return <NavigationContainer theme={theme}>{children}</NavigationContainer>;
 }
 
 export default function App() {
@@ -30,15 +46,22 @@ export default function App() {
     BodoniModa_600SemiBold, BodoniModa_700Bold,
     Jost_300Light, Jost_400Regular, Jost_500Medium,
     Jost_600SemiBold, Jost_700Bold,
+    Amiri_400Regular, Amiri_700Bold,
   });
 
+  // Saved data must be readable before any screen loads it (instant with MMKV, a quick read in Expo Go).
+  const [storageReady, setStorageReady] = React.useState(false);
   React.useEffect(() => {
-    if (fontsLoaded) {
+    hydrateStorage().finally(() => setStorageReady(true));
+  }, []);
+
+  React.useEffect(() => {
+    if (fontsLoaded && storageReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, storageReady]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !storageReady) {
     return null;
   }
 
@@ -47,13 +70,13 @@ export default function App() {
       <GestureHandlerRootView style={styles.container}>
         <ThemeProvider>
           <ThemedStatusBar />
-          <NavigationContainer>
+          <ThemedNavigation>
             <ErrorBoundary>
               <PrayerAppProvider>
-                <TabNavigator />
+                <RootNavigator />
               </PrayerAppProvider>
             </ErrorBoundary>
-          </NavigationContainer>
+          </ThemedNavigation>
         </ThemeProvider>
       </GestureHandlerRootView>
     </SafeAreaProvider>
@@ -61,5 +84,5 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bgBase },
+  container: { flex: 1 },
 });

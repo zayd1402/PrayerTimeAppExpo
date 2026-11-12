@@ -3,12 +3,13 @@ import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C } from '../types';
+
 import { mmkv } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
 import {
   getRamadanState, getTodayJuz, calculateKhatmPlan, getNightVirtue
 } from '../services/RamadanService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const RAMADAN_LOG_KEY = '@prayertime:ramadan_log';
 const RAMADAN_TARGET_KEY = '@prayertime:ramadan_targets';
@@ -43,6 +44,8 @@ function getTargets(): RamadanTargets {
 }
 
 export default function RamadanScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [state, setState] = useState(getRamadanState());
   const [todayLog, setTodayLog] = useState<RamadanDayLog>({
     suhoor: false, fajrOnTime: false, taraweehRakahs: 0,
@@ -211,8 +214,8 @@ export default function RamadanScreen() {
               <Text style={styles.virtueText}>{getNightVirtue(state.ramadanDay).label}</Text>
               <View style={styles.itiKafCheck}>
                 <TouchableOpacity style={styles.checkRow} onPress={() => {}}>
-                  <Ionicons name="square-outline" size={20} color={C.white} />
-                  <Text style={[styles.checkLabel, { color: C.white }]}>I'tikaf intention made</Text>
+                  <Ionicons name="square-outline" size={20} color={C.onHero} />
+                  <Text style={[styles.checkLabel, { color: C.onHero }]}>I'tikaf intention made</Text>
                 </TouchableOpacity>
                 <Text style={styles.itiKafHint}>Even a few minutes in the masjid counts</Text>
               </View>
@@ -284,18 +287,18 @@ export default function RamadanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
   card: {
-    backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 10,
+    backgroundColor: C.bgSurface, borderRadius: 18, margin: 16, marginBottom: 10,
     padding: 18,
   },
-  cardTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 4 },
+  cardTitle: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginBottom: 4 },
   cardSubtitle: { fontSize: 12, color: C.textMuted, marginBottom: 12 },
 
   checkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
@@ -303,32 +306,32 @@ const styles = StyleSheet.create({
   checkLabelDone: { color: C.textMuted, textDecorationLine: 'line-through' },
 
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  stepperValue: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.textPrimary, minWidth: 30, textAlign: 'center' },
+  stepperValue: { fontSize: 18, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, minWidth: 30, textAlign: 'center' },
 
   khatmProgress: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 },
   khatmBar: { flex: 1, height: 8, backgroundColor: C.border, borderRadius: 4 },
   khatmFill: { height: '100%', backgroundColor: C.gold, borderRadius: 4 },
-  khatmText: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
+  khatmText: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.gold },
   khatmSubtext: { fontSize: 12, color: C.textMuted, marginTop: 4 },
   khatmInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   khatmInput: { backgroundColor: C.bgBase, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, fontSize: 14, color: C.textPrimary, width: 50, textAlign: 'center' },
   setBtn: { backgroundColor: C.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  setBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.white },
+  setBtnText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.onPrimary },
   juzToday: { fontSize: 13, color: C.textSecondary, marginTop: 10 },
-  juzHighlight: { fontFamily: 'Jost_700Bold', color: C.primary },
+  juzHighlight: { fontFamily: 'Jost_600SemiBold', color: C.primary },
   juzLabel: { fontSize: 14, color: C.textSecondary },
 
   last10Card: { backgroundColor: C.heroBg, borderWidth: 1, borderColor: C.gold },
-  last10Title: { fontSize: 18, fontFamily: 'BodoniModa_700Bold', color: C.goldPale, marginTop: 8 },
+  last10Title: { fontSize: 18, fontFamily: 'BodoniModa_700Bold', color: C.onHero, marginTop: 8 },
   oddNightRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-  oddNightText: { fontSize: 14, color: C.gold, fontFamily: 'Jost_700Bold' },
-  virtueText: { fontSize: 13, color: C.goldLight, marginTop: 4 },
+  oddNightText: { fontSize: 14, color: C.gold, fontFamily: 'Jost_600SemiBold' },
+  virtueText: { fontSize: 13, color: C.onHeroMuted, marginTop: 4 },
   itiKafCheck: { marginTop: 12 },
   itiKafHint: { fontSize: 11, color: C.textMuted, marginLeft: 30, marginTop: -4 },
 
   statRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 12 },
   stat: { alignItems: 'center' },
-  statValue: { fontSize: 24, fontFamily: 'Jost_700Bold', color: C.gold },
+  statValue: { fontSize: 24, fontFamily: 'Jost_600SemiBold', color: C.gold },
   statLabel: { fontSize: 11, color: C.textMuted, marginTop: 2 },
   progressBar: { height: 6, backgroundColor: C.border, borderRadius: 3 },
   progressFill: { height: '100%', backgroundColor: C.gold, borderRadius: 3 },
@@ -336,7 +339,7 @@ const styles = StyleSheet.create({
 
   postHint: { fontSize: 12, color: C.textMuted, fontStyle: 'italic', marginTop: 8, lineHeight: 18 },
 
-  duaArabic: { fontSize: 16, color: C.textPrimary, textAlign: 'right', lineHeight: 28, marginTop: 8 },
+  duaArabic: { fontSize: 18, fontFamily: C.fontArabic, color: C.textPrimary, textAlign: 'right', writingDirection: 'rtl', lineHeight: 32, marginTop: 8 },
   duaText: { fontSize: 13, color: C.textSecondary, marginTop: 4, fontStyle: 'italic' },
   duaMeaning: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 });

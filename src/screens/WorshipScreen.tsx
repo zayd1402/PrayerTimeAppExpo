@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { useTranslation } from '../i18n';
 import { logger } from '../utils/logger';
-import { C, FastingLog, QuranLog } from '../types';
+import { FastingLog, QuranLog } from '../types';
 import { getRamadanState } from '../services/RamadanService';
 import { getLocalDateKey } from '../utils/date';
 import {
@@ -16,6 +16,7 @@ import {
   addDhikrSession, getTodayDhikrCount,
   getWeeklyQuranStats, getSunnahPrayersForDate, setSunnahPrayersForDate,
 } from '../services/StorageService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -55,6 +56,8 @@ const FASTING_TYPES = [
 
 // ─── Helper Components ───────────────────────────────────────
 function TabBar({ active, onChange, t }: { active: WorshipTab; onChange: (t: WorshipTab) => void; t: (key: string) => string }) {
+  const C = useTokens();
+  const tabStyles = useThemedStyles(makeTabStyles);
   return (
     <View style={tabStyles.container}>
       {TABS.map(tab => {
@@ -65,7 +68,7 @@ function TabBar({ active, onChange, t }: { active: WorshipTab; onChange: (t: Wor
             style={[tabStyles.tab, isActive && tabStyles.tabActive]}
             onPress={() => onChange(tab.id)}
           >
-            <Ionicons name={iconName(tab.icon)} size={18} color={isActive ? '#FFF' : C.textSecondary} />
+            <Ionicons name={iconName(tab.icon)} size={18} color={isActive ? C.primaryDark : C.textSecondary} />
             <Text style={[tabStyles.tabLabel, isActive && tabStyles.tabLabelActive]}>{t(`worship.${tab.id}`)}</Text>
           </TouchableOpacity>
         );
@@ -74,15 +77,17 @@ function TabBar({ active, onChange, t }: { active: WorshipTab; onChange: (t: Wor
   );
 }
 
-const tabStyles = StyleSheet.create({
-  container: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
+const makeTabStyles = (C: Tokens) => StyleSheet.create({
+  container: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 16, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12 },
-  tabActive: { backgroundColor: C.primary },
+  tabActive: { backgroundColor: C.bgBase, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   tabLabel: { fontSize: 11, color: C.textSecondary, marginTop: 3, fontFamily: 'Jost_500Medium' },
-  tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' }});
+  tabLabelActive: { color: C.textPrimary, fontFamily: 'Jost_600SemiBold' }});
 
 // ─── Dhikr Ring ──────────────────────────────────────────────
 function DhikrRing({ target, current, label, color, onPress }: { target: number; current: number; label: string; color: string; onPress: () => void }) {
+  const C = useTokens();
+  const dhikrStyles = useThemedStyles(makeDhikrStyles);
   const progress = Math.min(current / target, 1);
   return (
     <TouchableOpacity style={dhikrStyles.ringWrap} onPress={onPress} activeOpacity={0.8}>
@@ -93,23 +98,24 @@ function DhikrRing({ target, current, label, color, onPress }: { target: number;
       <Text style={dhikrStyles.label}>{label}</Text>
       {progress >= 1 && (
         <View style={[dhikrStyles.completedBadge, { backgroundColor: color }]}>
-          <Ionicons name="checkmark" size={10} color="#FFF" />
+          <Ionicons name="checkmark" size={10} color={C.onPrimary} />
         </View>
       )}
     </TouchableOpacity>
   );
 }
 
-const dhikrStyles = StyleSheet.create({
+const makeDhikrStyles = (C: Tokens) => StyleSheet.create({
   ringWrap: { alignItems: 'center', marginHorizontal: 8 },
   ring: { width: 80, height: 80, borderRadius: 40, borderWidth: 4, justifyContent: 'center', alignItems: 'center', marginBottom: 6 },
-  count: { fontSize: 22, fontFamily: 'Jost_700Bold' },
+  count: { fontSize: 22, fontFamily: 'Jost_600SemiBold' },
   target: { fontSize: 12, color: C.textMuted },
   label: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_600SemiBold' },
   completedBadge: { position: 'absolute', top: 0, right: 0, width: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center' }});
 
 // ─── Weekly Chart ────────────────────────────────────────────
 function WeeklyChart({ data, label, color }: { data: number[]; label: string; color: string }) {
+  const chartStyles = useThemedStyles(makeChartStyles);
   const max = Math.max(...data, 1);
   const days = ['S','M','T','W','T','F','S'];
   return (
@@ -129,9 +135,9 @@ function WeeklyChart({ data, label, color }: { data: number[]; label: string; co
   );
 }
 
-const chartStyles = StyleSheet.create({
-  container: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 16, marginHorizontal: 18, marginBottom: 12 },
-  title: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 12 },
+const makeChartStyles = (C: Tokens) => StyleSheet.create({
+  container: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 16, marginHorizontal: 16, marginBottom: 12 },
+  title: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginBottom: 12 },
   bars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 80 },
   barWrap: { alignItems: 'center', flex: 1 },
   barTrack: { width: 8, height: 60, backgroundColor: C.border, borderRadius: 4, justifyContent: 'flex-end', overflow: 'hidden' },
@@ -139,9 +145,11 @@ const chartStyles = StyleSheet.create({
   dayLabel: { fontSize: 10, color: C.textMuted, marginTop: 6 }});
 
 // ─── Main Screen ─────────────────────────────────────────────
-export default function WorshipScreen() {
+export default function WorshipScreen({ initialTab = 'prayers' }: { initialTab?: WorshipTab }) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<WorshipTab>('prayers');
+  const [activeTab, setActiveTab] = useState<WorshipTab>(initialTab);
   const [completedSunnah, setCompletedSunnah] = useState<Set<string>>(
     () => new Set(getSunnahPrayersForDate(getLocalDateKey())),
   );
@@ -197,7 +205,7 @@ export default function WorshipScreen() {
               >
                 <View style={[styles.sunnahIconWrap, completed && styles.sunnahIconWrapDone]}>
                   {completed ? (
-                    <Ionicons name="checkmark" size={16} color="#FFF" />
+                    <Ionicons name="checkmark" size={16} color={C.onPrimary} />
                   ) : (
                     <Text style={styles.sunnahRakahText}>{item.rakah}</Text>
                   )}
@@ -265,6 +273,8 @@ export default function WorshipScreen() {
 
   // ─── Ramadan Worship Card ───────────────────────────────────
 function RamadanWorshipCard() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const state = getRamadanState();
   const title = state.isRamadan
     ? 'Ramadan Worship Tracker'
@@ -317,7 +327,7 @@ function RamadanWorshipCard() {
                 <Ionicons name={iconName(ft.icon)} size={24} color={active ? C.primary : C.textMuted} />
                 <Text style={[styles.fastLabel, active && styles.fastLabelActive]}>{ft.label}</Text>
                 <Text style={styles.fastDesc}>{ft.desc}</Text>
-                {active && <View style={styles.fastCheck}><Ionicons name="checkmark" size={12} color="#FFF" /></View>}
+                {active && <View style={styles.fastCheck}><Ionicons name="checkmark" size={12} color={C.onPrimary} /></View>}
               </TouchableOpacity>
             );
           })}
@@ -369,7 +379,7 @@ function RamadanWorshipCard() {
             placeholderTextColor={C.textMuted}
           />
           <TouchableOpacity style={styles.quranAddBtn} onPress={addPages}>
-            <Ionicons name="add" size={20} color="#FFF" />
+            <Ionicons name="add" size={20} color={C.onPrimary} />
           </TouchableOpacity>
         </View>
       </>
@@ -395,40 +405,40 @@ function RamadanWorshipCard() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   scrollView: { flex: 1 },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
-  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 18, marginBottom: 10 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginHorizontal: 16, marginTop: 18, marginBottom: 10 },
 
   // Sunnah
   sunnahGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 10 },
   sunnahCard: {
     width: (width - 56) / 2,
-    backgroundColor: C.surfaceElevated, borderRadius: 16, padding: 14,
+    backgroundColor: C.bgSurface, borderRadius: 16, padding: 14,
   },
   sunnahCardCompleted: { backgroundColor: C.primaryLight },
   sunnahIconWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
   sunnahIconWrapDone: { backgroundColor: C.primary },
-  sunnahRakahText: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary },
+  sunnahRakahText: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
   sunnahName: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   sunnahNameDone: { color: C.primary },
   sunnahTime: { fontSize: 11, color: C.textMuted, marginTop: 2 },
 
   // Dhikr
-  dhikrHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 18, marginTop: 8 },
+  dhikrHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 16, marginTop: 8 },
   dhikrTotal: { fontSize: 56, fontFamily: 'BodoniModa_700Bold', color: C.primary },
   dhikrAction: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_600SemiBold' },
-  dhikrSubtitle: { fontSize: 14, color: C.textMuted, paddingHorizontal: 18, marginBottom: 16 },
+  dhikrSubtitle: { fontSize: 14, color: C.textMuted, paddingHorizontal: 16, marginBottom: 16 },
   dhikrRings: { flexDirection: 'row', justifyContent: 'center', marginVertical: 12 },
 
   // Fasting
-  fastGrid: { paddingHorizontal: 18, gap: 10 },
+  fastGrid: { paddingHorizontal: 16, gap: 10 },
   fastCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: C.surfaceElevated,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface,
     borderRadius: 16, padding: 16, gap: 14,
     borderWidth: 1.5, borderColor: 'transparent',
   },
@@ -439,20 +449,20 @@ const styles = StyleSheet.create({
   fastCheck: { width: 22, height: 22, borderRadius: 11, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center' },
   ramadanCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale,
-    borderRadius: 18, padding: 18, margin: 18, marginTop: 24,
+    borderRadius: 18, padding: 18, margin: 16, marginTop: 24,
   },
-  ramadanTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.gold },
+  ramadanTitle: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.gold },
   ramadanText: { fontSize: 13, color: C.textSecondary, marginTop: 2 },
 
   // Quran
   quranSummary: {
-    flexDirection: 'row', backgroundColor: C.surfaceElevated, borderRadius: 18,
-    marginHorizontal: 18, padding: 20, marginTop: 8,
+    flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18,
+    marginHorizontal: 16, padding: 20, marginTop: 8,
   },
   quranStat: { flex: 1, alignItems: 'center' },
-  quranStatValue: { fontSize: 32, fontFamily: 'Jost_700Bold', color: C.gold },
+  quranStatValue: { fontSize: 32, fontFamily: 'Jost_600SemiBold', color: C.gold },
   quranStatLabel: { fontSize: 12, color: C.textMuted, marginTop: 4 },
   quranDivider: { width: 1, backgroundColor: C.border, marginHorizontal: 12 },
-  quranInputWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 18, marginTop: 16, gap: 10 },
+  quranInputWrap: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 16, gap: 10 },
   quranInput: { flex: 1, backgroundColor: C.bgSurface, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: C.textPrimary },
   quranAddBtn: { width: 48, height: 48, borderRadius: 14, backgroundColor: C.gold, justifyContent: 'center', alignItems: 'center' }});

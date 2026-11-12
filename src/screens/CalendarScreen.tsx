@@ -6,8 +6,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
-import { useTokens, Tokens } from '../context/ThemeContext';
+import { useTokens, Tokens, ColorToken } from '../context/ThemeContext';
 import { HijriService } from '../services/HijriService';
 import { getRamadanState, getRamadanCardInfo } from '../services/RamadanService';
 import { loadPrayerLog, getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData, getKhushuAverage } from '../services/StorageService';
@@ -18,16 +17,16 @@ function getDateKey(date: Date): string {
   return getLocalDateKey(date);
 }
 
-const EVENT_COLORS: Record<string, string> = {
-  ramadan: C.primary,
-  eid: C.gold,
-  hajj: C.gold,
-  ashura: C.red,
-  mawlid: C.textSecondary,
-  laylatul_qadr: C.primaryLight,
-  white_days: C.gold,
-  jumuah: C.gold,
-  general: C.textSecondary};
+const EVENT_TONES: Record<string, ColorToken> = {
+  ramadan: 'primary',
+  eid: 'gold',
+  hajj: 'gold',
+  ashura: 'red',
+  mawlid: 'textSecondary',
+  laylatul_qadr: 'gold',
+  white_days: 'gold',
+  jumuah: 'gold',
+  general: 'textSecondary'};
 
 const EVENT_ICONS: Record<string, string> = {
   ramadan: 'moon-outline',
@@ -43,6 +42,7 @@ const EVENT_ICONS: Record<string, string> = {
 export default function CalendarScreen() {
   const { isRTL, t: translate } = useTranslation();
   const t = useTokens();
+  const eventColor = (type: string) => t[EVENT_TONES[type] ?? 'gold'];
   const styles = React.useMemo(() => createStyles(t), [t]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [prayerLog, setPrayerLog] = useState<Record<string, Record<string, string>>>({});
@@ -116,7 +116,7 @@ export default function CalendarScreen() {
             </Text>
           </View>
         </View>
-        <View style={[styles.ramadanSummaryBadge, { backgroundColor: (EVENT_COLORS.ramadan || t.gold) + '15' }]}>
+        <View style={[styles.ramadanSummaryBadge, { backgroundColor: eventColor('ramadan') + '15' }]}>
           <Text style={[styles.ramadanSummaryBadgeText, { color: t.gold }]}>Ramadan</Text>
         </View>
       </View>
@@ -136,14 +136,14 @@ export default function CalendarScreen() {
       {nextEvent && (
         <View style={styles.countdownCard}>
           <View style={styles.countdownLeft}>
-            <Ionicons name={iconName(EVENT_ICONS[nextEvent.type])} size={24} color={EVENT_COLORS[nextEvent.type] || t.gold} />
+            <Ionicons name={iconName(EVENT_ICONS[nextEvent.type])} size={24} color={eventColor(nextEvent.type)} />
             <View style={{ marginLeft: 12 }}>
               <Text style={styles.countdownTitle}>{nextEvent.title}</Text>
               <Text style={styles.countdownDesc}>{isRTL && nextEvent.descriptionArabic ? nextEvent.descriptionArabic : nextEvent.description}</Text>
             </View>
           </View>
-          <View style={[styles.countdownBadge, { backgroundColor: (EVENT_COLORS[nextEvent.type] || t.gold) + '15' }]}>
-            <Text style={[styles.countdownBadgeText, { color: EVENT_COLORS[nextEvent.type] || t.gold }]}>{translate('calendar.soon')}</Text>
+          <View style={[styles.countdownBadge, { backgroundColor: eventColor(nextEvent.type) + '15' }]}>
+            <Text style={[styles.countdownBadgeText, { color: eventColor(nextEvent.type) }]}>{translate('calendar.soon')}</Text>
           </View>
         </View>
       )}
@@ -178,7 +178,7 @@ export default function CalendarScreen() {
         <View style={styles.calNav}>
           {!isCurrentMonthToday && (
             <TouchableOpacity style={styles.todayBtn} onPress={jumpToToday}>
-              <Ionicons name="today-outline" size={13} color={t.white} />
+              <Ionicons name="today-outline" size={13} color={t.onPrimary} />
               <Text style={styles.todayBtnText}>{translate('calendar.today')}</Text>
             </TouchableOpacity>
           )}
@@ -231,7 +231,7 @@ export default function CalendarScreen() {
               <Text style={[
                 styles.calDayNum,
                 isToday && styles.calDayNumToday,
-                isSelected && { color: t.white },
+                isSelected && { color: t.onPrimary },
                 !isCurrentMonth && styles.calDayNumOther,
               ]}>
                 {gregorian.getDate()}
@@ -242,7 +242,7 @@ export default function CalendarScreen() {
                 </Text>
               )}
               {hasEvent && isCurrentMonth && (
-                <View style={[styles.eventDot, { backgroundColor: EVENT_COLORS[events[0].type] || t.gold }]} />
+                <View style={[styles.eventDot, { backgroundColor: eventColor(events[0].type) }]} />
               )}
             </TouchableOpacity>
           );
@@ -322,10 +322,10 @@ export default function CalendarScreen() {
                 )}
 
                 {events.map(event => (
-                  <View key={event.id} style={[styles.eventRow, { backgroundColor: (EVENT_COLORS[event.type] || t.gold) + '10' }]}>
-                    <Ionicons name={iconName(EVENT_ICONS[event.type])} size={16} color={EVENT_COLORS[event.type] || t.gold} />
+                  <View key={event.id} style={[styles.eventRow, { backgroundColor: eventColor(event.type) + '10' }]}>
+                    <Ionicons name={iconName(EVENT_ICONS[event.type])} size={16} color={eventColor(event.type)} />
                     <View style={{ marginLeft: 10, flex: 1 }}>
-                      <Text style={[styles.eventTitle, { color: EVENT_COLORS[event.type] || t.gold }]}>{event.title}</Text>
+                      <Text style={[styles.eventTitle, { color: eventColor(event.type) }]}>{event.title}</Text>
                       <Text style={styles.eventDesc}>{isRTL && event.descriptionArabic ? event.descriptionArabic : event.description}</Text>
                     </View>
                   </View>
@@ -344,7 +344,7 @@ export default function CalendarScreen() {
       <View style={styles.legendCard}>
         {ISLAMIC_EVENTS.filter(e => e.type !== 'white_days').map(event => (
           <View key={event.id} style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: EVENT_COLORS[event.type] || t.gold }]} />
+            <View style={[styles.legendDot, { backgroundColor: eventColor(event.type) }]} />
             <Text style={styles.legendText}>{event.title}</Text>
             <Text style={styles.legendHijri}>{event.hijriDate.day} {['Muharram','Safar','Rabi al-Awwal','Rabi al-Thani','Jumada al-Awwal','Jumada al-Thani','Rajab','Shaban','Ramadan','Shawwal','Dhu al-Qidah','Dhu al-Hijjah'][event.hijriDate.month - 1] || ''}</Text>
           </View>
@@ -359,43 +359,43 @@ function createStyles(t: Tokens) {
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: t.bgBase },
   scrollView: { flex: 1 },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: t.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: t.goldPale },
-  subtitle: { fontSize: 14, color: t.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: t.textPrimary },
+  subtitle: { fontSize: 14, color: t.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
   countdownCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: t.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16,
+    backgroundColor: t.surfaceElevated, borderRadius: 18, margin: 16, marginBottom: 12, padding: 16,
   },
   countdownLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  countdownTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: t.textPrimary },
+  countdownTitle: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: t.textPrimary },
   countdownDesc: { fontSize: 12, color: t.textMuted, marginTop: 2 },
   countdownBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  countdownBadgeText: { fontSize: 12, fontFamily: 'Jost_700Bold' },
+  countdownBadgeText: { fontSize: 12, fontFamily: 'Jost_600SemiBold' },
 
   streakCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
-    backgroundColor: t.goldPale, borderRadius: 16, marginHorizontal: 18, marginBottom: 14,
+    backgroundColor: t.goldPale, borderRadius: 16, marginHorizontal: 16, marginBottom: 14,
     paddingVertical: 12, paddingHorizontal: 8,
   },
   ramadanSummary: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: t.surfaceElevated, borderRadius: 18, marginHorizontal: 18, marginBottom: 14,
+    backgroundColor: t.surfaceElevated, borderRadius: 18, marginHorizontal: 16, marginBottom: 14,
     padding: 16,
   },
   ramadanSummaryLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  ramadanSummaryTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: t.textPrimary },
+  ramadanSummaryTitle: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: t.textPrimary },
   ramadanSummaryDesc: { fontSize: 12, color: t.textMuted, lineHeight: 17, marginTop: 2 },
   ramadanSummaryBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
-  ramadanSummaryBadgeText: { fontSize: 11, fontFamily: 'Jost_700Bold' },
+  ramadanSummaryBadgeText: { fontSize: 11, fontFamily: 'Jost_600SemiBold' },
   streakItem: { alignItems: 'center', flex: 1 },
-  streakValue: { fontSize: 20, fontFamily: 'Jost_700Bold', color: t.textPrimary },
+  streakValue: { fontSize: 20, fontFamily: 'Jost_600SemiBold', color: t.textPrimary },
   streakLabel: { fontSize: 11, fontFamily: 'Jost_500Medium', color: t.textMuted, marginTop: 1 },
   streakDivider: { width: 1, height: 28, backgroundColor: t.border },
 
-  calHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, marginBottom: 12 },
-  calMonth: { fontSize: 18, fontFamily: 'Jost_700Bold', color: t.textPrimary },
+  calHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 },
+  calMonth: { fontSize: 18, fontFamily: 'Jost_600SemiBold', color: t.textPrimary },
   calHijri: { fontSize: 13, color: t.textMuted, marginTop: 2 },
   calNav: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   todayBtn: {
@@ -403,14 +403,14 @@ function createStyles(t: Tokens) {
     backgroundColor: t.primary, borderRadius: 12,
     paddingHorizontal: 10, paddingVertical: 6, marginRight: 4,
   },
-  todayBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: t.white },
+  todayBtnText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: t.onPrimary },
   calNavBtn: {
     width: 32, height: 32, borderRadius: 10, backgroundColor: t.surfaceElevated,
     justifyContent: 'center', alignItems: 'center',
   },
 
-  calWeekdays: { flexDirection: 'row', paddingHorizontal: 18, marginBottom: 8 },
-  calWeekday: { flex: 1, textAlign: 'center', fontSize: 11, fontFamily: 'Jost_700Bold', color: t.textMuted },
+  calWeekdays: { flexDirection: 'row', paddingHorizontal: 16, marginBottom: 8 },
+  calWeekday: { flex: 1, textAlign: 'center', fontSize: 11, fontFamily: 'Jost_600SemiBold', color: t.textMuted },
 
   calGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 18 },
   calDay: {
@@ -422,18 +422,18 @@ function createStyles(t: Tokens) {
   calDayFull: { borderWidth: 1.5, borderColor: t.primary },
   calDaySelected: {},
   calDayNum: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: t.textPrimary },
-  calDayNumToday: { color: t.textPrimary, fontFamily: 'Jost_700Bold' },
+  calDayNumToday: { color: t.textPrimary, fontFamily: 'Jost_600SemiBold' },
   calDayNumOther: { color: t.textMuted },
   calDayHijri: { fontSize: 10, color: t.textMuted, marginTop: 1 },
   calDayHijriPrayed: { color: t.primary, fontFamily: 'Jost_600SemiBold' },
   eventDot: { width: 5, height: 5, borderRadius: 2.5, marginTop: 2 },
 
   detailCard: {
-    backgroundColor: t.surfaceElevated, borderRadius: 18, marginHorizontal: 18, padding: 18, marginTop: 8,
+    backgroundColor: t.surfaceElevated, borderRadius: 18, marginHorizontal: 16, padding: 18, marginTop: 8,
   },
-  detailDate: { fontSize: 16, fontFamily: 'Jost_700Bold', color: t.textPrimary },
+  detailDate: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: t.textPrimary },
   detailHijri: { fontSize: 13, color: t.textMuted, marginTop: 2, marginBottom: 14 },
-  detailSectionTitle: { fontSize: 13, fontFamily: 'Jost_700Bold', color: t.textSecondary, marginBottom: 8 },
+  detailSectionTitle: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: t.textSecondary, marginBottom: 8 },
 
   prayerBreakdown: { marginBottom: 8 },
   prayerStatusRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 10 },
@@ -453,9 +453,9 @@ function createStyles(t: Tokens) {
   eventDesc: { fontSize: 12, color: t.textMuted, marginTop: 1 },
   noEvent: { fontSize: 13, color: t.textMuted, fontStyle: 'italic', marginTop: 6 },
 
-  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: t.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: t.textPrimary, marginHorizontal: 16, marginTop: 24, marginBottom: 10 },
   legendCard: {
-    backgroundColor: t.surfaceElevated, borderRadius: 18, marginHorizontal: 18, padding: 16,
+    backgroundColor: t.surfaceElevated, borderRadius: 18, marginHorizontal: 16, padding: 16,
   },
   legendItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: t.border },
   legendDot: { width: 10, height: 10, borderRadius: 5 },

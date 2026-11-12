@@ -1,4 +1,4 @@
-import { createMMKV } from 'react-native-mmkv';
+import { kv } from './kvStore';
 import { 
   PrayerId, PrayerLogEntry, AppSettings, DEFAULT_SETTINGS,
   FastingLog, QuranLog, DhikrSession, 
@@ -6,7 +6,8 @@ import {
 } from '../types';
 import { getLocalDateKey, getLocalDateFromKey, getLocalDateKeyDaysAgo } from '../utils/date';
 
-export const storage = createMMKV({ id: 'prayertime-storage' });
+export const storage = kv;
+export { hydrateStorage } from './kvStore';
 
 // ─── helpers ────────────────────────────────────────────────
 function load<T>(key: string, fallback: T): T {

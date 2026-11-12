@@ -5,11 +5,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { logger } from '../utils/logger';
 import { useTranslation } from '../i18n';
-import { C, Hadith } from '../types';
+import { Hadith } from '../types';
 import { HADITHS, getDailyHadith, getHadithCategories, getHadithByCategory } from '../data/hadiths';
 import { getFavoriteHadiths, toggleFavoriteHadith } from '../services/StorageService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 function HadithCard({ hadith, isFav, onToggleFav, hideMeaning }: { hadith: Hadith; isFav: boolean; onToggleFav: () => void; hideMeaning?: boolean }) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const handleShare = async () => {
     try {
       await Share.share({
@@ -57,6 +60,8 @@ function HadithCard({ hadith, isFav, onToggleFav, hideMeaning }: { hadith: Hadit
 }
 
 export default function HadithScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const { isRTL } = useTranslation();
   const [dailyHadith, setDailyHadith] = useState<Hadith | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
@@ -159,35 +164,35 @@ export default function HadithScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
-  dailySection: { margin: 18, marginBottom: 8 },
+  dailySection: { margin: 16, marginBottom: 8 },
   dailyHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  dailyTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
+  dailyTitle: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.gold },
 
-  categories: { paddingHorizontal: 18, paddingBottom: 8 },
+  categories: { paddingHorizontal: 16, paddingBottom: 8 },
   catChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8},
   catChipActive: { backgroundColor: C.primary },
   catLabel: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  catLabelActive: { color: '#FFF', fontFamily: 'Jost_600SemiBold' },
+  catLabelActive: { color: C.onPrimary, fontFamily: 'Jost_600SemiBold' },
 
-  listTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginBottom: 10, marginTop: 4 },
-  emptyState: { paddingVertical: 28, alignItems: 'center', marginHorizontal: 18 },
-  emptyTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 8 },
+  listTitle: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginHorizontal: 16, marginBottom: 10, marginTop: 4 },
+  emptyState: { paddingVertical: 28, alignItems: 'center', marginHorizontal: 16 },
+  emptyTitle: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginTop: 8 },
   emptyText: { fontSize: 13, color: C.textMuted, marginTop: 4, textAlign: 'center' },
 
-  card: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12},
+  card: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 16, marginBottom: 12},
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   gradeBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  gradeText: { fontSize: 10, fontFamily: 'Jost_700Bold' },
+  gradeText: { fontSize: 10, fontFamily: 'Jost_600SemiBold' },
   cardActions: { flexDirection: 'row', gap: 8 },
   actionBtn: { padding: 4 },
-  arabic: { fontSize: 16, color: C.primary, textAlign: 'right', lineHeight: 26, marginBottom: 10 },
+  arabic: { fontSize: 18, fontFamily: C.fontArabic, color: C.primary, textAlign: 'right', writingDirection: 'rtl', lineHeight: 32, marginBottom: 10 },
   english: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontStyle: 'italic' },
   meta: { flexDirection: 'row', alignItems: 'center', marginTop: 12, flexWrap: 'wrap', gap: 4 },
   metaText: { fontSize: 11, color: C.textMuted },

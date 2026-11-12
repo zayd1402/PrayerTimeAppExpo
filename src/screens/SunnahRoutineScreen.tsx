@@ -4,10 +4,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
+
 import { SUNNAH_ROUTINE, SunnahItem } from '../data/sunnahRoutine';
 import { mmkv } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const SUNNAH_LOG_KEY = '@prayertime:sunnah_log';
 
@@ -60,6 +61,8 @@ function getSunnahStreak(log: SunnahLog): number {
 }
 
 export default function SunnahRoutineScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [activeTab, setActiveTab] = useState<Category>('morning');
   const [todayLog, setTodayLog] = useState<Record<string, number>>({});
   const [streak, setStreak] = useState(0);
@@ -121,7 +124,7 @@ export default function SunnahRoutineScreen() {
               style={[styles.tab, isActive && styles.tabActive]}
               onPress={() => setActiveTab(cat.id)}
             >
-              <Ionicons name={iconName(cat.icon)} size={16} color={isActive ? C.white : C.textSecondary} />
+              <Ionicons name={iconName(cat.icon)} size={16} color={isActive ? C.primaryDark : C.textSecondary} />
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{cat.label}</Text>
             </TouchableOpacity>
           );
@@ -138,7 +141,7 @@ export default function SunnahRoutineScreen() {
                 style={[styles.checkCircle, isComplete && styles.checkCircleDone]}
                 onPress={() => recordCount(item)}
               >
-                {isComplete && <Ionicons name="checkmark" size={14} color={C.white} />}
+                {isComplete && <Ionicons name="checkmark" size={14} color={C.onPrimary} />}
               </TouchableOpacity>
               <View style={styles.itemInfo}>
                 <Text style={[styles.itemTitle, isComplete && styles.itemTitleDone]}>{item.title}</Text>
@@ -188,30 +191,30 @@ export default function SunnahRoutineScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
   streakCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around',
-    backgroundColor: C.goldPale, borderRadius: 16, margin: 18, marginBottom: 10,
+    backgroundColor: C.goldPale, borderRadius: 16, margin: 16, marginBottom: 10,
     paddingVertical: 14,
   },
   streakItem: { alignItems: 'center' },
-  streakValue: { fontSize: 22, fontFamily: 'Jost_700Bold', color: C.textPrimary },
+  streakValue: { fontSize: 22, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   streakLabel: { fontSize: 11, fontFamily: 'Jost_500Medium', color: C.textMuted, marginTop: 1 },
   streakDivider: { width: 1, height: 32, backgroundColor: C.border },
 
-  tabRow: { flexDirection: 'row', marginHorizontal: 18, marginBottom: 12, gap: 8 },
+  tabRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, gap: 8 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 12, backgroundColor: C.bgSurface },
-  tabActive: { backgroundColor: C.primary },
+  tabActive: { backgroundColor: C.primaryLight },
   tabLabel: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
-  tabLabelActive: { color: C.white },
+  tabLabelActive: { color: C.primaryDark, fontFamily: 'Jost_600SemiBold' },
 
-  itemCard: { backgroundColor: C.surfaceElevated, borderRadius: 16, marginHorizontal: 18, marginBottom: 10, padding: 14 },
+  itemCard: { backgroundColor: C.bgSurface, borderRadius: 16, marginHorizontal: 16, marginBottom: 10, padding: 14 },
   itemCardComplete: { backgroundColor: C.goldPale },
   itemHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   checkCircle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
@@ -219,7 +222,7 @@ const styles = StyleSheet.create({
   itemInfo: { flex: 1 },
   itemTitle: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   itemTitleDone: { color: C.textMuted, textDecorationLine: 'line-through' },
-  itemArabic: { fontSize: 13, color: C.textSecondary, marginTop: 6, lineHeight: 22, textAlign: 'right' },
+  itemArabic: { fontSize: 16, fontFamily: C.fontArabic, color: C.textSecondary, marginTop: 6, lineHeight: 28, textAlign: 'right', writingDirection: 'rtl' },
 
   itemFooter: { marginTop: 10 },
   countRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flexWrap: 'wrap' },
@@ -227,7 +230,7 @@ const styles = StyleSheet.create({
   countDotFilled: { backgroundColor: C.primary, borderColor: C.primary },
   countDotLast: {},
   countText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textMuted, marginLeft: 4 },
-  completeLabel: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.primary },
+  completeLabel: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.primary },
   tapToFill: { flexDirection: 'row', alignItems: 'center', gap: 2, backgroundColor: C.primaryLight, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   tapFillText: { fontSize: 10, fontFamily: 'Jost_600SemiBold', color: C.primary },
   sourceText: { fontSize: 11, color: C.textMuted, marginTop: 4, fontStyle: 'italic' },

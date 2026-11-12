@@ -4,9 +4,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
+
 import { mmkv } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const HIFDH_LOG_KEY = '@prayertime:hifdh_log';
 
@@ -44,6 +45,8 @@ const SURAH_NAMES = [
 ];
 
 export default function HifdhScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [logs, setLogs] = useState<HifdhSession[]>([]);
   const [activeTab, setActiveTab] = useState<'sabaq' | 'sabaq-para' | 'manzil'>('sabaq');
   const [surah, setSurah] = useState('');
@@ -138,7 +141,7 @@ export default function HifdhScreen() {
             style={[styles.tab, activeTab === tab.id && styles.tabActive]}
             onPress={() => setActiveTab(tab.id)}
           >
-            <Ionicons name={iconName(tab.icon)} size={14} color={activeTab === tab.id ? C.white : C.textSecondary} />
+            <Ionicons name={iconName(tab.icon)} size={14} color={activeTab === tab.id ? C.primaryDark : C.textSecondary} />
             <Text style={[styles.tabLabel, activeTab === tab.id && styles.tabLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
@@ -179,7 +182,7 @@ export default function HifdhScreen() {
             keyboardType="number-pad"
           />
           <TouchableOpacity style={styles.addBtn} onPress={addSession}>
-            <Ionicons name="add" size={18} color={C.white} />
+            <Ionicons name="add" size={18} color={C.onPrimary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -217,33 +220,33 @@ export default function HifdhScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
-  statsRow: { flexDirection: 'row', justifyContent: 'space-around', margin: 18, marginBottom: 10 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-around', margin: 16, marginBottom: 10 },
   stat: { alignItems: 'center' },
-  statValue: { fontSize: 22, fontFamily: 'Jost_700Bold', color: C.primary },
+  statValue: { fontSize: 22, fontFamily: 'Jost_600SemiBold', color: C.primary },
   statLabel: { fontSize: 11, color: C.textMuted, marginTop: 2 },
 
-  mushafCard: { backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 10, padding: 16 },
-  mushafTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 12 },
+  mushafCard: { backgroundColor: C.bgSurface, borderRadius: 18, margin: 16, marginBottom: 10, padding: 16 },
+  mushafTitle: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginBottom: 12 },
   mushafGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   juzBox: { width: `${100 / 10}%`, aspectRatio: 1, backgroundColor: C.bgCard, borderRadius: 6, justifyContent: 'center', alignItems: 'center', maxWidth: 32 },
   juzBoxActive: { backgroundColor: C.primary },
   juzBoxText: { fontSize: 10, fontFamily: 'Jost_600SemiBold', color: C.textMuted },
-  juzBoxTextActive: { color: C.white },
+  juzBoxTextActive: { color: C.onPrimary },
 
-  tabRow: { flexDirection: 'row', marginHorizontal: 18, marginBottom: 10, gap: 6 },
+  tabRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, gap: 6 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 10, borderRadius: 12, backgroundColor: C.bgSurface },
-  tabActive: { backgroundColor: C.primary },
+  tabActive: { backgroundColor: C.primaryLight },
   tabLabel: { fontSize: 11, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
-  tabLabelActive: { color: C.white },
+  tabLabelActive: { color: C.primaryDark, fontFamily: 'Jost_600SemiBold' },
 
-  inputCard: { backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 10, padding: 16 },
+  inputCard: { backgroundColor: C.bgSurface, borderRadius: 18, margin: 16, marginBottom: 10, padding: 16 },
   surahInput: { backgroundColor: C.bgBase, borderRadius: 10, padding: 12, fontSize: 14, color: C.textPrimary, marginBottom: 8 },
   suggestions: { backgroundColor: C.bgBase, borderRadius: 10, marginBottom: 8, maxHeight: 200 },
   suggestion: { padding: 12, borderBottomWidth: 1, borderBottomColor: C.border },
@@ -252,14 +255,14 @@ const styles = StyleSheet.create({
   smallInput: { backgroundColor: C.bgBase, borderRadius: 10, padding: 12, fontSize: 14, color: C.textPrimary },
   addBtn: { width: 44, height: 44, borderRadius: 12, backgroundColor: C.primary, justifyContent: 'center', alignItems: 'center' },
 
-  revisionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale, borderRadius: 16, margin: 18, marginBottom: 10, padding: 14 },
-  revisionTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary },
+  revisionCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale, borderRadius: 16, margin: 16, marginBottom: 10, padding: 14 },
+  revisionTitle: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   revisionText: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  sessionCard: { backgroundColor: C.surfaceElevated, borderRadius: 14, marginHorizontal: 18, marginBottom: 8, padding: 14 },
+  sessionCard: { backgroundColor: C.bgSurface, borderRadius: 14, marginHorizontal: 16, marginBottom: 8, padding: 14 },
   sessionHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   sessionSurah: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, flex: 1 },
-  sessionAyahs: { fontSize: 13, color: C.primary, fontFamily: 'Jost_700Bold' },
+  sessionAyahs: { fontSize: 13, color: C.primary, fontFamily: 'Jost_600SemiBold' },
   sessionMeta: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
   sessionDate: { fontSize: 11, color: C.textMuted },
   sessionJuz: { fontSize: 11, color: C.textMuted },

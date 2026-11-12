@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity, Linking, TextInput } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Linking, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C } from '../types';
+
 import { AppLocation } from '../types';
 import { getNearbyMosques, searchLocalMosques, NearbyMosque } from '../services/LocalMosqueService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
+import { Glyph } from '../design/Glyph';
+import { F } from '../design/palette';
 
 interface MosquesScreenProps {
   coordinate: Pick<AppLocation, 'latitude' | 'longitude'>;
@@ -16,6 +19,8 @@ function formatDistance(km: number) {
 }
 
 export default function MosquesScreen({ coordinate, embedded = false }: MosquesScreenProps) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
   const [mosques, setMosques] = useState<NearbyMosque[]>([]);
 
@@ -50,16 +55,13 @@ export default function MosquesScreen({ coordinate, embedded = false }: MosquesS
   }
 
   return (
-    <View style={[styles.container, embedded && styles.embeddedContainer]}>
-      <View style={[styles.header, embedded && styles.embeddedHeader]}>
-        <View>
+    <View style={[styles.container, !embedded && styles.pageContainer]}>
+      {!embedded && (
+        <View style={styles.header}>
           <Text style={styles.title}>Mosques</Text>
-          <Text style={styles.subtitle}>Global seed list with distance from your selected city. Your local mosque may not be listed yet.</Text>
+          <Text style={styles.subtitle}>Distances from your city. Your local mosque may not be listed yet.</Text>
         </View>
-        <TouchableOpacity style={styles.refreshButton} onPress={() => setQuery('')}>
-          <Ionicons name="refresh-outline" size={18} color={C.primary} />
-        </TouchableOpacity>
-      </View>
+      )}
 
       <View style={styles.searchWrap}>
         <Ionicons name="search" size={18} color={C.textMuted} />
@@ -84,13 +86,10 @@ export default function MosquesScreen({ coordinate, embedded = false }: MosquesS
           <Text style={styles.emptyText}>Try another city or clear the search.</Text>
         </View>
       ) : (
-        <FlatList
-          data={mosques}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.list}
-          scrollEnabled={false}
-          renderItem={({ item }) => (
+        <View style={styles.list}>
+          {mosques.map(item => (
             <TouchableOpacity
+              key={item.id}
               style={styles.mosqueCard}
               onPress={() => openInMaps(item)}
               activeOpacity={0.8}
@@ -98,7 +97,7 @@ export default function MosquesScreen({ coordinate, embedded = false }: MosquesS
               accessibilityLabel={`${item.name}, ${formatDistance(item.distanceKm)} away`}
             >
               <View style={styles.mosqueIcon}>
-                <Ionicons name="business" size={24} color={C.primary} />
+                <Glyph name="mosque" size={22} color={C.primaryDark} />
               </View>
               <View style={styles.mosqueInfo}>
                 <Text style={styles.mosqueName}>{item.name}</Text>
@@ -109,57 +108,34 @@ export default function MosquesScreen({ coordinate, embedded = false }: MosquesS
                 <Text style={styles.distanceText}>{formatDistance(item.distanceKm)}</Text>
               </View>
             </TouchableOpacity>
-          )}
-        />
+          ))}
+        </View>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bgSurface, borderRadius: 22, marginHorizontal: 18, padding: 16 },
-  embeddedContainer: { backgroundColor: C.bgSurface },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  embeddedHeader: { paddingTop: 0 },
-  title: { fontSize: 18, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
-  subtitle: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-  refreshButton: { width: 36, height: 36, borderRadius: 14, backgroundColor: C.goldPale, justifyContent: 'center', alignItems: 'center' },
+const makeStyles = (C: Tokens) => StyleSheet.create({
+  container: { backgroundColor: C.bgBase },
+  pageContainer: { flex: 1, paddingHorizontal: 16 },
+  header: { paddingHorizontal: 4, paddingTop: 4, paddingBottom: 14 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: F.display, color: C.textPrimary },
+  subtitle: { fontSize: 14, fontFamily: F.body, color: C.textMuted, marginTop: 2 },
   searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.bgBase,
-    borderRadius: 14,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-    marginBottom: 12,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14,
+    paddingHorizontal: 14, minHeight: 48, gap: 10, marginBottom: 10,
   },
-  searchInput: { flex: 1, fontSize: 14, color: C.textPrimary },
-  list: { gap: 10 },
-  mosqueCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.bgBase,
-    borderRadius: 16,
-    padding: 14,
-    gap: 12,
-    marginBottom: 10,
-  },
-  mosqueIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 15,
-    backgroundColor: C.primaryLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  searchInput: { flex: 1, fontSize: 15, fontFamily: F.body, color: C.textPrimary, paddingVertical: 10 },
+  list: { gap: 8 },
+  mosqueCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 16, padding: 12, gap: 12 },
+  mosqueIcon: { width: 42, height: 42, borderRadius: 13, backgroundColor: C.primaryLight, justifyContent: 'center', alignItems: 'center' },
   mosqueInfo: { flex: 1 },
-  mosqueName: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary },
-  mosqueAddress: { fontSize: 12, color: C.textMuted, marginTop: 2, lineHeight: 16 },
-  mosqueMeta: { fontSize: 11, color: C.textMuted, marginTop: 2 },
-  distanceTag: { backgroundColor: C.goldPale, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
-  distanceText: { fontSize: 11, color: C.gold, fontFamily: 'Jost_700Bold' },
+  mosqueName: { fontSize: 15, fontFamily: F.semibold, color: C.textPrimary },
+  mosqueAddress: { fontSize: 12.5, fontFamily: F.body, color: C.textMuted, marginTop: 2, lineHeight: 17 },
+  mosqueMeta: { fontSize: 12, fontFamily: F.body, color: C.textMuted, marginTop: 1 },
+  distanceTag: { paddingHorizontal: 4 },
+  distanceText: { fontSize: 13, color: C.primaryDark, fontFamily: F.semibold },
   emptyState: { paddingVertical: 28, alignItems: 'center' },
-  emptyTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 8 },
-  emptyText: { fontSize: 13, color: C.textMuted, marginTop: 4 },
+  emptyTitle: { fontSize: 15, fontFamily: F.semibold, color: C.textPrimary, marginTop: 8 },
+  emptyText: { fontSize: 13, fontFamily: F.body, color: C.textMuted, marginTop: 4 },
 });

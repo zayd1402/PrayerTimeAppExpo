@@ -5,12 +5,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
+
 import {
   getFridayChecklist, setFridayChecklist as persistChecklist,
   getKahfProgress, setKahfProgress as persistKahf,
   getKhutbahNotes, setKhutbahNotes as persistKhutbah,
 } from '../services/StorageService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const FRIDAY_CHECKLIST = [
   { id: 'ghusl', label: 'Perform Ghusl (ritual bath)', icon: 'water-outline' },
@@ -35,6 +36,8 @@ const KAHF_SECTIONS = [
 ];
 
 export default function FridayScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [kahfProgress, setKahfProgress] = useState(0);
   const [khutbahNotes, setKhutbahNotes] = useState('');
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
@@ -93,7 +96,7 @@ export default function FridayScreen() {
             style={[styles.tab, activeSection === tab.id && styles.tabActive]}
             onPress={() => setActiveSection(tab.id)}
           >
-            <Ionicons name={iconName(tab.icon)} size={16} color={activeSection === tab.id ? '#FFF' : C.textSecondary} />
+            <Ionicons name={iconName(tab.icon)} size={16} color={activeSection === tab.id ? C.primaryDark : C.textSecondary} />
             <Text style={[styles.tabLabel, activeSection === tab.id && styles.tabLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
@@ -123,7 +126,7 @@ export default function FridayScreen() {
             return (
               <TouchableOpacity key={item.id} style={[styles.checkItem, done && styles.checkItemDone]} onPress={() => toggleCheck(item.id)}>
                 <View style={[styles.checkBox, done && styles.checkBoxDone]}>
-                  {done && <Ionicons name="checkmark" size={14} color="#FFF" />}
+                  {done && <Ionicons name="checkmark" size={14} color={C.onPrimary} />}
                 </View>
                 <Ionicons name={iconName(item.icon)} size={18} color={done ? C.primary : C.textSecondary} style={{ marginHorizontal: 12 }} />
                 <Text style={[styles.checkLabel, done && styles.checkLabelDone]}>{item.label}</Text>
@@ -243,54 +246,54 @@ export default function FridayScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
-  tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
+  tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 16, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  tabActive: { backgroundColor: C.primary },
+  tabActive: { backgroundColor: C.bgBase, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   tabLabel: { fontSize: 11, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' },
+  tabLabelActive: { color: C.textPrimary, fontFamily: 'Jost_600SemiBold' },
 
-  progressCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, marginBottom: 16},
+  progressCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 16, padding: 16, marginBottom: 16},
   progressItem: { flex: 1, alignItems: 'center' },
   progressDivider: { width: 1, backgroundColor: C.border },
-  progressValue: { fontSize: 20, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 6 },
+  progressValue: { fontSize: 20, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginTop: 6 },
   progressLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginHorizontal: 16, marginTop: 8, marginBottom: 10 },
 
-  checkItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
+  checkItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 16, marginBottom: 8 },
   checkItemDone: { backgroundColor: C.primaryLight },
   checkBox: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center' },
   checkBoxDone: { backgroundColor: C.primary, borderColor: C.primary },
   checkLabel: { flex: 1, fontSize: 14, fontFamily: 'Jost_500Medium', color: C.textPrimary },
   checkLabelDone: { color: C.primary, textDecorationLine: 'line-through' },
 
-  notesCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, minHeight: 120 },
+  notesCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 16, padding: 16, minHeight: 120 },
   notesInput: { flex: 1, fontSize: 14, color: C.textPrimary, lineHeight: 22, minHeight: 100 },
 
-  kahfIntro: { fontSize: 14, color: C.textSecondary, fontStyle: 'italic', lineHeight: 22, marginHorizontal: 18, marginBottom: 4 },
-  kahfSource: { fontSize: 12, color: C.textMuted, marginHorizontal: 18, marginBottom: 16 },
-  kahfSection: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 18, marginBottom: 8 },
+  kahfIntro: { fontSize: 14, color: C.textSecondary, fontStyle: 'italic', lineHeight: 22, marginHorizontal: 16, marginBottom: 4 },
+  kahfSource: { fontSize: 12, color: C.textMuted, marginHorizontal: 16, marginBottom: 16 },
+  kahfSection: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, padding: 14, marginHorizontal: 16, marginBottom: 8 },
   kahfSectionRead: { backgroundColor: C.primaryLight, opacity: 0.8 },
   kahfSectionCurrent: { borderWidth: 1.5, borderColor: C.gold },
   kahfNumWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center' },
   kahfNumWrapDone: { backgroundColor: C.primary },
-  kahfNum: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary },
-  kahfNumDone: { color: '#FFF' },
+  kahfNum: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
+  kahfNumDone: { color: C.onPrimary },
   kahfInfo: { flex: 1, marginLeft: 12 },
   kahfAyah: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   kahfTextDone: { color: C.primary, textDecorationLine: 'line-through' },
   kahfDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  duaCard: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 18, marginBottom: 12},
+  duaCard: { backgroundColor: C.bgSurface, borderRadius: 18, padding: 18, marginHorizontal: 16, marginBottom: 12},
   duaTimeHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  duaTimeTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary },
+  duaTimeTitle: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   duaTimeDesc: { fontSize: 13, color: C.textSecondary, lineHeight: 20 },
   duaTimeBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.goldPale, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'flex-start', marginTop: 12 },
   duaTimeBadgeText: { fontSize: 12, color: C.gold, fontFamily: 'Jost_600SemiBold' },
