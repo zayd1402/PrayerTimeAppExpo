@@ -16,6 +16,7 @@ import { PrayerAppProvider } from './src/context/PrayerAppContext';
 import { ThemeProvider, useTheme, useTokens } from './src/context/ThemeContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import RootNavigator from './src/navigation/RootNavigator';
+import { hydrateStorage } from './src/services/StorageService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -48,13 +49,19 @@ export default function App() {
     Amiri_400Regular, Amiri_700Bold,
   });
 
+  // Saved data must be readable before any screen loads it (instant with MMKV, a quick read in Expo Go).
+  const [storageReady, setStorageReady] = React.useState(false);
   React.useEffect(() => {
-    if (fontsLoaded) {
+    hydrateStorage().finally(() => setStorageReady(true));
+  }, []);
+
+  React.useEffect(() => {
+    if (fontsLoaded && storageReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, storageReady]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !storageReady) {
     return null;
   }
 

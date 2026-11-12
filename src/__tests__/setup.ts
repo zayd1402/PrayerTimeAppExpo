@@ -32,3 +32,10 @@ jest.mock('react-native-mmkv', () => ({
 }));
 
 jest.mock('@expo/vector-icons/Ionicons', () => 'Ionicons');
+
+// Storage runs on MMKV in tests (mocked above), so Constants just needs to say "not Expo Go".
+jest.mock('expo-constants', () => ({
+  __esModule: true,
+  default: { executionEnvironment: 'standalone' },
+  ExecutionEnvironment: { Bare: 'bare', Standalone: 'standalone', StoreClient: 'storeClient' },
+}));

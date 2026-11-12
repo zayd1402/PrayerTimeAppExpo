@@ -1,7 +1,8 @@
-import { Audio, AVPlaybackSource } from 'expo-av';
+// Adhan playback. Uses expo-audio, which Expo Go includes (expo-av was dropped from it).
+import { createAudioPlayer, setAudioModeAsync, AudioPlayer, AudioSource } from 'expo-audio';
 import { logger } from '../utils/logger';
 
-const ADHAN_FILES: Record<string, AVPlaybackSource> = {
+const ADHAN_FILES: Record<string, AudioSource> = {
   default: require('../../assets/audio/adhan-default.mp3'),
 };
 
@@ -13,7 +14,7 @@ const ADHAN_ATTRIBUTION = {
   soundId: 555065,
 };
 
-let currentSound: Audio.Sound | null = null;
+let currentSound: AudioPlayer | null = null;
 let isLoaded = false;
 let currentVolume = 1.0;
 
@@ -23,10 +24,10 @@ export function getAdhanAttribution() {
 
 export async function initAudio(): Promise<void> {
   if (isLoaded) return;
-  await Audio.setAudioModeAsync({
-    playsInSilentModeIOS: true,
-    staysActiveInBackground: true,
-    shouldDuckAndroid: true,
+  await setAudioModeAsync({
+    playsInSilentMode: true,
+    shouldPlayInBackground: true,
+    interruptionMode: 'duckOthers',
   });
   isLoaded = true;
 }
@@ -38,7 +39,7 @@ export function getAdhanVariants(): string[] {
 export async function setAdhanVolume(volume: number): Promise<void> {
   currentVolume = Math.max(0, Math.min(1, volume));
   if (currentSound) {
-    await currentSound.setVolumeAsync(currentVolume);
+    currentSound.volume = currentVolume;
   }
 }
 
@@ -48,19 +49,18 @@ export async function playAdhan(variant: string = 'default'): Promise<void> {
 
     const source = ADHAN_FILES[variant] || ADHAN_FILES.default;
 
-    const { sound } = await Audio.Sound.createAsync(source, {
-      shouldPlay: true,
-      volume: currentVolume,
-      isLooping: false,
-    });
-    currentSound = sound;
+    const player = createAudioPlayer(source);
+    player.volume = currentVolume;
+    player.loop = false;
+    currentSound = player;
 
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync();
-        currentSound = null;
+    player.addListener('playbackStatusUpdate', (status) => {
+      if (status.didJustFinish) {
+        player.remove();
+        if (currentSound === player) currentSound = null;
       }
     });
+    player.play();
   } catch (error) {
     logger.warn('Failed to play adhan:', error);
     currentSound = null;
@@ -70,8 +70,8 @@ export async function playAdhan(variant: string = 'default'): Promise<void> {
 export async function stopAdhan(): Promise<void> {
   try {
     if (currentSound) {
-      await currentSound.stopAsync();
-      await currentSound.unloadAsync();
+      currentSound.pause();
+      currentSound.remove();
       currentSound = null;
     }
   } catch {}
