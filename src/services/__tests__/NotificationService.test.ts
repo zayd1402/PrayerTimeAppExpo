@@ -57,10 +57,11 @@ beforeEach(() => {
 
 const flush = () => new Promise(resolve => setTimeout(resolve, 0));
 
-function respond(actionIdentifier: string) {
+function respond(actionIdentifier: string, date: number = Date.now()) {
   responseListener?.({
     actionIdentifier,
     notification: {
+      date,
       request: {
         identifier: 'prayer-dhuhr',
         content: { title: 'Dhuhr Prayer Time', body: "It's time for Dhuhr prayer", data: { prayerId: 'dhuhr', action: 'time' } },
@@ -193,9 +194,35 @@ describe('NotificationService', () => {
       setupNotificationResponseHandler(onMarkPrayed, jest.fn());
       respond('MARK_PRAYED');
       await flush();
-      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr');
+      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr', expect.any(Date));
       expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('snooze-dhuhr');
       expect(scheduleNotificationAsync).not.toHaveBeenCalled();
+    });
+
+    it('passes the delivery time, not the time the action was tapped', () => {
+      const onMarkPrayed = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, jest.fn());
+      const delivered = new Date(2026, 10, 11, 19, 45).getTime();
+      respond('MARK_PRAYED', delivered);
+      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr', new Date(delivered));
+    });
+
+    it('falls back to now when the delivery time is missing', () => {
+      const onMarkPrayed = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, jest.fn());
+      const before = Date.now();
+      respond('MARK_PRAYED', Number.NaN);
+      const deliveredAt = onMarkPrayed.mock.calls[0][1] as Date;
+      expect(deliveredAt.getTime()).toBeGreaterThanOrEqual(before);
+    });
+
+    it('does not mark a prayer on a plain tap', () => {
+      const onMarkPrayed = jest.fn();
+      const onTap = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, onTap);
+      respond('expo.modules.notifications.actions.DEFAULT');
+      expect(onMarkPrayed).not.toHaveBeenCalled();
+      expect(onTap).toHaveBeenCalled();
     });
   });
 });

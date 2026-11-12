@@ -4,7 +4,7 @@ import {
   FastingLog, QuranLog, DhikrSession, 
   ZakatRecord, CharityRecord, PrayerJournalEntry, KhushuEntry
 } from '../types';
-import { getLocalDateKey, getLocalDateFromKey } from '../utils/date';
+import { getLocalDateKey, getLocalDateFromKey, getLocalDateKeyDaysAgo } from '../utils/date';
 
 export const storage = createMMKV({ id: 'prayertime-storage' });
 
@@ -183,9 +183,7 @@ export async function getStreak(): Promise<number> {
   today.setHours(0, 0, 0, 0);
 
   for (let i = 0; i < dates.length; i++) {
-    const expected = new Date(today);
-    expected.setDate(today.getDate() - i);
-    const expectedKey = expected.toISOString().split('T')[0];
+    const expectedKey = getLocalDateKeyDaysAgo(i, today);
 
     if (dates[i] !== expectedKey) break;
     const dayLog = log[dates[i]];
@@ -227,9 +225,7 @@ export async function getHeatmapData(months: number = 2): Promise<Record<string,
   const result: Record<string, number> = {};
   const now = new Date();
   for (let i = 0; i < 30 * months; i++) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
+    const key = getLocalDateKeyDaysAgo(i, now);
     if (log[key]) {
       const count = Object.entries(log[key])
         .filter(([id, s]) => id !== 'sunrise' && s === 'prayed')
@@ -330,9 +326,7 @@ export async function getWeeklyQuranStats(): Promise<number[]> {
   const result: number[] = [];
   const now = new Date();
   for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
+    const key = getLocalDateKeyDaysAgo(i, now);
     result.push(log[key]?.pagesRead || 0);
   }
   return result;
@@ -357,7 +351,7 @@ export async function addDhikrSession(session: DhikrSession): Promise<DhikrSessi
 
 export async function getTodayDhikrCount(): Promise<{ subhanallah: number; alhamdulillah: number; allahuakbar: number }> {
   const history = load<DhikrSession[]>(KEYS.DHIKR_HISTORY, []);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateKey();
   const todaySessions = history.filter(s => s.date === today);
   return todaySessions.reduce((acc, s) => ({
     subhanallah: acc.subhanallah + s.subhanallah,
@@ -468,18 +462,14 @@ export async function addKhushuEntry(entry: KhushuEntry): Promise<KhushuEntry[]>
 
 export async function getKhushuAverage(days: number = 7): Promise<{ average: number; entries: number; trend: number[] }> {
   const log = load<KhushuEntry[]>(KEYS.KHUSHU_LOG, []);
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
-  const cutoffStr = cutoff.toISOString().split('T')[0];
+  const cutoffStr = getLocalDateKeyDaysAgo(days);
   const recent = log.filter(e => e.date >= cutoffStr);
   const average = recent.length > 0 ? recent.reduce((s, e) => s + e.level, 0) / recent.length : 0;
 
   // Daily trend (last 7 days)
   const trend: number[] = [];
   for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
+    const key = getLocalDateKeyDaysAgo(i);
     const dayEntries = recent.filter(e => e.date === key);
     const dayAvg = dayEntries.length > 0 ? dayEntries.reduce((s, e) => s + e.level, 0) / dayEntries.length : 0;
     trend.push(Math.round(dayAvg * 10) / 10);
@@ -501,9 +491,7 @@ export async function getSunnahStreak(): Promise<number> {
   today.setHours(0, 0, 0, 0);
 
   for (let i = 0; i < dates.length; i++) {
-    const expected = new Date(today);
-    expected.setDate(today.getDate() - i);
-    const expectedKey = expected.toISOString().split('T')[0];
+    const expectedKey = getLocalDateKeyDaysAgo(i, today);
     if (dates[i] !== expectedKey) break;
     const dayLog = log[dates[i]];
     const completed = Object.values(dayLog).filter(v => v === 100 || v === 1 || v === 3).length;

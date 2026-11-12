@@ -10,6 +10,7 @@ import { useTranslation } from '../i18n';
 import { logger } from '../utils/logger';
 import { C, FastingLog, QuranLog } from '../types';
 import { getRamadanState } from '../services/RamadanService';
+import { getLocalDateKey } from '../utils/date';
 import {
   loadFastingLog, toggleFast, loadQuranLog, addQuranLog,
   addDhikrSession, getTodayDhikrCount,
@@ -147,7 +148,7 @@ export default function WorshipScreen() {
   const [quranLog, setQuranLog] = useState<Record<string, QuranLog>>({});
   const [quranInput, setQuranInput] = useState('');
   const [weeklyQuran, setWeeklyQuran] = useState<number[]>([0,0,0,0,0,0,0]);
-  const todayKey = new Date().toISOString().split('T')[0];
+  const todayKey = getLocalDateKey();
 
   useEffect(() => {
     loadData();

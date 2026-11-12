@@ -5,6 +5,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { C } from '../types';
 import { mmkv } from '../services/StorageService';
+import { getLocalDateKey } from '../utils/date';
 import {
   getRamadanState, getTodayJuz, calculateKhatmPlan, getNightVirtue
 } from '../services/RamadanService';
@@ -51,7 +52,7 @@ export default function RamadanScreen() {
   const [khatmTargetInput, setKhatmTargetInput] = useState(String(targets.targetKhatms));
   const [allLogs, setAllLogs] = useState<Record<string, RamadanDayLog>>({});
 
-  const todayKey = new Date().toISOString().split('T')[0];
+  const todayKey = getLocalDateKey();
 
   useEffect(() => {
     const logs = getLog();

@@ -1,7 +1,7 @@
 // ─── PrayerAppContext — Global state for the app ──────────────
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
-import { getLocalDateKey } from '../utils/date';
+import { getLocalDateKey, getPrayerDateKey } from '../utils/date';
 import { logger } from '../utils/logger';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as TaskManager from 'expo-task-manager';
@@ -207,11 +207,12 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
 
       // Notification response handler
       notifSubRef.current = setupNotificationResponseHandler(
-        (prayerId) => {
+        async (prayerId, deliveredAt) => {
+          const prayerDayKey = getPrayerDateKey(prayerId, deliveredAt);
+          const log = await markPrayer(prayerDayKey, prayerId as PrayerId, 'prayed');
           const todayKey = getDateKey(new Date());
-          markPrayer(todayKey, prayerId as PrayerId, 'prayed').then(log => {
-            setPrayerStatuses({ ...(log[todayKey] || {}) });
-          });
+          if (prayerDayKey !== todayKey) return;
+          setPrayerStatuses({ ...(log[todayKey] || {}) });
         },
         (data) => {
           logger.log('Notification tapped:', data);

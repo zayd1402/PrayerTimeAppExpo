@@ -276,7 +276,7 @@ export async function snoozePrayerNotification(
 
 // ─── Notification Response Handler ───────────────────────────
 export function setupNotificationResponseHandler(
-  onMarkPrayed: (prayerId: string) => void,
+  onMarkPrayed: (prayerId: string, deliveredAt: Date) => void,
   onNotificationTap: (data: Record<string, unknown> | undefined) => void,
 ): Notifications.Subscription {
   const sub = Notifications.addNotificationResponseReceivedListener(response => {
@@ -285,7 +285,11 @@ export function setupNotificationResponseHandler(
     const actionId = response.actionIdentifier;
 
     if (actionId === 'MARK_PRAYED' && typeof data?.prayerId === 'string') {
-      onMarkPrayed(data.prayerId);
+      // Use the time the notification was delivered, not when it was acted on,
+      // so a prayer marked after midnight is logged under its own day.
+      const deliveredMs = response.notification.date;
+      const deliveredAt = Number.isFinite(deliveredMs) && deliveredMs > 0 ? new Date(deliveredMs) : new Date();
+      onMarkPrayed(data.prayerId, deliveredAt);
       // A pending snooze for a prayer that is now done would be noise.
       Notifications.cancelScheduledNotificationAsync(`snooze-${data.prayerId}`).catch(() => {});
       Notifications.dismissNotificationAsync(request.identifier).catch(() => {});

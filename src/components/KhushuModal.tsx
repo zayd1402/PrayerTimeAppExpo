@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { C, PrayerId, KhushuLevel, DistractionType, KhushuEntry } from '../types';
 import { addKhushuEntry } from '../services/StorageService';
+import { getLocalDateKey } from '../utils/date';
 
 const LEVELS: { value: KhushuLevel; label: string }[] = [
   { value: 1, label: 'Scattered' },
@@ -44,7 +45,7 @@ export default function KhushuModal({ visible, prayerId, prayerName, onClose }: 
   };
 
   const handleSave = async () => {
-    const date = new Date().toISOString().split('T')[0];
+    const date = getLocalDateKey();
     const entry: KhushuEntry = {
       date,
       prayerId,
