@@ -14,3 +14,21 @@ export function getLocalDateFromKey(key: string): Date {
   const [year, month, day] = key.split('-').map(Number);
   return new Date(year, month - 1, day);
 }
+
+/** Returns the local YYYY-MM-DD key `days` days before `date` (DST-safe). */
+export function getLocalDateKeyDaysAgo(days: number, date: Date = new Date()): string {
+  const d = new Date(date.getFullYear(), date.getMonth(), date.getDate() - days);
+  return getLocalDateKey(d);
+}
+
+/**
+ * The local day a prayer belongs to, given when its notification was delivered.
+ * Isha's time can run past midnight, so an Isha notification delivered in the
+ * small hours (before noon) still belongs to the previous day.
+ */
+export function getPrayerDateKey(prayerId: string, deliveredAt: Date): string {
+  if (prayerId === 'isha' && deliveredAt.getHours() < 12) {
+    return getLocalDateKeyDaysAgo(1, deliveredAt);
+  }
+  return getLocalDateKey(deliveredAt);
+}

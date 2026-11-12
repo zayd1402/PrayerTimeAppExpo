@@ -41,6 +41,7 @@ import {
   loadPrayerLog,
 } from '../StorageService';
 import { DEFAULT_SETTINGS } from '../../types';
+import { getLocalDateKey } from '../../utils/date';
 
 beforeEach(() => {
   Object.keys(store).forEach(key => delete store[key]);
@@ -193,7 +194,7 @@ describe('StorageService', () => {
 
   describe('dhikr history', () => {
     it('adds a dhikr session and returns today count', async () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getLocalDateKey();
       await addDhikrSession({ id: '1', date: today, subhanallah: 33, alhamdulillah: 33, allahuakbar: 34 });
       const count = await getTodayDhikrCount();
       expect(count).toEqual({ subhanallah: 33, alhamdulillah: 33, allahuakbar: 34 });

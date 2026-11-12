@@ -5,11 +5,13 @@ const cancelScheduledNotificationAsync = jest.fn();
 const cancelAllScheduledNotificationsAsync = jest.fn();
 const setNotificationChannelAsync = jest.fn();
 const setNotificationCategoryAsync = jest.fn();
+const addNotificationResponseReceivedListener = jest.fn((_cb: unknown) => ({ remove: jest.fn() }));
 
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
   setNotificationChannelAsync,
   setNotificationCategoryAsync,
+  addNotificationResponseReceivedListener,
   scheduleNotificationAsync,
   cancelScheduledNotificationAsync,
   cancelAllScheduledNotificationsAsync,
@@ -36,6 +38,7 @@ import {
   schedulePrayerNotification,
   cancelAllNotifications,
   scheduleFridayReminders,
+  setupNotificationResponseHandler,
 } from '../NotificationService';
 
 beforeEach(() => {
@@ -127,6 +130,42 @@ describe('NotificationService', () => {
       );
       expect(calls).toContain('friday-kahf');
       expect(calls).toContain('friday-dua');
+    });
+  });
+
+  describe('setupNotificationResponseHandler', () => {
+    const respond = (date: number, actionIdentifier = 'MARK_PRAYED') => {
+      const listener = addNotificationResponseReceivedListener.mock.calls[0][0] as (r: unknown) => void;
+      listener({
+        actionIdentifier,
+        notification: { date, request: { content: { data: { prayerId: 'isha' } } } },
+      });
+    };
+
+    it('passes the delivery time, not the time the action was tapped', () => {
+      const onMarkPrayed = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, jest.fn());
+      const delivered = new Date(2026, 10, 11, 19, 45).getTime();
+      respond(delivered);
+      expect(onMarkPrayed).toHaveBeenCalledWith('isha', new Date(delivered));
+    });
+
+    it('falls back to now when the delivery time is missing', () => {
+      const onMarkPrayed = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, jest.fn());
+      const before = Date.now();
+      respond(Number.NaN);
+      const deliveredAt = onMarkPrayed.mock.calls[0][1] as Date;
+      expect(deliveredAt.getTime()).toBeGreaterThanOrEqual(before);
+    });
+
+    it('does not mark a prayer on a plain tap', () => {
+      const onMarkPrayed = jest.fn();
+      const onTap = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, onTap);
+      respond(Date.now(), 'expo.modules.notifications.actions.DEFAULT');
+      expect(onMarkPrayed).not.toHaveBeenCalled();
+      expect(onTap).toHaveBeenCalled();
     });
   });
 });
