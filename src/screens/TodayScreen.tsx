@@ -94,9 +94,9 @@ function PrayerRing({ completed, total }: { completed: number; total: number }) 
 // ─── Prayer Row with Swipe (Reanimated + Gesture Handler) ─────
 function PrayerRow({
   prayer, time, isTrackable, isCompleted, status, isNext, isActive,
-  onToggle, onLongPress, reduceMotion, t
+  onToggle, onLongPress, reduceMotion, showIqama, t
 }: {
-  prayer: Prayer; time: Date; isTrackable: boolean; isCompleted: boolean;
+  prayer: Prayer; time: Date; isTrackable: boolean; isCompleted: boolean; showIqama: boolean;
   status: PrayerLogEntry['status'] | undefined;
   isNext: boolean; isActive: boolean; onToggle: () => void; onLongPress: () => void;
   reduceMotion: boolean; t: (key: string, params?: Record<string, string>) => string;
@@ -144,7 +144,7 @@ function PrayerRow({
   const isQaza = status === 'qaza';
   const isMissed = status === 'missed';
   const statusLabel = isQaza ? t('status.qaza') : isMissed ? t('status.missed') : null;
-  const iqama = isTrackable ? getIqamaTime(prayer.id, time) : null;
+  const iqama = isTrackable && showIqama ? getIqamaTime(prayer.id, time) : null;
   const iqamaCountdown = iqama && isNext ? getTimeUntil(iqama) : null;
 
   return (
@@ -480,6 +480,7 @@ export default function TodayScreen() {
               onToggle={() => handleToggle(prayer.id)}
               onLongPress={() => handleLongPress(prayer)}
               reduceMotion={reduceMotion}
+              showIqama={settings.iqamaCountdownEnabled}
               t={t}
             />
           );

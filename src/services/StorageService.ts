@@ -43,7 +43,25 @@ const KEYS = {
   FRIDAY_CHECKLIST:'@prayertime:friday_checklist',
   KHUSHU_LOG:     '@prayertime:khushu_log',
   TRACKING_START: '@prayertime:tracking_start',
+  SUNNAH_PRAYERS: '@prayertime:sunnah_prayers',
 };
+
+// ─── Sunnah & Witr prayers (Worship > Prayers) ──────────────
+const SUNNAH_PRAYER_DAYS_KEPT = 90;
+
+export function getSunnahPrayersForDate(dateKey: string): string[] {
+  return load<Record<string, string[]>>(KEYS.SUNNAH_PRAYERS, {})[dateKey] ?? [];
+}
+
+export function setSunnahPrayersForDate(dateKey: string, ids: string[]): void {
+  const all = load<Record<string, string[]>>(KEYS.SUNNAH_PRAYERS, {});
+  all[dateKey] = ids;
+  const oldest = getLocalDateKeyDaysAgo(SUNNAH_PRAYER_DAYS_KEPT);
+  for (const key of Object.keys(all)) {
+    if (key < oldest) delete all[key];
+  }
+  save(KEYS.SUNNAH_PRAYERS, all);
+}
 
 // ─── Settings ───────────────────────────────────────────────
 export async function loadSettings(): Promise<AppSettings> {
