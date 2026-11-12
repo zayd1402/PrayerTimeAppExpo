@@ -166,12 +166,12 @@ export default function WeeklyScreen() {
 
 const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
-  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: "Jost_400Regular", marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
-  daySelector: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 18, marginTop: 16, marginBottom: 8 },
+  daySelector: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, marginTop: 16, marginBottom: 8 },
   dayChip: { alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14, backgroundColor: C.bgSurface, minWidth: 44 },
   dayChipSelected: { backgroundColor: C.primary },
   dayChipToday: { backgroundColor: C.goldPale, borderWidth: 1, borderColor: C.gold },
@@ -180,13 +180,13 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
   dayLabelToday: { color: C.gold },
   todayDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.gold, marginTop: 4 },
 
-  selectedDayName: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginBottom: 12 },
+  selectedDayName: { fontSize: 18, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginHorizontal: 16, marginBottom: 12 },
 
   emptyState: { alignItems: 'center', paddingVertical: 40 },
   emptyText: { fontSize: 15, color: C.textSecondary, marginTop: 12, fontFamily: 'Jost_500Medium' },
   emptySub: { fontSize: 13, color: C.textMuted, marginTop: 4 },
 
-  activityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 18, padding: 16, marginHorizontal: 18, marginBottom: 10},
+  activityCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 18, padding: 16, marginHorizontal: 16, marginBottom: 10},
   activityIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   activityInfo: { flex: 1, marginLeft: 14 },
   activityTitle: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
@@ -196,18 +196,18 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
   fastToggleText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
   fastToggleTextActive: { color: C.onPrimary },
 
-  sunnahRevivalCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginTop: 16, padding: 18},
+  sunnahRevivalCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 16, marginTop: 16, padding: 18},
   sunnahHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
-  sunnahTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
+  sunnahTitle: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.gold },
   sunnahContent: { flexDirection: 'row', alignItems: 'center' },
   sunnahIconWrap: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   sunnahInfo: { flex: 1, marginLeft: 14 },
   sunnahName: { fontSize: 15, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   sunnahDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 24, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginHorizontal: 16, marginTop: 24, marginBottom: 10 },
 
-  overviewCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16},
+  overviewCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 16, padding: 16},
   overviewItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: C.border },
   overviewItemToday: { backgroundColor: '#FFF5F0', marginHorizontal: -16, paddingHorizontal: 16, borderRadius: 10 },
   overviewDot: { width: 28, height: 28, borderRadius: 8, backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center' },
@@ -216,4 +216,4 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
   overviewTitleToday: { color: C.primary, fontFamily: 'Jost_600SemiBold' },
   overviewDay: { fontSize: 11, color: C.textMuted, marginTop: 1 },
   todayBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: C.primary },
-  todayBadgeText: { fontSize: 10, color: C.onPrimary, fontFamily: 'Jost_700Bold' }});
+  todayBadgeText: { fontSize: 10, color: C.onPrimary, fontFamily: 'Jost_600SemiBold' }});

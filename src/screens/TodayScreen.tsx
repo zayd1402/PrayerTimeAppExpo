@@ -1,709 +1,392 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  StyleSheet, View, Text, TouchableOpacity,
-  Alert, AccessibilityInfo
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { iconName } from '../components/Icon';
-import { useTranslation } from '../i18n';
-import { PrayerId, PrayerLogEntry, PRAYER_ICONS } from '../types';
-import Animated, {
-  useSharedValue, useAnimatedStyle, useAnimatedScrollHandler,
-  withTiming, withSequence, withRepeat
-} from 'react-native-reanimated';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+// Today: a sky that takes the colour of the current prayer time, one button for the prayer that's
+// due, the five times with visible ticks, quick actions and one timely suggestion.
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { AccessibilityInfo, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Haptics from 'expo-haptics';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withTiming, cancelAnimation } from 'react-native-reanimated';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 import { usePrayerApp } from '../context/PrayerAppContext';
-import SettingsScreen from './SettingsScreen';
-import KhushuModal from '../components/KhushuModal';
-import { getUpcomingSacredPeriods, SacredPeriod } from '../services/SacredTimeService';
-import { getRamadanState, getRamadanCardInfo, RamadanState } from '../services/RamadanService';
-import { getLessonForDate } from '../data/knowledge';
-import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
+import { Tokens, useTheme, useThemedStyles, useTokens } from '../context/ThemeContext';
+import { PrayerId } from '../types';
+import MarkSheet from '../components/MarkSheet';
+import { Glyph, GlyphName } from '../design/Glyph';
+import { F, Sky, useSky } from '../design/palette';
+import { computeDayState, formatClock, formatDuration, isDone, minutesOf, FIVE } from '../design/dayState';
+import { getSpecialMoment } from '../design/moment';
+import { PrimaryButton, ProfileButton, TickButton, TickState, tapHaptic } from '../design/ui';
+import { HijriService } from '../services/HijriService';
+import { calculateQiblaDirection } from '../services/PrayerService';
+import { getNearbyMosques } from '../services/LocalMosqueService';
+import { getTodayDhikrCount } from '../services/StorageService';
+import type { RootStackParamList } from '../navigation/routes';
 
-interface Prayer {
-  id: string;
-  name: string;
-  arabicName: string;
-  icon: string;
-}
+const NAMES: Record<PrayerId, { en: string; ar: string; short: string }> = {
+  fajr: { en: 'Fajr', ar: 'الفجر', short: 'Fajr' },
+  sunrise: { en: 'Sunrise', ar: 'الشروق', short: 'Sunrise' },
+  dhuhr: { en: 'Dhuhr', ar: 'الظهر', short: 'Dhuhr' },
+  asr: { en: 'Asr', ar: 'العصر', short: 'Asr' },
+  maghrib: { en: 'Maghrib', ar: 'المغرب', short: 'Mgh' },
+  isha: { en: 'Isha', ar: 'العشاء', short: 'Isha' },
+};
 
-const PRAYERS: Prayer[] = [
-  { id: 'fajr', name: 'Fajr', arabicName: 'الفجر', icon: PRAYER_ICONS.fajr.icon },
-  { id: 'sunrise', name: 'Sunrise', arabicName: 'الشروق', icon: PRAYER_ICONS.sunrise.icon },
-  { id: 'dhuhr', name: 'Dhuhr', arabicName: 'الظهر', icon: PRAYER_ICONS.dhuhr.icon },
-  { id: 'asr', name: 'Asr', arabicName: 'العصر', icon: PRAYER_ICONS.asr.icon },
-  { id: 'maghrib', name: 'Maghrib', arabicName: 'المغرب', icon: PRAYER_ICONS.maghrib.icon },
-  { id: 'isha', name: 'Isha', arabicName: 'العشاء', icon: PRAYER_ICONS.isha.icon },
-];
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const TRACKABLE = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-}
-
-function getIqamaTime(prayerId: string, prayerTime: Date): Date | null {
-  const iqamaMinutes: Record<string, number> = {
-    fajr: 20, dhuhr: 15, asr: 15, maghrib: 5, isha: 15
-  };
-  if (!iqamaMinutes[prayerId]) return null;
-  const iqama = new Date(prayerTime);
-  iqama.setMinutes(iqama.getMinutes() + iqamaMinutes[prayerId]);
-  return iqama;
-}
-
-function getTimeUntil(target: Date): string {
-  const now = new Date();
-  const diff = target.getTime() - now.getTime();
-  if (diff <= 0) return 'Now';
-  const mins = Math.floor(diff / 60000);
-  const hrs = Math.floor(mins / 60);
-  if (hrs > 0) return `${hrs}h ${mins % 60}m`;
-  return `${mins}m`;
-}
-
-// ─── Circular Progress Ring ──────────────────────────────────
-function PrayerRing({ completed, total }: { completed: number; total: number }) {
-  const C = useTokens();
-  const styles = useThemedStyles(makeStyles);
-  const size = 58;
-  const strokeWidth = 5;
-  const progress = completed / total;
-
-  return (
-    <View style={[styles.ringContainer, { width: size, height: size }]}>
-      <View style={[styles.ringBg, { width: size, height: size, borderRadius: size / 2 }]} />
-      <View style={styles.ringSvg}>
-        <View style={[styles.ringTrack, {
-          width: size, height: size, borderRadius: size / 2,
-          borderWidth: strokeWidth, borderColor: 'rgba(255,255,255,0.15)'
-        }]} />
-        <Animated.View style={[styles.ringFill, {
-          width: size, height: size, borderRadius: size / 2,
-          borderWidth: strokeWidth, borderColor: C.gold,
-          borderTopColor: C.gold, borderRightColor: progress > 0.25 ? C.gold : 'transparent',
-          borderBottomColor: progress > 0.5 ? C.gold : 'transparent',
-          borderLeftColor: progress > 0.75 ? C.gold : 'transparent',
-          transform: [{ rotate: `${-90 + progress * 360}deg` }]}]} />
-      </View>
-      <Text style={styles.ringText}>{completed}/{total}</Text>
-    </View>
-  );
-}
-
-// ─── Prayer Row with Swipe (Reanimated + Gesture Handler) ─────
-function PrayerRow({
-  prayer, time, isTrackable, isCompleted, status, isNext, isActive,
-  onToggle, onLongPress, reduceMotion, showIqama, t
-}: {
-  prayer: Prayer; time: Date; isTrackable: boolean; isCompleted: boolean; showIqama: boolean;
-  status: PrayerLogEntry['status'] | undefined;
-  isNext: boolean; isActive: boolean; onToggle: () => void; onLongPress: () => void;
-  reduceMotion: boolean; t: (key: string, params?: Record<string, string>) => string;
-}) {
-  const C = useTokens();
-  const styles = useThemedStyles(makeStyles);
-  const translateX = useSharedValue(0);
-  const rowScale = useSharedValue(1);
-
+/** Current minute of the day, refreshed every 15 seconds. */
+function useNowMinutes(): number {
+  const [now, setNow] = useState(() => minutesOf(new Date()));
   useEffect(() => {
-    if (reduceMotion) {
-      rowScale.value = 1;
-      return;
-    }
-    if (isActive) {
-      rowScale.value = withRepeat(
-        withSequence(
-          withTiming(1.008, { duration: 2000 }),
-          withTiming(1, { duration: 2000 })
-        ),
-        -1, true
-      );
-    } else {
-      rowScale.value = withTiming(1, { duration: 300 });
-    }
-  }, [isActive, reduceMotion]);
-
-  const swipeGesture = Gesture.Pan()
-    .onUpdate((e) => {
-      if (e.translationX > 0) {
-        translateX.value = Math.min(e.translationX, 120);
-      }
-    })
-    .onEnd((e) => {
-      if (e.translationX > 80 && isTrackable) {
-        translateX.value = withTiming(0, { duration: 200 });
-        onToggle();
-      } else {
-        translateX.value = withTiming(0, { duration: 200 });
-      }
-    });
-
-  const animatedRowStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }, { scale: rowScale.value }],
-  }));
-
-  const isQaza = status === 'qaza';
-  const isMissed = status === 'missed';
-  const statusLabel = isQaza ? t('status.qaza') : isMissed ? t('status.missed') : null;
-  const iqama = isTrackable && showIqama ? getIqamaTime(prayer.id, time) : null;
-  const iqamaCountdown = iqama && isNext ? getTimeUntil(iqama) : null;
-
-  return (
-    <GestureDetector gesture={swipeGesture}>
-      <Animated.View
-        style={[
-          styles.prayerRowWrap,
-          animatedRowStyle,
-          isNext && styles.prayerRowWrapNext,
-          isActive && styles.prayerRowWrapActive,
-          isCompleted && styles.prayerRowWrapCompleted,
-        ]}
-      >
-        {/* Swipe reveal background */}
-        <View style={[styles.swipeBg, isCompleted ? styles.swipeBgUndo : styles.swipeBgDone]}>
-          <Ionicons name={isCompleted ? 'arrow-undo' : 'checkmark'} size={24} color={C.onPrimary} />
-          <Text style={styles.swipeText}>{isCompleted ? t('home.undo') : t('home.prayed')}</Text>
-        </View>
-
-        <TouchableOpacity
-          activeOpacity={0.8}
-          onPress={isTrackable ? onToggle : undefined}
-          onLongPress={onLongPress}
-          accessibilityRole="button"
-          accessibilityLabel={`${prayer.name} prayer, ${isQaza ? 'prayed as qaza' : isMissed ? 'missed' : isCompleted ? 'completed' : 'not completed'}`}
-          accessibilityHint={isTrackable ? (isCompleted ? 'Double-tap to clear. Long-press for options' : 'Double-tap to mark as prayed. Long-press for options') : undefined}
-          style={[
-            styles.prayerRow,
-            isNext && styles.prayerRowNext,
-            isActive && styles.prayerRowActive,
-            isCompleted && styles.prayerRowDone,
-          ]}
-        >
-          <View style={[styles.prayerIconWrap, isActive && styles.prayerIconWrapActive]}>
-            <Ionicons name={iconName((isActive ? PRAYER_ICONS[prayer.id as PrayerId].iconActive : prayer.icon))} size={22} color={isActive ? C.primary : C.textSecondary} />
-            {isActive && <View style={styles.activePulse} />}
-          </View>
-
-          <View style={styles.prayerInfo}>
-            <Text style={[styles.prayerName, isNext && styles.prayerNameNext, isCompleted && styles.prayerNameDone]}>
-              {prayer.name}
-            </Text>
-            <Text style={styles.prayerArabic}>{prayer.arabicName}</Text>
-            {iqamaCountdown && (
-              <View style={styles.iqamaBadge}>
-                <Ionicons name="time-outline" size={10} color={C.primary} />
-                <Text style={styles.iqamaText}>{t('home.iqamaIn', { time: iqamaCountdown })}</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.prayerRight}>
-            <Text style={[styles.prayerTimeText, isNext && styles.prayerTimeNext]}>
-              {formatTime(time)}
-            </Text>
-            {isTrackable && (
-              <View style={styles.statusWrap}>
-                {statusLabel && (
-                  <Text style={[styles.statusLabel, isQaza ? styles.statusLabelQaza : styles.statusLabelMissed]}>
-                    {statusLabel}
-                  </Text>
-                )}
-                <View style={[
-                  styles.checkCircle,
-                  isCompleted && styles.checkCircleDone,
-                  isQaza && styles.checkCircleQaza,
-                  isMissed && styles.checkCircleMissed,
-                ]}>
-                  {isCompleted ? (
-                    <Ionicons name="checkmark" size={14} color={C.onPrimary} />
-                  ) : isMissed ? (
-                    <Ionicons name="close" size={14} color={C.red} />
-                  ) : (
-                    <View style={styles.checkEmpty} />
-                  )}
-                </View>
-              </View>
-            )}
-          </View>
-        </TouchableOpacity>
-      </Animated.View>
-    </GestureDetector>
-  );
+    const id = setInterval(() => setNow(minutesOf(new Date())), 15000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
 }
 
-// ─── Daily Hadith Card ───────────────────────────────────────
-function DailyHadithCard({ hadith, title }: { hadith: { english: string; source: string } | null; title: string }) {
-  const C = useTokens();
-  const styles = useThemedStyles(makeStyles);
-  if (!hadith) return null;
-  return (
-    <View style={styles.hadithCard}>
-      <View style={styles.hadithHeader}>
-        <Ionicons name="book-outline" size={16} color={C.gold} />
-        <Text style={styles.hadithTitle}>{title}</Text>
-      </View>
-      <Text style={styles.hadithText} numberOfLines={3}>{hadith.english}</Text>
-      <Text style={styles.hadithSource}>— {hadith.source}</Text>
-    </View>
-  );
-}
-
-function RamadanQuickCard({ state }: { state: RamadanState }) {
-  const C = useTokens();
-  const styles = useThemedStyles(makeStyles);
-  const { title, description } = getRamadanCardInfo(state);
-  return (
-    <View style={styles.ramadanCard}>
-      <Ionicons name="moon-outline" size={22} color={C.gold} />
-      <View style={styles.ramadanTextWrap}>
-        <Text style={styles.ramadanTitle}>{title}</Text>
-        <Text style={styles.ramadanDesc}>{description}</Text>
-      </View>
-      {state.isRamadan && (
-        <View style={styles.ramadanBadge}>
-          <Text style={styles.ramadanBadgeText}>{state.isLast10Nights ? 'Last 10' : 'Day'}</Text>
-        </View>
-      )}
-    </View>
-  );
-}
-
-// ─── Main Screen ─────────────────────────────────────────────
-export default function TodayScreen() {
-  const C = useTokens();
-  const styles = useThemedStyles(makeStyles);
-  const {
-    prayersObj: prayerTimes, nextPrayerObj: nextPrayer, nextPrayerTime,
-    completedPrayers, prayerStatuses, location, timerDisplay, dailyHadith, hijriDateStr,
-    settings, error,
-    handleTogglePrayer: togglePrayer,
-    handleMarkPrayer: markPrayerStatus,
-    handleUpdateSettings,
-  } = usePrayerApp();
-  const scrollY = useSharedValue(0);
-  const [reduceMotion, setReduceMotion] = useState(false);
-  const [sunnahStreak, setSunnahStreak] = useState(0);
-  const [khushuPrayer, setKhushuPrayer] = useState<{ id: string; name: string } | null>(null);
-  const [sacredPeriods, setSacredPeriods] = useState<SacredPeriod[]>([]);
-  const { t } = useTranslation();
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const ramadanState = getRamadanState();
-  const todayLesson = useMemo(() => getLessonForDate(), []);
-
+function useReduceMotion(): boolean {
+  const [reduce, setReduce] = useState(false);
   useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(enabled => setReduceMotion(enabled));
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+    AccessibilityInfo.isReduceMotionEnabled().then(setReduce).catch(() => {});
+    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduce);
     return () => sub.remove();
   }, []);
+  return reduce;
+}
 
+/** The striped segment for the prayer that's open now. The stripes drift slowly unless motion is reduced. */
+function NowSegment({ color }: { color: string }) {
+  const reduce = useReduceMotion();
+  const x = useSharedValue(0);
   useEffect(() => {
-    import('../services/StorageService').then(s => s.getSunnahStreak().then(setSunnahStreak));
-    setSacredPeriods(getUpcomingSacredPeriods(30));
-  }, []);
+    if (reduce) { cancelAnimation(x); x.value = 0; return; }
+    x.value = withRepeat(withTiming(-14, { duration: 1600, easing: Easing.linear }), -1, false);
+    return () => cancelAnimation(x);
+  }, [reduce, x]);
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
+  return (
+    <View style={{ height: 5, borderRadius: 3, overflow: 'hidden', width: '100%' }}>
+      <Animated.View style={[{ flexDirection: 'row', width: '200%' }, style]}>
+        {Array.from({ length: 30 }, (_, i) => (
+          <View key={i} style={{ width: 4, height: 5, marginRight: 3, backgroundColor: color, borderRadius: 1 }} />
+        ))}
+      </Animated.View>
+    </View>
+  );
+}
 
-  const entries = [
-    { prayer: PRAYERS[0], time: prayerTimes.fajr },
-    { prayer: PRAYERS[1], time: prayerTimes.sunrise },
-    { prayer: PRAYERS[2], time: prayerTimes.dhuhr },
-    { prayer: PRAYERS[3], time: prayerTimes.asr },
-    { prayer: PRAYERS[4], time: prayerTimes.maghrib },
-    { prayer: PRAYERS[5], time: prayerTimes.isha },
+function Segments({ sky, statuses, open }: { sky: Sky; statuses: Partial<Record<PrayerId, string>>; open: PrayerId | null }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 6 }} accessibilityLabel={`${FIVE.filter(id => isDone(statuses[id] as never)).length} of 5 prayers done today`}>
+      {FIVE.map(id => {
+        const done = isDone(statuses[id] as never);
+        const now = !done && id === open;
+        return (
+          <View key={id} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+            {now ? <NowSegment color={sky.fg} /> : (
+              <View style={{ height: 5, width: '100%', borderRadius: 3, backgroundColor: done ? sky.fg : sky.wash }} />
+            )}
+            <Text style={{ fontSize: 11, fontFamily: done || now ? F.semibold : F.body, color: done || now ? sky.fg : sky.fg2 }}>
+              {NAMES[id].short}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+export default function TodayScreen() {
+  const C = useTokens();
+  const { isDark } = useTheme();
+  const styles = useThemedStyles(makeStyles);
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { prayerTimes, prayerStatuses, location, handleMarkPrayer } = usePrayerApp();
+  const now = useNowMinutes();
+  const [sheetFor, setSheetFor] = useState<PrayerId | null>(null);
+  const [dhikrToday, setDhikrToday] = useState(0);
+
+  const times = useMemo(() => {
+    if (prayerTimes.length < 6) return null;
+    const m: Record<string, number> = {};
+    prayerTimes.forEach(p => { m[p.id] = p.minutes; });
+    return m as Record<PrayerId, number>;
+  }, [prayerTimes]);
+
+  const state = useMemo(() => times ? computeDayState(times, now, prayerStatuses) : null, [times, now, prayerStatuses]);
+  const sky = useSky(state?.sky ?? (now >= 18 * 60 || now < 5 * 60 ? 'night' : 'day'));
+  const lightText = sky.fg.startsWith('#F');
+
+  // The status bar follows the sky while Today is on screen.
+  useFocusEffect(useCallback(() => {
+    StatusBar.setBarStyle(lightText ? 'light-content' : 'dark-content');
+    return () => StatusBar.setBarStyle(isDark ? 'light-content' : 'dark-content');
+  }, [lightText, isDark]));
+
+  useFocusEffect(useCallback(() => {
+    getTodayDhikrCount().then(d => setDhikrToday(d.subhanallah + d.alhamdulillah + d.allahuakbar)).catch(() => {});
+  }, []));
+
+  const today = new Date();
+  const hijri = HijriService.gregorianToHijri(today);
+  const dateLine = `${WEEKDAYS[today.getDay()]}, ${hijri.day} ${hijri.monthName} ${hijri.year}`;
+  const qibla = location ? Math.round(calculateQiblaDirection(location.latitude, location.longitude)) : null;
+  const nearest = useMemo(() => location ? getNearbyMosques(location, 50)[0] : undefined, [location]);
+  const moment = useMemo(() => getSpecialMoment(today), [today.toDateString()]);
+  const { dailyHadith } = usePrayerApp();
+
+  const mark = (id: PrayerId) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    handleMarkPrayer(id, 'prayed');
+  };
+
+  const tickStateFor = (id: PrayerId): TickState => {
+    const s = prayerStatuses[id];
+    if (s === 'prayed') return 'done';
+    if (s === 'qaza') return 'qaza';
+    if (times && times[id] > now) return 'future';
+    return 'open';
+  };
+
+  const onTick = (id: PrayerId) => {
+    const s = tickStateFor(id);
+    if (s === 'future') return;
+    // Ticking the prayer that's open marks it on time. Anything already logged, or a prayer whose
+    // time has passed, opens the sheet so on time vs qaza is a real choice.
+    if (s === 'open' && id === state?.open) mark(id);
+    else { tapHaptic(); setSheetFor(id); }
+  };
+
+  const windowText = (id: PrayerId): string | undefined => {
+    if (!times) return undefined;
+    const ends: Record<PrayerId, number> = {
+      fajr: times.sunrise, sunrise: times.dhuhr, dhuhr: times.asr, asr: times.maghrib, maghrib: times.isha, isha: times.fajr,
+    };
+    const verb = times[id] <= now ? 'Started' : 'Starts';
+    return `${verb} ${formatClock(times[id])}, open until ${formatClock(ends[id])}`;
+  };
+
+  const heroName = state ? NAMES[state.hero.prayer].en : 'Set your city';
+  const heroLabel = state ? (state.hero.mode === 'now' ? 'Now' : 'Next') : 'Prayer times';
+  let heroAt = 'Choose a city to see prayer times';
+  if (state && times) {
+    if (state.hero.mode === 'now' && state.openEnds !== null) {
+      const endName = state.open === 'fajr' ? 'sunrise' : state.open === 'isha' ? 'Fajr' : NAMES[state.next].en;
+      heroAt = `Until ${endName}, ${formatClock(state.openEnds)}`;
+    } else {
+      heroAt = `${formatClock(times[state.hero.prayer])}${state.nextIsTomorrow ? ' tomorrow' : ''}`;
+    }
+  }
+
+  const open = state?.open ?? null;
+  const showNudge = !!(state && open && !isDone(prayerStatuses[open]));
+  let nudgeTitle = '';
+  let nudgeSub = '';
+  if (showNudge && times && open && state?.openEnds != null) {
+    const sinceStart = (now - times[open] + 1440) % 1440;
+    nudgeTitle = sinceStart < 60 ? `${NAMES[open].en} has started` : `${NAMES[open].en} is still open`;
+    nudgeSub = open === 'isha' ? 'Prayed it yet? Open until Fajr' : `Prayed it yet? ${formatDuration(state.openEnds - now)} left`;
+  }
+
+  const duaHint = state ? { dawn: 'Morning', day: `After ${state.open ? NAMES[state.open].en : 'Fajr'}`, golden: 'Evening', maghrib: 'Evening', night: 'Before sleep' }[state.sky] : 'Daily';
+
+  const quick: { icon: GlyphName; label: string; hint: string; onPress: () => void }[] = [
+    { icon: 'qibla', label: 'Qibla', hint: qibla !== null ? `${qibla}°` : 'Compass', onPress: () => navigation.navigate('tabs', { screen: 'qibla' } as never) },
+    { icon: 'beads', label: 'Tasbih', hint: dhikrToday > 0 ? `${dhikrToday} today` : 'Start', onPress: () => navigation.navigate('worship', { tab: 'dhikr' }) },
+    { icon: 'hands', label: 'Duas', hint: duaHint, onPress: () => navigation.navigate('duas') },
+    { icon: 'mosque', label: 'Mosques', hint: nearest ? (nearest.distanceKm < 1 ? `${Math.round(nearest.distanceKm * 1000)} m` : `${nearest.distanceKm.toFixed(1)} km`) : 'Nearby', onPress: () => navigation.navigate('mosques') },
   ];
 
-  const completedCount = TRACKABLE.filter(id => completedPrayers.has(id)).length;
-
-  const heroStyle = useAnimatedStyle(() => {
-    if (reduceMotion) return {};
-    const scale = 1 - Math.min(scrollY.value / 150, 0.08);
-    const opacity = 1 - Math.min(scrollY.value / 120, 0.3);
-    return {
-      transform: [{ scale }],
-      opacity,
-    };
-  });
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y;
-    },
-  });
-
-  const handleToggle = async (id: string) => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
-    togglePrayer(id);
-    // Show khushu' modal after marking
-    const entry = TRACKABLE.find(p => p === id);
-    if (entry && !completedPrayers.has(id)) {
-      const prayer = PRAYERS.find(p => p.id === id);
-      if (prayer) setKhushuPrayer({ id: prayer.id, name: prayer.name });
-    }
-  };
-
-  const handleLongPress = (prayer: Prayer) => {
-    if (!TRACKABLE.includes(prayer.id)) return;
-    const id = prayer.id as PrayerId;
-    const markDone = (status: 'prayed' | 'qaza') => {
-      const wasDone = completedPrayers.has(id);
-      markPrayerStatus(id, status);
-      if (!wasDone) setKhushuPrayer({ id: prayer.id, name: prayer.name });
-    };
-    const buttons: Parameters<typeof Alert.alert>[2] = [
-      { text: 'Prayed On Time', onPress: () => markDone('prayed') },
-      { text: 'Qaza', onPress: () => markDone('qaza') },
-    ];
-    if (prayerStatuses[id]) {
-      buttons.push({ text: 'Clear', style: 'destructive', onPress: () => markPrayerStatus(id, null) });
-    }
-    buttons.push({ text: 'Cancel', style: 'cancel' });
-    Alert.alert(`Mark ${prayer.name}`, 'How did you pray?', buttons);
-  };
+  const sheetPrayer = sheetFor ? { id: sheetFor, name: NAMES[sheetFor].en } : null;
+  const sheetCurrent = sheetFor ? (prayerStatuses[sheetFor] ?? (times && times[sheetFor] <= now && sheetFor !== open ? 'missed' : undefined)) : undefined;
 
   return (
-    <>
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        {error && (
-          <View style={styles.errorBanner}>
-            <Ionicons name="warning-outline" size={16} color={C.bgBase} />
-            <Text style={styles.errorText}>{t('home.locationError')}</Text>
-          </View>
-        )}
-        <Animated.ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
-          scrollEventThrottle={16}
-          onScroll={scrollHandler}
-        >
-        {settingsOpen && (
-          <View style={styles.settingsOverlay}>
-            <TouchableOpacity
-              style={styles.settingsBackButton}
-              onPress={() => setSettingsOpen(false)}
-              accessibilityRole="button"
-              accessibilityLabel="Close settings"
-            >
-              <Ionicons name="arrow-back" size={20} color={C.onHero} />
-              <Text style={styles.settingsBackText}>{t('common.back')}</Text>
-            </TouchableOpacity>
-            <SettingsScreen settings={settings} updateSettings={handleUpdateSettings} />
-          </View>
-        )}
-      {/* Hero Card with Sunset Gradient */}
-      <Animated.View style={[styles.heroCard, heroStyle]}>
+    <View style={styles.screen}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
         <LinearGradient
-          colors={[C.bgBase, C.goldPale, C.bgBase]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.heroGradient}
+          colors={[sky.top, sky.bottom, C.bgBase]}
+          locations={[0, 0.72, 1]}
+          style={{ paddingTop: insets.top + 8, paddingBottom: 26 }}
         >
-          <TouchableOpacity
-            style={styles.heroSettingsButton}
-            onPress={() => setSettingsOpen(true)}
-            accessibilityRole="button"
-            accessibilityLabel="Open settings"
-          >
-            <Ionicons name="settings-outline" size={20} color={C.heroBg} />
-          </TouchableOpacity>
+          <View style={styles.skyIn}>
+            <View style={styles.topbar}>
+              <Pressable
+                style={styles.loc}
+                onPress={() => navigation.navigate('settings')}
+                accessibilityRole="button"
+                accessibilityLabel={`Location ${location?.name ?? 'not set'}. Change in settings`}
+              >
+                <Glyph name="pin" size={17} color={sky.fg} />
+                <View>
+                  <Text style={[styles.locName, { color: sky.fg }]} numberOfLines={1}>{location?.name ?? 'Choose your city'}</Text>
+                  <Text style={[styles.locDate, { color: sky.fg2 }]}>{dateLine}</Text>
+                </View>
+              </Pressable>
+              <ProfileButton background={sky.wash} color={sky.fg} />
+            </View>
 
-          <View style={styles.heroTop}>
-            <View style={styles.heroLeft}>
-              <View style={styles.locationRow}>
-                <Ionicons name="location" size={14} color={C.textSecondary} />
-                <Text style={styles.locationText}>{location?.name ?? t('home.chooseLocation')}</Text>
+            <View style={styles.heroRow} accessible accessibilityLabel={`${heroLabel} ${heroName}, ${heroAt}${state ? `, ${state.hero.mode === 'now' ? 'time left' : 'starts in'} ${formatDuration(state.hero.minutes)}` : ''}`}>
+              <View style={{ flexShrink: 1 }}>
+                <Text style={[styles.heroLbl, { color: sky.fg2 }]}>{heroLabel}</Text>
+                <Text style={[styles.heroName, { color: sky.fg }]} numberOfLines={1} adjustsFontSizeToFit>{heroName}</Text>
+                <Text style={[styles.heroAt, { color: sky.fg2 }]}>{heroAt}</Text>
               </View>
-              <Text style={styles.nextPrayerText}>
-                {nextPrayer ? nextPrayer.name : t('home.allComplete')}
-              </Text>
-              <Text style={styles.nextPrayerTime}>
-                {nextPrayer && nextPrayerTime ? t('home.atTime', { time: formatTime(nextPrayerTime) }) : t('home.prayersTracked')}
-              </Text>
+              {state && (
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={[styles.heroLbl, { color: sky.fg2 }]}>{state.hero.mode === 'now' ? 'Time left' : 'Starts in'}</Text>
+                  <Text style={[styles.heroCd, { color: sky.fg }]}>{formatDuration(state.hero.minutes)}</Text>
+                </View>
+              )}
             </View>
-            <PrayerRing completed={completedCount} total={5} />
+
+            {state && <Segments sky={sky} statuses={prayerStatuses} open={open} />}
           </View>
-
-          {nextPrayerTime && timerDisplay ? (
-            <Text style={styles.timerText}>{timerDisplay}</Text>
-          ) : (
-            <Text style={styles.timerHint}>{t('home.liveCountdownOff')}</Text>
-          )}
-
-          <View style={styles.progressRow}>
-            <View style={styles.progressBar}>
-              <Animated.View style={[styles.progressFill, { width: `${(completedCount / 5) * 100}%` }]} />
-            </View>
-            <Text style={styles.progressText}>{t('home.progress', { count: String(completedCount) })}</Text>
-          </View>
-
-          {sunnahStreak > 0 && (
-            <View style={styles.sunnahStreakRow}>
-              <Ionicons name="leaf-outline" size={11} color={C.gold} />
-              <Text style={styles.sunnahStreakText}>{t('home.sunnahStreak', { count: String(sunnahStreak) })}</Text>
-            </View>
-          )}
         </LinearGradient>
-      </Animated.View>
 
-      {/* Hijri Date */}
-      <View style={styles.hijriRow}>
-        <Ionicons name="calendar-outline" size={14} color={C.textMuted} />
-        <Text style={styles.hijriText}>{hijriDateStr}</Text>
-      </View>
+        <View style={styles.body}>
+          {!times && (
+            <View style={styles.nudge}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.nudgeTitle}>Location needed</Text>
+                <Text style={styles.nudgeSub}>Pick your city so prayer times, Qibla and mosques are accurate.</Text>
+              </View>
+              <PrimaryButton label="Choose city" onPress={() => navigation.navigate('settings')} />
+            </View>
+          )}
 
-      <RamadanQuickCard state={ramadanState} />
+          {showNudge && open && (
+            <View style={styles.nudge}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.nudgeTitle}>{nudgeTitle}</Text>
+                <Text style={styles.nudgeSub}>{nudgeSub}</Text>
+              </View>
+              <PrimaryButton label="Mark prayed" onPress={() => mark(open)} />
+            </View>
+          )}
 
-      {/* Sacred Time Awareness */}
-      {sacredPeriods.length > 0 && sacredPeriods[0].daysUntil <= 14 && (
-        <View style={styles.sacredCard}>
-          <Ionicons name={iconName(sacredPeriods[0].icon)} size={18} color={C.gold} />
-          <View style={{ marginLeft: 10, flex: 1 }}>
-            <Text style={styles.sacredTitle}>
-              {sacredPeriods[0].isActive ? `${sacredPeriods[0].title} is here!` : `${sacredPeriods[0].title} in ${sacredPeriods[0].daysUntil} days`}
-            </Text>
-            <Text style={styles.sacredDesc}>{sacredPeriods[0].description}</Text>
+          {times && (
+            <View>
+              {(['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'] as PrayerId[]).map((id, i, all) => {
+                const last = i === all.length - 1;
+                if (id === 'sunrise') {
+                  return (
+                    <View key={id} style={[styles.sunRow, styles.rowLine]}>
+                      <Text style={styles.sunTime}>{formatClock(times.sunrise, false)}</Text>
+                      <Glyph name="sunrise" size={14} color={C.textMuted} />
+                      <Text style={styles.sunText}>Sunrise</Text>
+                    </View>
+                  );
+                }
+                const tick = tickStateFor(id);
+                const isNow = id === open && tick === 'open';
+                const past = tick === 'done' || tick === 'qaza' || (times[id] <= now && !isNow);
+                return (
+                  <Pressable
+                    key={id}
+                    onLongPress={tick === 'future' ? undefined : () => { tapHaptic(); setSheetFor(id); }}
+                    style={[styles.prow, !last && !isNow && styles.rowLine, isNow && styles.prowNow]}
+                  >
+                    <Text style={[styles.ptime, isNow && styles.ptimeNow]}>{formatClock(times[id], false)}</Text>
+                    <View style={styles.pname}>
+                      <Text style={[styles.pnameText, past && { color: C.textSecondary }, isNow && { fontFamily: F.semibold }]}>{NAMES[id].en}</Text>
+                      <Text style={styles.pnameAr}>{NAMES[id].ar}</Text>
+                      {tick === 'qaza' && <Text style={styles.qazaTag}>Qaza</Text>}
+                    </View>
+                    <TickButton
+                      state={tick}
+                      highlight={isNow}
+                      onPress={() => onTick(id)}
+                      onLongPress={() => { tapHaptic(); setSheetFor(id); }}
+                      label={`${NAMES[id].en}, ${formatClock(times[id])}, ${tick === 'done' ? 'prayed on time' : tick === 'qaza' ? 'prayed as qaza' : tick === 'future' ? 'not started yet' : 'not marked'}`}
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+
+          <View style={styles.quick}>
+            {quick.map(q => (
+              <Pressable key={q.label} onPress={q.onPress} style={styles.quickItem} accessibilityRole="button" accessibilityLabel={`${q.label}, ${q.hint}`}>
+                {({ pressed }) => (
+                  <>
+                    <View style={[styles.quickIcon, pressed && { backgroundColor: C.surfacePressed }]}>
+                      <Glyph name={q.icon} size={22} color={C.primaryDark} />
+                    </View>
+                    <Text style={styles.quickLabel}>{q.label}</Text>
+                    <Text style={styles.quickHint} numberOfLines={1}>{q.hint}</Text>
+                  </>
+                )}
+              </Pressable>
+            ))}
           </View>
+
+          {moment ? (
+            <Pressable onPress={() => moment.route && navigation.navigate(moment.route)} style={styles.moment} accessibilityRole="button">
+              <Text style={styles.momentK}>{moment.kicker}</Text>
+              <Text style={styles.momentTitle}>{moment.title}</Text>
+              {moment.body ? <Text style={styles.momentBody}>{moment.body}</Text> : null}
+            </Pressable>
+          ) : dailyHadith ? (
+            <Pressable onPress={() => navigation.navigate('hadith')} style={styles.moment} accessibilityRole="button">
+              <Text style={styles.momentK}>Hadith of the day</Text>
+              <Text style={styles.momentHadith} numberOfLines={4}>{dailyHadith.english}</Text>
+              <Text style={styles.momentBody}>{dailyHadith.source}</Text>
+            </Pressable>
+          ) : null}
         </View>
-      )}
+      </ScrollView>
 
-      {/* Prayer List */}
-      <View style={styles.prayerList}>
-        {entries.map(({ prayer, time }) => {
-          const isTrackable = TRACKABLE.includes(prayer.id);
-          const isCompleted = completedPrayers.has(prayer.id);
-          const isNext = nextPrayer?.id === prayer.id;
-          const isActive = isNext && !isCompleted;
-
-          return (
-            <PrayerRow
-              key={prayer.id}
-              prayer={prayer}
-              time={time}
-              isTrackable={isTrackable}
-              isCompleted={isCompleted}
-              status={prayerStatuses[prayer.id as PrayerId]}
-              isNext={isNext}
-              isActive={isActive}
-              onToggle={() => handleToggle(prayer.id)}
-              onLongPress={() => handleLongPress(prayer)}
-              reduceMotion={reduceMotion}
-              showIqama={settings.iqamaCountdownEnabled}
-              t={t}
-            />
-          );
-        })}
-      </View>
-
-      {/* Daily Hadith */}
-      <DailyHadithCard hadith={dailyHadith} title={t('home.hadithOfDay')} />
-
-      {/* Today I Learned */}
-      <View style={styles.learnCard}>
-        <View style={styles.learnHeader}>
-          <Ionicons name="bulb-outline" size={16} color={C.gold} />
-          <Text style={styles.learnTitle}>{t('home.todayILearned')}</Text>
-        </View>
-        <Text style={styles.learnLesson}>{todayLesson.title}</Text>
-        <Text style={styles.learnContent} numberOfLines={4}>{todayLesson.content}</Text>
-        {todayLesson.source && <Text style={styles.learnSource}>— {todayLesson.source}</Text>}
-      </View>
-
-      {/* Hint */}
-      <Text style={styles.hintText}>{t('home.swipeHint')}</Text>
-
-      {khushuPrayer && (
-        <KhushuModal
-          visible={!!khushuPrayer}
-          prayerId={khushuPrayer.id as PrayerId}
-          prayerName={khushuPrayer.name}
-          onClose={() => setKhushuPrayer(null)}
-        />
-      )}
-    </Animated.ScrollView>
-      </SafeAreaView>
-    </>
+      <MarkSheet
+        prayer={sheetPrayer}
+        window={sheetFor ? windowText(sheetFor) : undefined}
+        current={sheetCurrent}
+        onSave={(id, status) => handleMarkPrayer(id, status)}
+        onClear={id => handleMarkPrayer(id, null)}
+        onClose={() => setSheetFor(null)}
+      />
+    </View>
   );
 }
 
 const makeStyles = (C: Tokens) => StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bgBase },
-  scrollView: { flex: 1 },
-  content: { padding: 18, paddingBottom: 120 },
-  settingsOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 50, backgroundColor: C.bgBase },
-  settingsBackButton: {
-    position: 'absolute',
-    top: 18,
-    left: 18,
-    zIndex: 60,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: 'rgba(58,44,26,0.72)',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  settingsBackText: { color: C.onHero, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: C.gold,
-    marginHorizontal: 18,
-    marginTop: 8,
-    marginBottom: -8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  errorText: { flex: 1, color: C.bgBase, fontSize: 13, fontFamily: 'Jost_500Medium' },
-
-  // Hero — Neumorphic
-  heroCard: {
-    borderRadius: 24,
-    marginBottom: 16,
-    // Neumorphic: soft raised shadow (light top-left, dark bottom-right)
-    shadowColor: C.shadow.shadowColor,
-    shadowOffset: { width: -4, height: -4 },
-    shadowOpacity: 1,
-    shadowRadius: 12,
-    elevation: 8,
-    overflow: 'hidden',
-  },
-  heroGradient: {
-    padding: 24,
-    // Makes the top-left shadow "light" visible
-    backgroundColor: C.bgCard,
-  },
-  heroSettingsButton: {
-    position: 'absolute',
-    top: 16,
-    right: 16,
-    width: 38,
-    height: 38,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.55)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  heroLeft: { flex: 1 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 6 },
-  locationText: { color: C.textSecondary, fontSize: 13, fontFamily: 'Jost_500Medium' },
-  nextPrayerText: { color: C.textPrimary, fontSize: 34, fontFamily: 'BodoniModa_700Bold' },
-  nextPrayerTime: { color: C.textSecondary, fontSize: 14, fontFamily: 'Jost_400Regular', marginTop: 2 },
-  timerText: { color: C.gold, fontSize: 38, fontFamily: 'BodoniModa_700Bold', marginTop: 12, fontVariant: ['tabular-nums'] },
-  timerHint: { color: C.textMuted, fontSize: 12, fontFamily: 'Jost_500Medium', marginTop: 12 },
-  progressRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, gap: 12 },
-  progressBar: { flex: 1, height: 6, backgroundColor: 'rgba(202,138,4,0.15)', borderRadius: 3 },
-  progressFill: { height: '100%', backgroundColor: C.gold, borderRadius: 3 },
-  progressText: { color: C.textPrimary, fontSize: 14, fontFamily: 'Jost_700Bold', fontVariant: ['tabular-nums'] },
-
-  sunnahStreakRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 6 },
-  sunnahStreakText: { color: C.gold, fontSize: 11, fontFamily: 'Jost_500Medium' },
-
-  // Ring
-  ringContainer: { justifyContent: 'center', alignItems: 'center' },
-  ringBg: { position: 'absolute', backgroundColor: 'rgba(202,138,4,0.1)' },
-  ringSvg: { position: 'absolute', justifyContent: 'center', alignItems: 'center' },
-  ringTrack: { position: 'absolute' },
-  ringFill: { position: 'absolute' },
-  ringText: { color: C.textPrimary, fontSize: 14, fontFamily: 'Jost_700Bold' },
-
-  // Hijri
-  hijriRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 16 },
-  hijriText: { textAlign: 'center', color: C.textSecondary, fontSize: 14, fontFamily: 'Jost_500Medium' },
-
-  // Ramadan
-  ramadanCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: C.goldPale,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 16,
-  },
-  ramadanTextWrap: { flex: 1, marginLeft: 12 },
-  ramadanTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.gold },
-  ramadanDesc: { fontSize: 12, color: C.textSecondary, lineHeight: 17, marginTop: 2 },
-  ramadanBadge: { backgroundColor: C.heroBg, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
-  ramadanBadgeText: { color: C.onHero, fontSize: 11, fontFamily: 'Jost_700Bold' },
-
-  // Prayer List
-  prayerList: { gap: 10 },
-
-  // Prayer Row
-  prayerRowWrap: { borderRadius: 18, overflow: 'hidden', marginBottom: 2 },
-  prayerRowWrapNext: {
-    backgroundColor: C.bgCard,
-    borderWidth: 1,
-    borderColor: 'rgba(194,122,45,0.12)',
-  },
-  prayerRowWrapActive: { borderWidth: 1.5, borderColor: 'rgba(194,122,45,0.25)' },
-  prayerRowWrapCompleted: { opacity: 0.75 },
-  swipeBg: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 100, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 4 },
-  swipeBgDone: { backgroundColor: C.primary },
-  swipeBgUndo: { backgroundColor: C.textMuted },
-  swipeText: { color: C.onPrimary, fontSize: 12, fontFamily: 'Jost_600SemiBold' },
-  prayerRow: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: C.surfaceElevated, borderRadius: 18,
-    paddingHorizontal: 16, paddingVertical: 14, gap: 14},
-  prayerRowNext: { backgroundColor: C.bgCard },
-  prayerRowActive: { backgroundColor: C.surfaceElevated },
-  prayerRowDone: { backgroundColor: C.bgSurface },
-  prayerIconWrap: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(202,138,4,0.08)', justifyContent: 'center', alignItems: 'center' },
-  prayerIconWrapActive: { backgroundColor: 'rgba(194,122,45,0.1)' },
-  prayerIcon: { fontSize: 22 },
-  activePulse: { position: 'absolute', width: 44, height: 44, borderRadius: 14, borderWidth: 2, borderColor: C.primary, opacity: 0.3 },
-  prayerInfo: { flex: 1 },
-  prayerName: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
-  prayerNameNext: { color: C.primary, fontFamily: 'Jost_700Bold' },
-  prayerNameDone: { color: C.textMuted, fontFamily: 'Jost_500Medium', textDecorationLine: 'line-through' },
-  prayerArabic: { fontSize: 15, lineHeight: 22, color: C.textMuted, fontFamily: C.fontArabic },
-  iqamaBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, backgroundColor: 'rgba(194,122,45,0.08)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start' },
-  iqamaText: { fontSize: 11, color: C.primary, fontFamily: 'Jost_600SemiBold' },
-  prayerRight: { alignItems: 'flex-end', gap: 6 },
-  prayerTimeText: { fontSize: 15, color: C.textSecondary, fontFamily: 'Jost_500Medium', fontVariant: ['tabular-nums'] },
-  prayerTimeNext: { color: C.primary, fontFamily: 'Jost_700Bold' },
-  checkCircle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center' },
-  checkCircleDone: { backgroundColor: C.primary, borderColor: C.primary },
-  checkCircleQaza: { backgroundColor: C.gold, borderColor: C.gold },
-  checkCircleMissed: { borderColor: C.red },
-  statusWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  statusLabel: { fontSize: 11, fontFamily: 'Jost_600SemiBold' },
-  statusLabelQaza: { color: C.gold },
-  statusLabelMissed: { color: C.red },
-  checkEmpty: { width: 10, height: 10, borderRadius: 5 },
-
-  // Hadith Card
-  hadithCard: {
-    backgroundColor: C.surfaceElevated,
-    borderRadius: 18, padding: 18, marginTop: 16,
-  },
-  learnCard: {
-    backgroundColor: C.surfaceElevated, borderRadius: 18, padding: 18, marginTop: 10,
-    borderLeftWidth: 3, borderLeftColor: C.gold,
-  },
-  learnHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  learnTitle: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.gold },
-  learnLesson: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 6 },
-  learnContent: { fontSize: 13, color: C.textSecondary, lineHeight: 20 },
-  learnSource: { fontSize: 12, color: C.textMuted, marginTop: 6, textAlign: 'right' },
-  sacredCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: C.goldPale,
-    borderRadius: 16, padding: 14, marginBottom: 12,
-  },
-  sacredTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary },
-  sacredDesc: { fontSize: 12, color: C.textMuted, marginTop: 2 },
-  hadithHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  hadithTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.gold },
-  hadithText: { fontSize: 14, color: C.textPrimary, lineHeight: 22, fontFamily: 'Jost_400Regular', fontStyle: 'italic' },
-  hadithSource: { fontSize: 12, color: C.textMuted, marginTop: 8, textAlign: 'right', fontFamily: 'Jost_500Medium' },
-
-  // Hint
-  hintText: { textAlign: 'center', color: C.textMuted, fontSize: 12, fontFamily: 'Jost_400Regular', marginTop: 16 }});
+  screen: { flex: 1, backgroundColor: C.bgBase },
+  skyIn: { paddingHorizontal: 20, gap: 18 },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  loc: { flexDirection: 'row', alignItems: 'center', gap: 7, flexShrink: 1, minHeight: 44 },
+  locName: { fontFamily: F.semibold, fontSize: 16 },
+  locDate: { fontFamily: F.body, fontSize: 12.5, marginTop: 1 },
+  heroRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 },
+  heroLbl: { fontFamily: F.body, fontSize: 13 },
+  heroName: { fontFamily: F.display, fontSize: 48, lineHeight: 54, marginTop: 2 },
+  heroAt: { fontFamily: F.body, fontSize: 14, marginTop: 2 },
+  heroCd: { fontFamily: F.displayMedium, fontSize: 32, lineHeight: 38 },
+  body: { paddingHorizontal: 16, gap: 16 },
+  nudge: { backgroundColor: C.primaryLight, borderRadius: 18, paddingVertical: 12, paddingLeft: 16, paddingRight: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  nudgeTitle: { fontFamily: F.semibold, fontSize: 15, color: C.textPrimary },
+  nudgeSub: { fontFamily: F.body, fontSize: 13, color: C.textSecondary, marginTop: 1 },
+  rowLine: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: C.borderStrong },
+  prow: { flexDirection: 'row', alignItems: 'center', minHeight: 54, paddingLeft: 12, paddingRight: 2 },
+  prowNow: { backgroundColor: C.primaryLight, borderRadius: 14 },
+  ptime: { width: 54, fontFamily: F.body, fontSize: 14, color: C.textMuted, fontVariant: ['tabular-nums'] },
+  ptimeNow: { color: C.primaryDark, fontFamily: F.semibold },
+  pname: { flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 10 },
+  pnameText: { fontFamily: F.medium, fontSize: 17, color: C.textPrimary },
+  pnameAr: { fontFamily: F.arabic, fontSize: 17, color: C.textMuted, writingDirection: 'rtl' },
+  qazaTag: { fontFamily: F.medium, fontSize: 11.5, color: C.qaza },
+  sunRow: { flexDirection: 'row', alignItems: 'center', minHeight: 36, paddingLeft: 12, gap: 6 },
+  sunTime: { width: 48, fontFamily: F.body, fontSize: 13, color: C.textMuted, fontVariant: ['tabular-nums'] },
+  sunText: { fontFamily: F.body, fontSize: 13, color: C.textMuted },
+  quick: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 4 },
+  quickItem: { flex: 1, alignItems: 'center', gap: 4 },
+  quickIcon: { width: 54, height: 54, borderRadius: 18, backgroundColor: C.bgSurface, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  quickLabel: { fontFamily: F.medium, fontSize: 13, color: C.textSecondary },
+  quickHint: { fontFamily: F.body, fontSize: 11.5, color: C.textMuted },
+  moment: { backgroundColor: C.goldPale, borderRadius: 18, paddingVertical: 14, paddingHorizontal: 16, gap: 3 },
+  momentK: { fontFamily: F.semibold, fontSize: 12.5, color: C.gold },
+  momentTitle: { fontFamily: F.semibold, fontSize: 16, color: C.textPrimary },
+  momentHadith: { fontFamily: F.body, fontSize: 15, lineHeight: 22, color: C.textPrimary },
+  momentBody: { fontFamily: F.body, fontSize: 13, color: C.textSecondary },
+});

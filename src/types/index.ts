@@ -1,15 +1,15 @@
 export const C = {
   bgBase: '#FDF8F0',
-  bgSurface: '#F8F1E5',
-  bgCard: '#F2E8D5',
+  bgSurface: '#F6EEE1',
+  bgCard: '#EFE4D2',
   // Deepened from #C27A2D so white button text passes 4.5:1 (now 4.66:1).
   primary: '#A8641F',
   primaryDark: '#8F5418',
-  primaryLight: '#F0D9B0',
+  primaryLight: '#F5E3C6',
   // Deepened from #B8860B so gold labels pass 4.5:1 on the page (now 4.6:1).
   gold: '#946A06',
   goldLight: '#D4A843',
-  goldPale: '#FBF0D5',
+  goldPale: '#FAEFD4',
   surfaceElevated: '#F5ECD8',
   surfacePressed: '#EBDFC5',
   heroBg: '#3D2415',
@@ -21,7 +21,7 @@ export const C = {
   },
   timerAmber: '#946A06',
   textPrimary: '#2D2010',
-  textSecondary: '#6B5030',
+  textSecondary: '#5E4630',
   // Was #8C7855, which measured 4.0:1 on bgBase. Now 5.4:1.
   textMuted: '#7A6247',
   red: '#C4553B',
@@ -37,7 +37,7 @@ export const C = {
   /** Arabic display text. */
   fontArabic: 'Amiri_400Regular',
   fontArabicBold: 'Amiri_700Bold',
-  border: 'rgba(45,32,16,0.08)',
+  border: 'rgba(45,32,16,0.10)',
   borderStrong: 'rgba(45,32,16,0.15)',
   radius: {
     sm: 12,

@@ -45,7 +45,8 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
 
   const filteredCities = useMemo(() => {
     const normalized = manualSearch.trim().toLowerCase();
-    if (!normalized) return MANUAL_CITIES;
+    // The full list only appears while searching, so it doesn't push every other setting off screen.
+    if (!normalized) return [];
     return MANUAL_CITIES.filter(city => city.name.toLowerCase().includes(normalized));
   }, [manualSearch]);
 
@@ -116,6 +117,19 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
             <Text style={styles.rowLabel}>{translate('settings.useCurrentLocation')}</Text>
             <Ionicons name="chevron-forward" size={16} color={t.textMuted} />
           </TouchableOpacity>
+
+          {settings.location && (
+            <View style={styles.row}>
+              <View style={styles.rowIconWrap}>
+                <Ionicons name="location-outline" size={18} color={t.primary} />
+              </View>
+              <View style={styles.rowText}>
+                <Text style={styles.rowLabel}>{settings.location.name}</Text>
+                <Text style={styles.rowSubtitle}>{settings.location.source === 'device' ? 'From your device' : 'Chosen by you'}</Text>
+              </View>
+              <Ionicons name="checkmark-circle" size={20} color={t.primary} />
+            </View>
+          )}
 
           <View style={styles.manualSearchWrap}>
             <Ionicons name="search" size={16} color={t.textMuted} />
@@ -370,23 +384,25 @@ function createStyles(t: Tokens) {
   return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: t.bgSurface,
+    backgroundColor: t.bgBase,
   },
   content: {
-    paddingBottom: 100,
+    paddingBottom: 40,
   },
   header: {
-    padding: 18,
-    backgroundColor: t.heroBg,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   title: {
-    fontSize: 22,
-    fontFamily: 'Jost_700Bold',
-    color: t.onHero,
+    fontSize: 30,
+    lineHeight: 36,
+    fontFamily: 'BodoniModa_700Bold',
+    color: t.textPrimary,
   },
   subtitle: {
-    fontSize: 13,
-    color: t.onHeroMuted,
+    fontSize: 14,
+    color: t.textMuted,
     fontFamily: 'Jost_400Regular',
     marginTop: 4,
   },
@@ -395,16 +411,14 @@ function createStyles(t: Tokens) {
     paddingBottom: 0,
   },
   sectionTitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Jost_600SemiBold',
-    color: t.textMuted,
-    marginBottom: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: t.textSecondary,
+    marginBottom: 8,
   },
   card: {
     backgroundColor: t.bgSurface,
-    borderRadius: 14,
+    borderRadius: 18,
     overflow: 'hidden',
   },
   row: {
@@ -510,7 +524,7 @@ function createStyles(t: Tokens) {
     marginTop: 8,
     alignSelf: 'flex-end',
   },
-  previewBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: t.onPrimary },
+  previewBtnText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: t.onPrimary },
   attribution: {
     flexDirection: 'row',
     gap: 8,

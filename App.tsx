@@ -15,7 +15,7 @@ import { Amiri_400Regular, Amiri_700Bold } from '@expo-google-fonts/amiri';
 import { PrayerAppProvider } from './src/context/PrayerAppContext';
 import { ThemeProvider, useTheme, useTokens } from './src/context/ThemeContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
-import TabNavigator from './src/navigation/TabNavigator';
+import RootNavigator from './src/navigation/RootNavigator';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -66,7 +66,7 @@ export default function App() {
           <ThemedNavigation>
             <ErrorBoundary>
               <PrayerAppProvider>
-                <TabNavigator />
+                <RootNavigator />
               </PrayerAppProvider>
             </ErrorBoundary>
           </ThemedNavigation>

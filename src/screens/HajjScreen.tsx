@@ -244,19 +244,19 @@ export default function HajjScreen() {
 
 const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
-  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
-  tabStrip: { margin: 18, marginBottom: 10 },
+  tabStrip: { margin: 16, marginBottom: 10 },
   tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: C.bgSurface, marginRight: 8 },
   tabActive: { backgroundColor: C.primary },
   tabLabel: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
   tabLabelActive: { color: C.onPrimary },
 
-  card: { backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 10, padding: 18 },
-  cardTitle: { fontSize: 17, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 8 },
+  card: { backgroundColor: C.bgSurface, borderRadius: 18, margin: 16, marginBottom: 10, padding: 18 },
+  cardTitle: { fontSize: 17, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginBottom: 8 },
   highlightText: { fontSize: 14, color: C.primary, fontFamily: 'Jost_600SemiBold', fontStyle: 'italic', marginBottom: 12 },
 
   checklist: { marginTop: 4 },
@@ -274,10 +274,10 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
 
   ihramBox: { backgroundColor: 'rgba(196,85,59,0.08)', borderRadius: 12, padding: 14, marginBottom: 10 },
   ihramBoxAlt: { backgroundColor: 'rgba(194,122,45,0.08)', borderRadius: 12, padding: 14, marginBottom: 10 },
-  ihramLabel: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 8 },
+  ihramLabel: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginBottom: 8 },
   ihramItem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   ihramItemText: { fontSize: 13, color: C.textSecondary },
-  ihramDua: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 12, marginBottom: 8 },
+  ihramDua: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginTop: 12, marginBottom: 8 },
 
   duaSection: { marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
   duaSectionTitle: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.textSecondary, marginBottom: 8 },
@@ -290,5 +290,5 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
   jamaratRow: { flexDirection: 'row', gap: 10 },
   jamaratBtn: { flex: 1, alignItems: 'center', padding: 12, borderRadius: 14, backgroundColor: C.bgCard },
   jamaratLabel: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textMuted },
-  jamaratCount: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.primary, marginTop: 4 },
+  jamaratCount: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.primary, marginTop: 4 },
 });

@@ -146,7 +146,7 @@ export default function JournalScreen() {
             onPress={() => setSelectedMood(mood.value)}
           >
             <Ionicons name={iconName(mood.icon)} size={20} color={selectedMood === mood.value ? C[mood.tone] : C.textMuted} />
-            <Text style={[styles.moodLabel, selectedMood === mood.value && { color: C[mood.tone], fontFamily: 'Jost_700Bold' }]}>
+            <Text style={[styles.moodLabel, selectedMood === mood.value && { color: C[mood.tone], fontFamily: 'Jost_600SemiBold' }]}>
               {mood.label}
             </Text>
           </TouchableOpacity>
@@ -244,20 +244,20 @@ export default function JournalScreen() {
 
 const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
-  content: { paddingBottom: 120 },
-  header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
-  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: "Jost_400Regular", marginTop: 4 },
+  content: { paddingBottom: 40 },
+  header: { paddingHorizontal: 20, paddingTop: 4, paddingBottom: 12 },
+  title: { fontSize: 30, lineHeight: 36, fontFamily: 'BodoniModa_700Bold', color: C.textPrimary },
+  subtitle: { fontSize: 14, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 2 },
 
-  summaryCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16},
+  summaryCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, margin: 16, marginBottom: 12, padding: 16},
   summaryItem: { flex: 1, alignItems: 'center' },
   summaryDivider: { width: 1, backgroundColor: C.border },
-  summaryValue: { fontSize: 24, fontFamily: 'Jost_700Bold', color: C.primary },
+  summaryValue: { fontSize: 24, fontFamily: 'Jost_600SemiBold', color: C.primary },
   summaryLabel: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 
-  khushuCard: { backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16 },
+  khushuCard: { backgroundColor: C.bgSurface, borderRadius: 18, margin: 16, marginBottom: 12, padding: 16 },
   khushuHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  khushuTitle: { fontSize: 14, fontFamily: 'Jost_700Bold', color: C.textPrimary },
+  khushuTitle: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   khushuValue: { fontSize: 32, fontFamily: 'BodoniModa_700Bold', color: C.primary },
   khushuLabel: { fontSize: 12, color: C.textMuted, marginBottom: 12 },
   khushuBars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 50 },
@@ -266,30 +266,30 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
   khushuBar: { width: 8, borderRadius: 4, backgroundColor: C.primary },
   khushuBarLabel: { fontSize: 9, color: C.textMuted, marginTop: 4 },
 
-  sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 8, marginBottom: 10 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginHorizontal: 16, marginTop: 8, marginBottom: 10 },
 
-  prayerSelector: { paddingHorizontal: 18, paddingBottom: 8 },
+  prayerSelector: { paddingHorizontal: 16, paddingBottom: 8 },
   prayerChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8},
   prayerChipActive: { backgroundColor: C.primary },
   prayerChipLabel: { fontSize: 13, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  prayerChipLabelActive: { color: C.onPrimary, fontFamily: 'Jost_700Bold' },
+  prayerChipLabelActive: { color: C.onPrimary, fontFamily: 'Jost_600SemiBold' },
 
-  inputLabel: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginHorizontal: 18, marginBottom: 8, marginTop: 12 },
+  inputLabel: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginHorizontal: 16, marginBottom: 8, marginTop: 12 },
 
   moodGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 8 },
   moodChip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, backgroundColor: C.bgSurface, borderWidth: 1.5, borderColor: 'transparent', marginBottom: 4 },
   moodLabel: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
 
-  inputCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginBottom: 10, padding: 16 },
+  inputCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 16, marginBottom: 10, padding: 16 },
   textInput: { fontSize: 14, color: C.textPrimary, lineHeight: 22, minHeight: 60, textAlignVertical: 'top' },
 
-  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.primary, borderRadius: 16, marginHorizontal: 18, marginTop: 8, paddingVertical: 16 },
-  saveBtnText: { color: C.onPrimary, fontSize: 16, fontFamily: 'Jost_700Bold' },
+  saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.primary, borderRadius: 16, marginHorizontal: 16, marginTop: 8, paddingVertical: 16 },
+  saveBtnText: { color: C.onPrimary, fontSize: 16, fontFamily: 'Jost_600SemiBold' },
 
-  entryCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginBottom: 10, padding: 16},
+  entryCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 16, marginBottom: 10, padding: 16},
   entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   entryPrayer: { backgroundColor: C.primaryLight, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  entryPrayerText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.primary },
+  entryPrayerText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.primary },
   entryDate: { fontSize: 12, color: C.textMuted },
   moodBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginBottom: 10 },
   moodBadgeText: { fontSize: 11, fontFamily: 'Jost_600SemiBold' },

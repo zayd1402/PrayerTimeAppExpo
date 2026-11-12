@@ -227,3 +227,13 @@ Tonal layering exclusively. No drop shadows on cards, rows, or surfaces at rest:
 - **Don't** ship motion without a `prefers-reduced-motion` fallback.
 - **Don't** use 1px border + shadow on the same element (ghost-card pattern).
 - **Don't** use side-stripe borders greater than 1px.
+
+## Screens and shared pieces (redesign, November 2026)
+
+- Four tabs: Today, Habits, Qibla, Library. Every other page is a stack screen (`src/navigation/RootNavigator.tsx`), so back works. Settings opens from the profile button on each tab.
+- `src/design/palette.ts`: the five time-of-day skies (light and dark) and the 0 to 5 heat-map ramp.
+- `src/design/dayState.ts`: which prayer is open, the sky, and the hero text for a given minute. Tested in `dayState.test.ts`.
+- `src/design/habits.ts`: heat levels, per-prayer rates and insights for Habits. Tested in `habits.test.ts`.
+- `src/design/ui.tsx`: page title, profile button, tick, segmented control, mini ring, primary button. `src/design/Glyph.tsx`: the line icons.
+- `src/components/MarkSheet.tsx`: on time or qaza plus khushu', opened by a long press or by tapping a prayer that's already logged or whose time has passed.
+- Sub-pages use a large serif title in text colour, never a walnut header box. No all-caps labels.
