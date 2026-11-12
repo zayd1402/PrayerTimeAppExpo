@@ -4,6 +4,7 @@ import {
   FastingLog, QuranLog, DhikrSession, 
   ZakatRecord, CharityRecord, PrayerJournalEntry, KhushuEntry
 } from '../types';
+import { getLocalDateKey, getLocalDateFromKey } from '../utils/date';
 
 export const storage = createMMKV({ id: 'prayertime-storage' });
 
@@ -41,6 +42,7 @@ const KEYS = {
   KHUTBAH_NOTES:  '@prayertime:khutbah_notes',
   FRIDAY_CHECKLIST:'@prayertime:friday_checklist',
   KHUSHU_LOG:     '@prayertime:khushu_log',
+  TRACKING_START: '@prayertime:tracking_start',
 };
 
 // ─── Settings ───────────────────────────────────────────────
@@ -80,6 +82,96 @@ export async function getPrayerLogForDate(dateKey: string): Promise<DayLog | nul
   return log[dateKey] || null;
 }
 
+export async function clearPrayer(
+  dateKey: string,
+  prayerId: PrayerId
+): Promise<Record<string, DayLog>> {
+  const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
+  if (log[dateKey]) {
+    delete log[dateKey][prayerId];
+    if (Object.keys(log[dateKey]).length === 0) delete log[dateKey];
+    save(KEYS.PRAYER_LOG, log);
+  }
+  return log;
+}
+
+// ─── Missed prayers ──────────────────────────────────────────
+const TRACKED_PRAYERS: PrayerId[] = ['fajr', 'dhuhr', 'asr', 'maghrib', 'isha'];
+// The prayer whose start closes each prayer's window on the same day.
+// Isha runs until the next day's Fajr, so it is handled separately.
+const WINDOW_END: Partial<Record<PrayerId, PrayerId>> = {
+  fajr: 'sunrise',
+  dhuhr: 'asr',
+  asr: 'maghrib',
+  maghrib: 'isha',
+};
+const MAX_BACKFILL_DAYS = 60;
+
+/** The first day the user tracked prayers. Nothing before it is marked missed. */
+function getTrackingStart(log: Record<string, DayLog>, todayKey: string): string {
+  const saved = storage.getString(KEYS.TRACKING_START);
+  const earliestLogged = Object.keys(log).sort()[0];
+  let start = saved ?? earliestLogged ?? todayKey;
+  if (earliestLogged && earliestLogged < start) start = earliestLogged;
+  if (start !== saved) storage.set(KEYS.TRACKING_START, start);
+  return start;
+}
+
+/**
+ * Logs 'missed' for every trackable prayer with no entry whose time is over.
+ * Past days are filled in from the tracking start (at most 60 days back).
+ * Today's prayers count as over once the next prayer begins; Isha only after
+ * the next Fajr. `todayMinutes` is today's start time of each prayer in
+ * minutes from midnight. Without it, today and last night's Isha are left alone.
+ */
+export async function markMissedPrayers(
+  now: Date = new Date(),
+  todayMinutes?: Partial<Record<PrayerId, number>>
+): Promise<Record<string, DayLog>> {
+  const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
+  const todayKey = getLocalDateKey(now);
+  const startKey = getTrackingStart(log, todayKey);
+  const nowMinutes = now.getHours() * 60 + now.getMinutes();
+  let changed = false;
+
+  const markIfEmpty = (dateKey: string, id: PrayerId) => {
+    if (!log[dateKey]) log[dateKey] = {} as DayLog;
+    if (log[dateKey][id] === undefined) {
+      log[dateKey][id] = 'missed';
+      changed = true;
+    }
+  };
+
+  // Past days
+  const today = getLocalDateFromKey(todayKey);
+  for (let i = MAX_BACKFILL_DAYS; i >= 1; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = getLocalDateKey(d);
+    if (key < startKey) continue;
+    for (const id of TRACKED_PRAYERS) {
+      if (id === 'isha' && i === 1) {
+        const fajr = todayMinutes?.fajr;
+        if (fajr === undefined || nowMinutes < fajr) continue;
+      }
+      markIfEmpty(key, id);
+    }
+  }
+
+  // Today
+  if (todayMinutes && todayKey >= startKey) {
+    for (const id of TRACKED_PRAYERS) {
+      const endId = WINDOW_END[id];
+      if (!endId) continue;
+      const end = todayMinutes[endId];
+      if (end !== undefined && nowMinutes >= end) markIfEmpty(todayKey, id);
+    }
+  }
+
+  if (changed) save(KEYS.PRAYER_LOG, log);
+  return log;
+}
+
 // ─── Stats ───────────────────────────────────────────────────
 export async function getStreak(): Promise<number> {
   const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
@@ -115,18 +207,18 @@ export async function getTotalPrayers(): Promise<number> {
   return total;
 }
 
+/** Share of logged prayers (on time, qaza or missed) that were prayed on time. */
 export async function getOnTimeRate(): Promise<number> {
   const log = load<Record<string, DayLog>>(KEYS.PRAYER_LOG, {});
   let prayed = 0;
-  let qaza = 0;
+  let total = 0;
   for (const day of Object.values(log)) {
     for (const [id, status] of Object.entries(day)) {
       if (id === 'sunrise') continue;
       if (status === 'prayed') prayed++;
-      else if (status === 'qaza') qaza++;
+      if (status === 'prayed' || status === 'qaza' || status === 'missed') total++;
     }
   }
-  const total = prayed + qaza;
   return total === 0 ? 0 : Math.round((prayed / total) * 100);
 }
 

@@ -6,13 +6,13 @@ import { logger } from '../utils/logger';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
-import { PrayerId, PrayerTime, AppSettings, AppLocation, DEFAULT_SETTINGS, PRAYER_ICONS, PRAYER_IDS, PrayerNotificationId } from '../types';
+import { PrayerId, PrayerLogEntry, PrayerTime, AppSettings, AppLocation, DEFAULT_SETTINGS, PRAYER_ICONS, PRAYER_IDS, PrayerNotificationId } from '../types';
 import {
   getPrayerTimesObject, getNextPrayer, getTimeUntilNext
 } from '../services/PrayerService';
 import { HijriService } from '../services/HijriService';
 import {
-  loadSettings, saveSettings, markPrayer, loadPrayerLog, mmkv
+  loadSettings, saveSettings, markPrayer, clearPrayer, markMissedPrayers,
 } from '../services/StorageService';
 import { getCurrentLocation } from '../services/LocationService';
 import {
@@ -27,6 +27,9 @@ import {
 } from '../services/NotificationService';
 import { getDailyHadith } from '../data/hadiths';
 import { initAudio, playAdhan } from '../services/AudioService';
+
+type PrayerStatus = PrayerLogEntry['status'];
+type DayStatuses = Partial<Record<PrayerId, PrayerStatus>>;
 
 function getDateKey(date: Date): string {
   return getLocalDateKey(date);
@@ -87,14 +90,20 @@ export interface PrayerAppState {
   location: AppLocation | null;
   loading: boolean;
   error: string | null;
+  /** Prayers done today, on time or as qaza. */
   completedPrayers: Set<string>;
+  /** Today's logged status per prayer. Unlogged prayers are absent. */
+  prayerStatuses: DayStatuses;
   timerDisplay: string;
   dailyHadith: { english: string; source: string } | null;
   prayersObj: Record<string, Date>;
   nextPrayerObj: { id: string; name: string; arabicName: string; icon: string } | null;
   nextPrayerTime: Date | null;
   hijriDateStr: string;
+  /** Unlogged or missed → prayed on time; prayed or qaza → cleared. */
   handleTogglePrayer: (id: string) => void;
+  /** Sets today's status for a prayer, or clears it with null. */
+  handleMarkPrayer: (id: PrayerId, status: PrayerStatus | null) => void;
   handleUpdateSettings: (partial: Partial<AppSettings>) => void;
 }
 
@@ -144,7 +153,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useState<AppLocation | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [completedPrayers, setCompletedPrayers] = useState<Set<string>>(new Set());
+  const [prayerStatuses, setPrayerStatuses] = useState<DayStatuses>({});
   const [timerDisplay, setTimerDisplay] = useState('');
   const [dailyHadith, setDailyHadith] = useState<{ english: string; source: string } | null>(null);
   const lastScheduledRef = useRef<string>('');
@@ -200,19 +209,9 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       notifSubRef.current = setupNotificationResponseHandler(
         (prayerId) => {
           const todayKey = getDateKey(new Date());
-          markPrayer(todayKey, prayerId as PrayerId, 'prayed');
-          const todayLog = mmkv.getString('@prayertime:prayer_log');
-          if (todayLog) {
-            const log = JSON.parse(todayLog);
-            const todayData = log[todayKey];
-            if (todayData) {
-              const completed = new Set<string>();
-              Object.entries(todayData).forEach(([id, status]) => {
-                if (status === 'prayed') completed.add(id);
-              });
-              setCompletedPrayers(completed);
-            }
-          }
+          markPrayer(todayKey, prayerId as PrayerId, 'prayed').then(log => {
+            setPrayerStatuses({ ...(log[todayKey] || {}) });
+          });
         },
         (data) => {
           logger.log('Notification tapped:', data);
@@ -250,17 +249,14 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
     const next = getNextPrayer(times, minutesFromMidnight());
     setNextPrayer(next);
 
-    loadPrayerLog().then(log => {
-      const todayKey = getDateKey(new Date());
-      const todayLog = log[todayKey];
-      if (todayLog) {
-        const completed = new Set<string>();
-        Object.entries(todayLog).forEach(([id, status]) => {
-          if (status === 'prayed') completed.add(id);
-        });
-        setCompletedPrayers(completed);
-      }
-    });
+    // Log any prayer whose time has passed without an entry as missed,
+    // then load today's statuses (also resets them when the day rolls over).
+    const todayMinutes: Partial<Record<PrayerId, number>> = {};
+    times.forEach(p => { todayMinutes[p.id as PrayerId] = p.minutes; });
+    const now = new Date();
+    markMissedPrayers(now, todayMinutes).then(log => {
+      setPrayerStatuses({ ...(log[getDateKey(now)] || {}) });
+    }).catch((err) => logger.warn('Prayer log update failed:', err));
 
     if (settings.notificationsEnabled) {
       scheduleEnabledNotifications(settings, times, lastScheduledRef).catch((err) => logger.warn('Notification operation failed:', err));
@@ -317,21 +313,29 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(interval);
   }, [nextPrayer, settings.liveCountdownEnabled, settings.adhanEnabled, settings.adhanVariant]);
 
-  const handleMarkPrayer = async (id: PrayerId, status: 'prayed' | 'qaza') => {
+  const handleMarkPrayer = async (id: PrayerId, status: PrayerStatus | null) => {
     const todayKey = getDateKey(new Date());
-    await markPrayer(todayKey, id, status);
-    setCompletedPrayers(prev => {
-      const next = new Set(prev);
-      if (status === 'prayed') next.add(id);
-      else next.delete(id);
+    setPrayerStatuses(prev => {
+      const next = { ...prev };
+      if (status) next[id] = status;
+      else delete next[id];
       return next;
     });
+    if (status) await markPrayer(todayKey, id, status);
+    else await clearPrayer(todayKey, id);
   };
 
   const handleTogglePrayer = (id: string) => {
-    const isCompleted = completedPrayers.has(id);
-    handleMarkPrayer(id as PrayerId, isCompleted ? 'qaza' : 'prayed');
+    const status = prayerStatuses[id as PrayerId];
+    const isDone = status === 'prayed' || status === 'qaza';
+    handleMarkPrayer(id as PrayerId, isDone ? null : 'prayed');
   };
+
+  const completedPrayers = new Set<string>(
+    Object.entries(prayerStatuses)
+      .filter(([, status]) => status === 'prayed' || status === 'qaza')
+      .map(([id]) => id)
+  );
 
   const handleUpdateSettings = async (partial: Partial<AppSettings>) => {
     const updated = {
@@ -375,9 +379,9 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   return (
     <PrayerAppContext.Provider value={{
       settings, prayerTimes, nextPrayer, location, loading, error,
-      completedPrayers, timerDisplay, dailyHadith,
+      completedPrayers, prayerStatuses, timerDisplay, dailyHadith,
       prayersObj, nextPrayerObj, nextPrayerTime, hijriDateStr,
-      handleTogglePrayer, handleUpdateSettings,
+      handleTogglePrayer, handleMarkPrayer, handleUpdateSettings,
     }}>
       {children}
     </PrayerAppContext.Provider>
