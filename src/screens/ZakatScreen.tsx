@@ -5,14 +5,17 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C, ZakatRecord, CharityRecord } from '../types';
+import { ZakatRecord, CharityRecord } from '../types';
 import {
   loadZakatRecords, addZakatRecord,
   loadCharityLog, addCharityRecord, getCharityTotal
 } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 export default function ZakatScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [zakatRecords, setZakatRecords] = useState<ZakatRecord[]>([]);
   const [charityRecords, setCharityRecords] = useState<CharityRecord[]>([]);
   const [charityTotal, setCharityTotal] = useState(0);
@@ -114,11 +117,11 @@ export default function ZakatScreen() {
       {/* Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity style={[styles.tab, activeTab === 'zakat' && styles.tabActive]} onPress={() => setActiveTab('zakat')}>
-          <Ionicons name="calculator-outline" size={16} color={activeTab === 'zakat' ? '#FFF' : C.textSecondary} />
+          <Ionicons name="calculator-outline" size={16} color={activeTab === 'zakat' ? C.onPrimary : C.textSecondary} />
           <Text style={[styles.tabLabel, activeTab === 'zakat' && styles.tabLabelActive]}>Zakat</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, activeTab === 'charity' && styles.tabActive]} onPress={() => setActiveTab('charity')}>
-          <Ionicons name="heart-outline" size={16} color={activeTab === 'charity' ? '#FFF' : C.textSecondary} />
+          <Ionicons name="heart-outline" size={16} color={activeTab === 'charity' ? C.onPrimary : C.textSecondary} />
           <Text style={[styles.tabLabel, activeTab === 'charity' && styles.tabLabelActive]}>Charity</Text>
         </TouchableOpacity>
       </View>
@@ -270,18 +273,18 @@ export default function ZakatScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: "Jost_400Regular", marginTop: 4 },
 
   tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 12 },
   tabActive: { backgroundColor: C.primary },
   tabLabel: { fontSize: 13, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' },
+  tabLabelActive: { color: C.onPrimary, fontFamily: 'Jost_700Bold' },
 
   nisabCard: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 18, marginTop: 8, padding: 16, borderRadius: 16 },
   nisabMet: { backgroundColor: C.primaryLight },
@@ -305,7 +308,7 @@ const styles = StyleSheet.create({
   zakatValue: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.primary },
 
   calculateBtn: { backgroundColor: C.primary, borderRadius: 16, marginHorizontal: 18, marginTop: 16, paddingVertical: 16, alignItems: 'center' },
-  calculateBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Jost_700Bold' },
+  calculateBtnText: { color: C.onPrimary, fontSize: 16, fontFamily: 'Jost_700Bold' },
 
   recordCard: { backgroundColor: C.bgSurface, borderRadius: 16, marginHorizontal: 18, marginBottom: 10, padding: 16 },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
@@ -327,9 +330,9 @@ const styles = StyleSheet.create({
   categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: C.bgSurface },
   categoryChipActive: { backgroundColor: C.red },
   categoryLabel: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  categoryLabelActive: { color: '#FFF', fontFamily: 'Jost_600SemiBold' },
+  categoryLabelActive: { color: C.onPrimary, fontFamily: 'Jost_600SemiBold' },
   addCharityBtn: { backgroundColor: C.red, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
-  addCharityText: { color: '#FFF', fontSize: 15, fontFamily: 'Jost_700Bold' },
+  addCharityText: { color: C.onPrimary, fontSize: 15, fontFamily: 'Jost_700Bold' },
 
   charityRecord: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, marginHorizontal: 18, marginBottom: 8, padding: 14 },
   charityDot: { width: 10, height: 10, borderRadius: 5 },

@@ -4,9 +4,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
+
 import { mmkv } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const HIFDH_LOG_KEY = '@prayertime:hifdh_log';
 
@@ -44,6 +45,8 @@ const SURAH_NAMES = [
 ];
 
 export default function HifdhScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [logs, setLogs] = useState<HifdhSession[]>([]);
   const [activeTab, setActiveTab] = useState<'sabaq' | 'sabaq-para' | 'manzil'>('sabaq');
   const [surah, setSurah] = useState('');
@@ -138,7 +141,7 @@ export default function HifdhScreen() {
             style={[styles.tab, activeTab === tab.id && styles.tabActive]}
             onPress={() => setActiveTab(tab.id)}
           >
-            <Ionicons name={iconName(tab.icon)} size={14} color={activeTab === tab.id ? C.white : C.textSecondary} />
+            <Ionicons name={iconName(tab.icon)} size={14} color={activeTab === tab.id ? C.onPrimary : C.textSecondary} />
             <Text style={[styles.tabLabel, activeTab === tab.id && styles.tabLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
@@ -179,7 +182,7 @@ export default function HifdhScreen() {
             keyboardType="number-pad"
           />
           <TouchableOpacity style={styles.addBtn} onPress={addSession}>
-            <Ionicons name="add" size={18} color={C.white} />
+            <Ionicons name="add" size={18} color={C.onPrimary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -217,12 +220,12 @@ export default function HifdhScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: 'Jost_400Regular', marginTop: 4 },
 
   statsRow: { flexDirection: 'row', justifyContent: 'space-around', margin: 18, marginBottom: 10 },
   stat: { alignItems: 'center' },
@@ -235,13 +238,13 @@ const styles = StyleSheet.create({
   juzBox: { width: `${100 / 10}%`, aspectRatio: 1, backgroundColor: C.bgCard, borderRadius: 6, justifyContent: 'center', alignItems: 'center', maxWidth: 32 },
   juzBoxActive: { backgroundColor: C.primary },
   juzBoxText: { fontSize: 10, fontFamily: 'Jost_600SemiBold', color: C.textMuted },
-  juzBoxTextActive: { color: C.white },
+  juzBoxTextActive: { color: C.onPrimary },
 
   tabRow: { flexDirection: 'row', marginHorizontal: 18, marginBottom: 10, gap: 6 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 10, borderRadius: 12, backgroundColor: C.bgSurface },
   tabActive: { backgroundColor: C.primary },
   tabLabel: { fontSize: 11, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
-  tabLabelActive: { color: C.white },
+  tabLabelActive: { color: C.onPrimary },
 
   inputCard: { backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 10, padding: 16 },
   surahInput: { backgroundColor: C.bgBase, borderRadius: 10, padding: 12, fontSize: 14, color: C.textPrimary, marginBottom: 8 },

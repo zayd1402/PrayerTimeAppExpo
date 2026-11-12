@@ -8,8 +8,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import * as Location from 'expo-location';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { C } from '../types';
+
 import { calculateQiblaDirection, haversineDistance, bearingToCompassDirection } from '../services/PrayerService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 const COMPASS_SIZE = Math.min(width - 80, 300);
@@ -27,6 +28,8 @@ interface QiblaScreenProps {
 
 // ─── Accuracy Indicator ──────────────────────────────────────
 function AccuracyBadge({ accuracy }: { accuracy: 'high' | 'medium' | 'low' | 'calibrating' }) {
+  const C = useTokens();
+  const accStyles = useThemedStyles(makeAccStyles);
   const colors = {
     high: { bg: C.primaryLight, text: C.primary, icon: 'checkmark-circle' },
     medium: { bg: C.goldPale, text: C.gold, icon: 'alert-circle' },
@@ -43,12 +46,14 @@ function AccuracyBadge({ accuracy }: { accuracy: 'high' | 'medium' | 'low' | 'ca
   );
 }
 
-const accStyles = StyleSheet.create({
+const makeAccStyles = (_C: Tokens) => StyleSheet.create({
   badge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, alignSelf: 'center', marginTop: 12 },
   text: { fontSize: 13, fontFamily: 'Jost_600SemiBold' }});
 
 // ─── Calibration Overlay ─────────────────────────────────────
 function CalibrationOverlay({ visible }: { visible: boolean }) {
+  const C = useTokens();
+  const calStyles = useThemedStyles(makeCalStyles);
   const rotation = useSharedValue(0);
 
   useEffect(() => {
@@ -83,7 +88,7 @@ function CalibrationOverlay({ visible }: { visible: boolean }) {
   );
 }
 
-const calStyles = StyleSheet.create({
+const makeCalStyles = (C: Tokens) => StyleSheet.create({
   overlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(250,246,239,0.95)', justifyContent: 'center', alignItems: 'center', zIndex: 100, borderRadius: 24 },
   phone: { marginBottom: 20 },
   title: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 8 },
@@ -91,6 +96,8 @@ const calStyles = StyleSheet.create({
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function QiblaScreen({ coordinate, compact = false, showHeader = true }: QiblaScreenProps) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [qiblaDirection, setQiblaDirection] = useState(0);
   const [rotation, setRotation] = useState(0);
   const [accuracy, setAccuracy] = useState<'high' | 'medium' | 'low' | 'calibrating'>('calibrating');
@@ -224,7 +231,7 @@ export default function QiblaScreen({ coordinate, compact = false, showHeader = 
               <View style={styles.needleBottom} />
             </View>
             <View style={styles.needleCenter}>
-              <Ionicons name="location" size={20} color="#FFF" />
+              <Ionicons name="location" size={20} color={C.onPrimary} />
             </View>
           </Animated.View>
 
@@ -239,7 +246,7 @@ export default function QiblaScreen({ coordinate, compact = false, showHeader = 
 
         {isAligned && (
           <Animated.View style={[styles.alignedBadge, animatedAlignedStyle]}>
-            <Ionicons name="checkmark-circle" size={16} color="#FFF" />
+            <Ionicons name="checkmark-circle" size={16} color={C.onPrimary} />
             <Text style={styles.alignedText}>Aligned with Qibla</Text>
           </Animated.View>
         )}
@@ -271,11 +278,11 @@ export default function QiblaScreen({ coordinate, compact = false, showHeader = 
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   header: { padding: 18, backgroundColor: C.heroBg, alignItems: 'center' },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: 'Jost_400Regular', marginTop: 4 },
 
   compassContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 20 },
   compass: {
@@ -307,7 +314,7 @@ const styles = StyleSheet.create({
   centerLabel: { fontSize: 10, color: C.textMuted, letterSpacing: 2 },
 
   alignedBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, marginTop: 16 },
-  alignedText: { color: '#FFF', fontSize: 14, fontFamily: 'Jost_600SemiBold' },
+  alignedText: { color: C.onPrimary, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
 
   infoGrid: { flexDirection: 'row', paddingHorizontal: 18, gap: 12, marginBottom: 12 },
   infoCard: { flex: 1, backgroundColor: C.bgSurface, borderRadius: 16, padding: 16, alignItems: 'center'},

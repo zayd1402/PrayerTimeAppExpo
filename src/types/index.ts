@@ -2,10 +2,12 @@ export const C = {
   bgBase: '#FDF8F0',
   bgSurface: '#F8F1E5',
   bgCard: '#F2E8D5',
-  primary: '#C27A2D',
-  primaryDark: '#9E5C1A',
+  // Deepened from #C27A2D so white button text passes 4.5:1 (now 4.66:1).
+  primary: '#A8641F',
+  primaryDark: '#8F5418',
   primaryLight: '#F0D9B0',
-  gold: '#B8860B',
+  // Deepened from #B8860B so gold labels pass 4.5:1 on the page (now 4.6:1).
+  gold: '#946A06',
   goldLight: '#D4A843',
   goldPale: '#FBF0D5',
   surfaceElevated: '#F5ECD8',
@@ -17,12 +19,24 @@ export const C = {
     shadowOpacity: 1,
     shadowRadius: 12,
   },
-  timerAmber: '#B8860B',
+  timerAmber: '#946A06',
   textPrimary: '#2D2010',
   textSecondary: '#6B5030',
-  textMuted: '#8C7855',
+  // Was #8C7855, which measured 4.0:1 on bgBase. Now 5.4:1.
+  textMuted: '#7A6247',
   red: '#C4553B',
   white: '#FFFFFF',
+  /** Text and icons placed on a primary-coloured fill (buttons, active chips, ticks). */
+  onPrimary: '#FFFFFF',
+  /** Text on heroBg headers and cards. */
+  onHero: '#FBF0D5',
+  /** Secondary text on heroBg. */
+  onHeroMuted: '#D4A843',
+  /** Prayers made up later. Muted on purpose: recorded, not celebrated over on-time. */
+  qaza: '#7A6A55',
+  /** Arabic display text. */
+  fontArabic: 'Amiri_400Regular',
+  fontArabicBold: 'Amiri_700Bold',
   border: 'rgba(45,32,16,0.08)',
   borderStrong: 'rgba(45,32,16,0.15)',
   radius: {
@@ -31,6 +45,47 @@ export const C = {
     lg: 16,
     xl: 24,
   },
+  type: {
+    display: { fontSize: 32, fontWeight: '700' as const, lineHeight: 1.15 },
+    headline: { fontSize: 22, fontWeight: '700' as const, lineHeight: 1.25 },
+    title: { fontSize: 16, fontWeight: '600' as const, lineHeight: 1.3 },
+    body: { fontSize: 14, fontWeight: '400' as const, lineHeight: 1.55 },
+    label: { fontSize: 12, fontWeight: '500' as const, lineHeight: 1.3 },
+    caption: { fontSize: 10, fontWeight: '500' as const, lineHeight: 1.2 },
+  },
+};
+
+// Dark variant of design tokens
+/** Dark palette. Same keys as C; values tuned for contrast on dark surfaces. */
+export const darkC: typeof C = {
+  bgBase: '#15110D',
+  bgSurface: '#1F1A15',
+  bgCard: '#2A221B',
+  primary: '#D99A4E',
+  primaryDark: '#B87C34',
+  primaryLight: '#3A2A19',
+  gold: '#E2B653',
+  goldLight: '#C49A3C',
+  goldPale: '#272015',
+  surfaceElevated: '#2A221B',
+  surfacePressed: '#3A2E22',
+  heroBg: '#24170F',
+  shadow: { shadowColor: 'rgba(0,0,0,0.3)', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 1, shadowRadius: 12 },
+  timerAmber: '#E2B653',
+  textPrimary: '#EFE3D1',
+  textSecondary: '#C4B49C',
+  textMuted: '#A2917A',
+  red: '#D47A5C',
+  white: '#FFFFFF',
+  onPrimary: '#22170D',
+  onHero: '#F3E6D0',
+  onHeroMuted: '#C9A867',
+  qaza: '#A8977E',
+  fontArabic: 'Amiri_400Regular',
+  fontArabicBold: 'Amiri_700Bold',
+  border: 'rgba(239,227,209,0.10)',
+  borderStrong: 'rgba(239,227,209,0.18)',
+  radius: { sm: 12, md: 14, lg: 16, xl: 24 },
   type: {
     display: { fontSize: 32, fontWeight: '700' as const, lineHeight: 1.15 },
     headline: { fontSize: 22, fontWeight: '700' as const, lineHeight: 1.25 },

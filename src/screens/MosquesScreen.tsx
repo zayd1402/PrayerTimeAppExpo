@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Text, FlatList, TouchableOpacity, Linking, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C } from '../types';
+
 import { AppLocation } from '../types';
 import { getNearbyMosques, searchLocalMosques, NearbyMosque } from '../services/LocalMosqueService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 interface MosquesScreenProps {
   coordinate: Pick<AppLocation, 'latitude' | 'longitude'>;
@@ -16,6 +17,8 @@ function formatDistance(km: number) {
 }
 
 export default function MosquesScreen({ coordinate, embedded = false }: MosquesScreenProps) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [query, setQuery] = useState('');
   const [mosques, setMosques] = useState<NearbyMosque[]>([]);
 
@@ -116,7 +119,7 @@ export default function MosquesScreen({ coordinate, embedded = false }: MosquesS
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgSurface, borderRadius: 22, marginHorizontal: 18, padding: 16 },
   embeddedContainer: { backgroundColor: C.bgSurface },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },

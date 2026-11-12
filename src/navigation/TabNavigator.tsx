@@ -3,13 +3,14 @@ import { Platform, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
+
 
 import TodayScreen from '../screens/TodayScreen';
 import WorshipScreen from '../screens/WorshipScreen';
 import QiblaMosquesScreen from '../screens/QiblaMosquesScreen';
 import CalendarScreen from '../screens/CalendarScreen';
 import LearnScreen from '../screens/LearnScreen';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const Tab = createBottomTabNavigator();
 
@@ -26,6 +27,8 @@ function TabIcon({ name, color, size }: { name: string; color: string; size: num
 }
 
 export default function TabNavigator() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   return (
     <Tab.Navigator
       screenOptions={{
@@ -53,7 +56,7 @@ export default function TabNavigator() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   tabBar: {
     backgroundColor: C.bgSurface,
     borderTopColor: C.border,

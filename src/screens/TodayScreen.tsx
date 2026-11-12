@@ -7,7 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { useTranslation } from '../i18n';
-import { C, PrayerId, PrayerLogEntry, PRAYER_ICONS } from '../types';
+import { PrayerId, PrayerLogEntry, PRAYER_ICONS } from '../types';
 import Animated, {
   useSharedValue, useAnimatedStyle, useAnimatedScrollHandler,
   withTiming, withSequence, withRepeat
@@ -21,6 +21,7 @@ import KhushuModal from '../components/KhushuModal';
 import { getUpcomingSacredPeriods, SacredPeriod } from '../services/SacredTimeService';
 import { getRamadanState, getRamadanCardInfo, RamadanState } from '../services/RamadanService';
 import { getLessonForDate } from '../data/knowledge';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 interface Prayer {
   id: string;
@@ -66,6 +67,8 @@ function getTimeUntil(target: Date): string {
 
 // ─── Circular Progress Ring ──────────────────────────────────
 function PrayerRing({ completed, total }: { completed: number; total: number }) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const size = 58;
   const strokeWidth = 5;
   const progress = completed / total;
@@ -101,6 +104,8 @@ function PrayerRow({
   isNext: boolean; isActive: boolean; onToggle: () => void; onLongPress: () => void;
   reduceMotion: boolean; t: (key: string, params?: Record<string, string>) => string;
 }) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const translateX = useSharedValue(0);
   const rowScale = useSharedValue(1);
 
@@ -160,7 +165,7 @@ function PrayerRow({
       >
         {/* Swipe reveal background */}
         <View style={[styles.swipeBg, isCompleted ? styles.swipeBgUndo : styles.swipeBgDone]}>
-          <Ionicons name={isCompleted ? 'arrow-undo' : 'checkmark'} size={24} color="#FFF" />
+          <Ionicons name={isCompleted ? 'arrow-undo' : 'checkmark'} size={24} color={C.onPrimary} />
           <Text style={styles.swipeText}>{isCompleted ? t('home.undo') : t('home.prayed')}</Text>
         </View>
 
@@ -214,7 +219,7 @@ function PrayerRow({
                   isMissed && styles.checkCircleMissed,
                 ]}>
                   {isCompleted ? (
-                    <Ionicons name="checkmark" size={14} color="#FFF" />
+                    <Ionicons name="checkmark" size={14} color={C.onPrimary} />
                   ) : isMissed ? (
                     <Ionicons name="close" size={14} color={C.red} />
                   ) : (
@@ -232,6 +237,8 @@ function PrayerRow({
 
 // ─── Daily Hadith Card ───────────────────────────────────────
 function DailyHadithCard({ hadith, title }: { hadith: { english: string; source: string } | null; title: string }) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   if (!hadith) return null;
   return (
     <View style={styles.hadithCard}>
@@ -246,6 +253,8 @@ function DailyHadithCard({ hadith, title }: { hadith: { english: string; source:
 }
 
 function RamadanQuickCard({ state }: { state: RamadanState }) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const { title, description } = getRamadanCardInfo(state);
   return (
     <View style={styles.ramadanCard}>
@@ -265,6 +274,8 @@ function RamadanQuickCard({ state }: { state: RamadanState }) {
 
 // ─── Main Screen ─────────────────────────────────────────────
 export default function TodayScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const {
     prayersObj: prayerTimes, nextPrayerObj: nextPrayer, nextPrayerTime,
     completedPrayers, prayerStatuses, location, timerDisplay, dailyHadith, hijriDateStr,
@@ -377,7 +388,7 @@ export default function TodayScreen() {
               accessibilityRole="button"
               accessibilityLabel="Close settings"
             >
-              <Ionicons name="arrow-back" size={20} color={C.white} />
+              <Ionicons name="arrow-back" size={20} color={C.onHero} />
               <Text style={styles.settingsBackText}>{t('common.back')}</Text>
             </TouchableOpacity>
             <SettingsScreen settings={settings} updateSettings={handleUpdateSettings} />
@@ -518,7 +529,7 @@ export default function TodayScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   scrollView: { flex: 1 },
   content: { padding: 18, paddingBottom: 120 },
@@ -536,7 +547,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  settingsBackText: { color: C.white, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
+  settingsBackText: { color: C.onHero, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -620,7 +631,7 @@ const styles = StyleSheet.create({
   ramadanTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.gold },
   ramadanDesc: { fontSize: 12, color: C.textSecondary, lineHeight: 17, marginTop: 2 },
   ramadanBadge: { backgroundColor: C.heroBg, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
-  ramadanBadgeText: { color: C.goldPale, fontSize: 11, fontFamily: 'Jost_700Bold' },
+  ramadanBadgeText: { color: C.onHero, fontSize: 11, fontFamily: 'Jost_700Bold' },
 
   // Prayer List
   prayerList: { gap: 10 },
@@ -637,7 +648,7 @@ const styles = StyleSheet.create({
   swipeBg: { position: 'absolute', right: 0, top: 0, bottom: 0, width: 100, justifyContent: 'center', alignItems: 'center', flexDirection: 'row', gap: 4 },
   swipeBgDone: { backgroundColor: C.primary },
   swipeBgUndo: { backgroundColor: C.textMuted },
-  swipeText: { color: '#FFF', fontSize: 12, fontFamily: 'Jost_600SemiBold' },
+  swipeText: { color: C.onPrimary, fontSize: 12, fontFamily: 'Jost_600SemiBold' },
   prayerRow: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: C.surfaceElevated, borderRadius: 18,
@@ -653,7 +664,7 @@ const styles = StyleSheet.create({
   prayerName: { fontSize: 16, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   prayerNameNext: { color: C.primary, fontFamily: 'Jost_700Bold' },
   prayerNameDone: { color: C.textMuted, fontFamily: 'Jost_500Medium', textDecorationLine: 'line-through' },
-  prayerArabic: { fontSize: 12, color: C.textMuted, fontFamily: 'Jost_400Regular', marginTop: 1 },
+  prayerArabic: { fontSize: 15, lineHeight: 22, color: C.textMuted, fontFamily: C.fontArabic },
   iqamaBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, backgroundColor: 'rgba(194,122,45,0.08)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start' },
   iqamaText: { fontSize: 11, color: C.primary, fontFamily: 'Jost_600SemiBold' },
   prayerRight: { alignItems: 'flex-end', gap: 6 },

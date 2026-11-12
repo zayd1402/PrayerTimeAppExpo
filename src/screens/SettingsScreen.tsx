@@ -308,7 +308,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
                   setTimeout(() => stopAdhan(), 4000);
                 }}
               >
-                <Ionicons name="play" size={14} color={t.white} />
+                <Ionicons name="play" size={14} color={t.onPrimary} />
                 <Text style={styles.previewBtnText}>{translate('settings.adhanPreview')}</Text>
               </TouchableOpacity>
             </View>
@@ -382,11 +382,11 @@ function createStyles(t: Tokens) {
   title: {
     fontSize: 22,
     fontFamily: 'Jost_700Bold',
-    color: t.white,
+    color: t.onHero,
   },
   subtitle: {
     fontSize: 13,
-    color: t.goldLight,
+    color: t.onHeroMuted,
     fontFamily: 'Jost_400Regular',
     marginTop: 4,
   },
@@ -498,7 +498,7 @@ function createStyles(t: Tokens) {
   },
   pillActive: { backgroundColor: t.primary, borderColor: t.primary },
   pillText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: t.textSecondary },
-  pillTextActive: { color: t.white },
+  pillTextActive: { color: t.onPrimary },
   previewBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -510,7 +510,7 @@ function createStyles(t: Tokens) {
     marginTop: 8,
     alignSelf: 'flex-end',
   },
-  previewBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: t.white },
+  previewBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: t.onPrimary },
   attribution: {
     flexDirection: 'row',
     gap: 8,

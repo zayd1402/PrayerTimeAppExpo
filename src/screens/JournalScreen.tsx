@@ -5,17 +5,18 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C, PrayerId, PrayerJournalEntry } from '../types';
+import { PrayerId, PrayerJournalEntry } from '../types';
 import { loadPrayerJournal, addJournalEntry, getKhushuAverage } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const MOODS = [
-  { value: 'peaceful', label: 'Peaceful', icon: 'leaf-outline', color: C.primary },
-  { value: 'grateful', label: 'Grateful', icon: 'heart-outline', color: C.red },
-  { value: 'joyful', label: 'Joyful', icon: 'sunny-outline', color: C.timerAmber },
-  { value: 'distracted', label: 'Distracted', icon: 'cloud-outline', color: C.textSecondary },
-  { value: 'tired', label: 'Tired', icon: 'moon-outline', color: C.textSecondary },
-  { value: 'anxious', label: 'Anxious', icon: 'rainy-outline', color: C.textSecondary },
+  { value: 'peaceful', label: 'Peaceful', icon: 'leaf-outline', tone: 'primary' },
+  { value: 'grateful', label: 'Grateful', icon: 'heart-outline', tone: 'red' },
+  { value: 'joyful', label: 'Joyful', icon: 'sunny-outline', tone: 'timerAmber' },
+  { value: 'distracted', label: 'Distracted', icon: 'cloud-outline', tone: 'textSecondary' },
+  { value: 'tired', label: 'Tired', icon: 'moon-outline', tone: 'textSecondary' },
+  { value: 'anxious', label: 'Anxious', icon: 'rainy-outline', tone: 'textSecondary' },
 ] as const;
 
 const PRAYER_NAMES: Record<string, string> = {
@@ -23,6 +24,8 @@ const PRAYER_NAMES: Record<string, string> = {
 };
 
 export default function JournalScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [entries, setEntries] = useState<Record<string, PrayerJournalEntry[]>>({});
   const [selectedPrayer, setSelectedPrayer] = useState<PrayerId>('fajr');
   const [selectedMood, setSelectedMood] = useState<PrayerJournalEntry['mood'] | ''>('');
@@ -139,11 +142,11 @@ export default function JournalScreen() {
         {MOODS.map(mood => (
           <TouchableOpacity
             key={mood.value}
-            style={[styles.moodChip, selectedMood === mood.value && { backgroundColor: mood.color + '15', borderColor: mood.color }]}
+            style={[styles.moodChip, selectedMood === mood.value && { backgroundColor: C[mood.tone] + '15', borderColor: C[mood.tone] }]}
             onPress={() => setSelectedMood(mood.value)}
           >
-            <Ionicons name={iconName(mood.icon)} size={20} color={selectedMood === mood.value ? mood.color : C.textMuted} />
-            <Text style={[styles.moodLabel, selectedMood === mood.value && { color: mood.color, fontFamily: 'Jost_700Bold' }]}>
+            <Ionicons name={iconName(mood.icon)} size={20} color={selectedMood === mood.value ? C[mood.tone] : C.textMuted} />
+            <Text style={[styles.moodLabel, selectedMood === mood.value && { color: C[mood.tone], fontFamily: 'Jost_700Bold' }]}>
               {mood.label}
             </Text>
           </TouchableOpacity>
@@ -191,7 +194,7 @@ export default function JournalScreen() {
       </View>
 
       <TouchableOpacity style={styles.saveBtn} onPress={saveEntry}>
-        <Ionicons name="save-outline" size={18} color="#FFF" />
+        <Ionicons name="save-outline" size={18} color={C.onPrimary} />
         <Text style={styles.saveBtnText}>Save Entry</Text>
       </TouchableOpacity>
 
@@ -210,9 +213,9 @@ export default function JournalScreen() {
                   <Text style={styles.entryDate}>{entry.date}</Text>
                 </View>
                 {mood && (
-                  <View style={[styles.moodBadge, { backgroundColor: mood.color + '10' }]}>
-                    <Ionicons name={iconName(mood.icon)} size={12} color={mood.color} />
-                    <Text style={[styles.moodBadgeText, { color: mood.color }]}>{mood.label}</Text>
+                  <View style={[styles.moodBadge, { backgroundColor: C[mood.tone] + '10' }]}>
+                    <Ionicons name={iconName(mood.icon)} size={12} color={C[mood.tone]} />
+                    <Text style={[styles.moodBadgeText, { color: C[mood.tone] }]}>{mood.label}</Text>
                   </View>
                 )}
                 {entry.reflection && (
@@ -239,12 +242,12 @@ export default function JournalScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: "Jost_400Regular", marginTop: 4 },
 
   summaryCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, margin: 18, marginBottom: 12, padding: 16},
   summaryItem: { flex: 1, alignItems: 'center' },
@@ -269,7 +272,7 @@ const styles = StyleSheet.create({
   prayerChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, backgroundColor: C.bgSurface, marginRight: 8},
   prayerChipActive: { backgroundColor: C.primary },
   prayerChipLabel: { fontSize: 13, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  prayerChipLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' },
+  prayerChipLabelActive: { color: C.onPrimary, fontFamily: 'Jost_700Bold' },
 
   inputLabel: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary, marginHorizontal: 18, marginBottom: 8, marginTop: 12 },
 
@@ -281,7 +284,7 @@ const styles = StyleSheet.create({
   textInput: { fontSize: 14, color: C.textPrimary, lineHeight: 22, minHeight: 60, textAlignVertical: 'top' },
 
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.primary, borderRadius: 16, marginHorizontal: 18, marginTop: 8, paddingVertical: 16 },
-  saveBtnText: { color: '#FFF', fontSize: 16, fontFamily: 'Jost_700Bold' },
+  saveBtnText: { color: C.onPrimary, fontSize: 16, fontFamily: 'Jost_700Bold' },
 
   entryCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginBottom: 10, padding: 16},
   entryHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },

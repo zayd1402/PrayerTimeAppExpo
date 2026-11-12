@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
+
 import { usePrayerApp } from '../context/PrayerAppContext';
 import RamadanScreen from './RamadanScreen';
 import DuaLibraryScreen from './DuaLibraryScreen';
@@ -17,37 +17,40 @@ import TazkiyahScreen from './TazkiyahScreen';
 import JournalScreen from './JournalScreen';
 import ZakatScreen from './ZakatScreen';
 import HajjScreen from './HajjScreen';
+import { ColorToken, Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 type LearnSection =
   | 'ramadan' | 'duas' | 'hadith' | 'friday' | 'weekly' | 'settings'
   | 'sunnah' | 'hifdh' | 'tazkiyah' | 'journal' | 'zakat' | 'hajj';
 
-type LearnItem = { id: LearnSection; title: string; description: string; icon: string; color: string };
+type LearnItem = { id: LearnSection; title: string; description: string; icon: string; tone: ColorToken };
 
 const LEARN_ITEMS: LearnItem[] = [
-  { id: 'ramadan', title: 'Ramadan', description: 'Tracker, khatm plan, last 10 nights, and Ramadan dua.', icon: 'moon-outline', color: C.gold },
-  { id: 'duas', title: 'Dua Library', description: 'Searchable supplications for daily moments.', icon: 'book-outline', color: C.primary },
-  { id: 'hadith', title: 'Hadith', description: 'Daily hadith, categories, favorites, and sharing.', icon: 'document-text-outline', color: C.gold },
-  { id: 'friday', title: 'Friday', description: 'Jumu\'ah checklist, Al-Kahf progress, and dua times.', icon: 'star-outline', color: C.primaryLight },
-  { id: 'weekly', title: 'Weekly Sunnah', description: 'Simple weekly practices and fasting reminders.', icon: 'calendar-clear-outline', color: C.gold },
+  { id: 'ramadan', title: 'Ramadan', description: 'Tracker, khatm plan, last 10 nights, and Ramadan dua.', icon: 'moon-outline', tone: 'gold' },
+  { id: 'duas', title: 'Dua Library', description: 'Searchable supplications for daily moments.', icon: 'book-outline', tone: 'primary' },
+  { id: 'hadith', title: 'Hadith', description: 'Daily hadith, categories, favorites, and sharing.', icon: 'document-text-outline', tone: 'gold' },
+  { id: 'friday', title: 'Friday', description: 'Jumu\'ah checklist, Al-Kahf progress, and dua times.', icon: 'star-outline', tone: 'primary' },
+  { id: 'weekly', title: 'Weekly Sunnah', description: 'Simple weekly practices and fasting reminders.', icon: 'calendar-clear-outline', tone: 'gold' },
 ];
 
 const PRACTICE_ITEMS: LearnItem[] = [
-  { id: 'sunnah', title: 'Daily Sunnah', description: 'Morning, evening, and night adhkar checklist.', icon: 'sunny-outline', color: C.primary },
-  { id: 'hifdh', title: 'Hifdh', description: 'Track memorisation and revision by surah.', icon: 'book-outline', color: C.primary },
-  { id: 'tazkiyah', title: 'Tazkiyah', description: 'Daily self-reflection on character and heart.', icon: 'leaf-outline', color: C.primary },
-  { id: 'journal', title: 'Journal', description: 'Private reflections and gratitude notes.', icon: 'create-outline', color: C.textSecondary },
-  { id: 'zakat', title: 'Zakat', description: 'Calculate zakat on savings, gold, and silver.', icon: 'wallet-outline', color: C.gold },
-  { id: 'hajj', title: 'Hajj & Umrah', description: 'Step-by-step rites and duas.', icon: 'airplane-outline', color: C.gold },
+  { id: 'sunnah', title: 'Daily Sunnah', description: 'Morning, evening, and night adhkar checklist.', icon: 'sunny-outline', tone: 'primary' },
+  { id: 'hifdh', title: 'Hifdh', description: 'Track memorisation and revision by surah.', icon: 'book-outline', tone: 'primary' },
+  { id: 'tazkiyah', title: 'Tazkiyah', description: 'Daily self-reflection on character and heart.', icon: 'leaf-outline', tone: 'primary' },
+  { id: 'journal', title: 'Journal', description: 'Private reflections and gratitude notes.', icon: 'create-outline', tone: 'textSecondary' },
+  { id: 'zakat', title: 'Zakat', description: 'Calculate zakat on savings, gold, and silver.', icon: 'wallet-outline', tone: 'gold' },
+  { id: 'hajj', title: 'Hajj & Umrah', description: 'Step-by-step rites and duas.', icon: 'airplane-outline', tone: 'gold' },
 ];
 
 function ItemGrid({ items, onSelect }: { items: LearnItem[]; onSelect: (id: LearnSection) => void }) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   return (
     <View style={styles.grid}>
       {items.map(item => (
         <TouchableOpacity key={item.id} style={styles.card} onPress={() => onSelect(item.id)}>
-          <View style={[styles.iconWrap, { backgroundColor: item.color + '18' }]}>
-            <Ionicons name={iconName(item.icon)} size={24} color={item.color} />
+          <View style={[styles.iconWrap, { backgroundColor: C[item.tone] + '18' }]}>
+            <Ionicons name={iconName(item.icon)} size={24} color={C[item.tone]} />
           </View>
           <Text style={styles.cardTitle}>{item.title}</Text>
           <Text style={styles.cardDesc}>{item.description}</Text>
@@ -58,6 +61,8 @@ function ItemGrid({ items, onSelect }: { items: LearnItem[]; onSelect: (id: Lear
 }
 
 export default function LearnScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const { settings, handleUpdateSettings } = usePrayerApp();
   const [activeSection, setActiveSection] = useState<LearnSection | null>(null);
 
@@ -65,7 +70,7 @@ export default function LearnScreen() {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <TouchableOpacity style={styles.backButton} onPress={() => setActiveSection(null)}>
-          <Ionicons name="arrow-back" size={20} color={C.white} />
+          <Ionicons name="arrow-back" size={20} color={C.onHero} />
           <Text style={styles.backButtonText}>Learn</Text>
         </TouchableOpacity>
         {activeSection === 'ramadan' && <RamadanScreen />}
@@ -93,7 +98,7 @@ export default function LearnScreen() {
         </View>
 
       <View style={styles.featuredCard}>
-        <Ionicons name="moon-outline" size={24} color={C.goldPale} />
+        <Ionicons name="moon-outline" size={24} color={C.onHero} />
         <View style={styles.featuredText}>
           <Text style={styles.featuredTitle}>Ramadan is part of the MVP</Text>
           <Text style={styles.featuredDesc}>Track the month, plan khatm, and keep Ramadan visible from Today, Worship, Calendar, and Learn.</Text>
@@ -121,14 +126,14 @@ export default function LearnScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   scrollView: { flex: 1 },
   content: { paddingBottom: 120 },
   screen: { flex: 1, backgroundColor: C.bgBase },
   header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: 'Jost_400Regular', marginTop: 4 },
   featuredCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -143,7 +148,7 @@ const styles = StyleSheet.create({
   featuredTitle: { fontSize: 15, fontFamily: 'Jost_700Bold', color: C.gold },
   featuredDesc: { fontSize: 12, color: C.textSecondary, lineHeight: 18, marginTop: 2 },
   featuredButton: { backgroundColor: C.heroBg, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14 },
-  featuredButtonText: { color: C.goldPale, fontSize: 12, fontFamily: 'Jost_700Bold' },
+  featuredButtonText: { color: C.onHero, fontSize: 12, fontFamily: 'Jost_700Bold' },
   sectionTitle: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginHorizontal: 18, marginTop: 22, marginBottom: 10 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, gap: 12 },
   card: {
@@ -180,5 +185,5 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  backButtonText: { color: C.white, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
+  backButtonText: { color: C.onHero, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
 });

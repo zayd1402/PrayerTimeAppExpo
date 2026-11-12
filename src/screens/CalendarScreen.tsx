@@ -6,8 +6,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
-import { useTokens, Tokens } from '../context/ThemeContext';
+import { useTokens, Tokens, ColorToken } from '../context/ThemeContext';
 import { HijriService } from '../services/HijriService';
 import { getRamadanState, getRamadanCardInfo } from '../services/RamadanService';
 import { loadPrayerLog, getStreak, getTotalPrayers, getOnTimeRate, getHeatmapData, getKhushuAverage } from '../services/StorageService';
@@ -18,16 +17,16 @@ function getDateKey(date: Date): string {
   return getLocalDateKey(date);
 }
 
-const EVENT_COLORS: Record<string, string> = {
-  ramadan: C.primary,
-  eid: C.gold,
-  hajj: C.gold,
-  ashura: C.red,
-  mawlid: C.textSecondary,
-  laylatul_qadr: C.primaryLight,
-  white_days: C.gold,
-  jumuah: C.gold,
-  general: C.textSecondary};
+const EVENT_TONES: Record<string, ColorToken> = {
+  ramadan: 'primary',
+  eid: 'gold',
+  hajj: 'gold',
+  ashura: 'red',
+  mawlid: 'textSecondary',
+  laylatul_qadr: 'gold',
+  white_days: 'gold',
+  jumuah: 'gold',
+  general: 'textSecondary'};
 
 const EVENT_ICONS: Record<string, string> = {
   ramadan: 'moon-outline',
@@ -43,6 +42,7 @@ const EVENT_ICONS: Record<string, string> = {
 export default function CalendarScreen() {
   const { isRTL, t: translate } = useTranslation();
   const t = useTokens();
+  const eventColor = (type: string) => t[EVENT_TONES[type] ?? 'gold'];
   const styles = React.useMemo(() => createStyles(t), [t]);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [prayerLog, setPrayerLog] = useState<Record<string, Record<string, string>>>({});
@@ -116,7 +116,7 @@ export default function CalendarScreen() {
             </Text>
           </View>
         </View>
-        <View style={[styles.ramadanSummaryBadge, { backgroundColor: (EVENT_COLORS.ramadan || t.gold) + '15' }]}>
+        <View style={[styles.ramadanSummaryBadge, { backgroundColor: eventColor('ramadan') + '15' }]}>
           <Text style={[styles.ramadanSummaryBadgeText, { color: t.gold }]}>Ramadan</Text>
         </View>
       </View>
@@ -136,14 +136,14 @@ export default function CalendarScreen() {
       {nextEvent && (
         <View style={styles.countdownCard}>
           <View style={styles.countdownLeft}>
-            <Ionicons name={iconName(EVENT_ICONS[nextEvent.type])} size={24} color={EVENT_COLORS[nextEvent.type] || t.gold} />
+            <Ionicons name={iconName(EVENT_ICONS[nextEvent.type])} size={24} color={eventColor(nextEvent.type)} />
             <View style={{ marginLeft: 12 }}>
               <Text style={styles.countdownTitle}>{nextEvent.title}</Text>
               <Text style={styles.countdownDesc}>{isRTL && nextEvent.descriptionArabic ? nextEvent.descriptionArabic : nextEvent.description}</Text>
             </View>
           </View>
-          <View style={[styles.countdownBadge, { backgroundColor: (EVENT_COLORS[nextEvent.type] || t.gold) + '15' }]}>
-            <Text style={[styles.countdownBadgeText, { color: EVENT_COLORS[nextEvent.type] || t.gold }]}>{translate('calendar.soon')}</Text>
+          <View style={[styles.countdownBadge, { backgroundColor: eventColor(nextEvent.type) + '15' }]}>
+            <Text style={[styles.countdownBadgeText, { color: eventColor(nextEvent.type) }]}>{translate('calendar.soon')}</Text>
           </View>
         </View>
       )}
@@ -178,7 +178,7 @@ export default function CalendarScreen() {
         <View style={styles.calNav}>
           {!isCurrentMonthToday && (
             <TouchableOpacity style={styles.todayBtn} onPress={jumpToToday}>
-              <Ionicons name="today-outline" size={13} color={t.white} />
+              <Ionicons name="today-outline" size={13} color={t.onPrimary} />
               <Text style={styles.todayBtnText}>{translate('calendar.today')}</Text>
             </TouchableOpacity>
           )}
@@ -231,7 +231,7 @@ export default function CalendarScreen() {
               <Text style={[
                 styles.calDayNum,
                 isToday && styles.calDayNumToday,
-                isSelected && { color: t.white },
+                isSelected && { color: t.onPrimary },
                 !isCurrentMonth && styles.calDayNumOther,
               ]}>
                 {gregorian.getDate()}
@@ -242,7 +242,7 @@ export default function CalendarScreen() {
                 </Text>
               )}
               {hasEvent && isCurrentMonth && (
-                <View style={[styles.eventDot, { backgroundColor: EVENT_COLORS[events[0].type] || t.gold }]} />
+                <View style={[styles.eventDot, { backgroundColor: eventColor(events[0].type) }]} />
               )}
             </TouchableOpacity>
           );
@@ -322,10 +322,10 @@ export default function CalendarScreen() {
                 )}
 
                 {events.map(event => (
-                  <View key={event.id} style={[styles.eventRow, { backgroundColor: (EVENT_COLORS[event.type] || t.gold) + '10' }]}>
-                    <Ionicons name={iconName(EVENT_ICONS[event.type])} size={16} color={EVENT_COLORS[event.type] || t.gold} />
+                  <View key={event.id} style={[styles.eventRow, { backgroundColor: eventColor(event.type) + '10' }]}>
+                    <Ionicons name={iconName(EVENT_ICONS[event.type])} size={16} color={eventColor(event.type)} />
                     <View style={{ marginLeft: 10, flex: 1 }}>
-                      <Text style={[styles.eventTitle, { color: EVENT_COLORS[event.type] || t.gold }]}>{event.title}</Text>
+                      <Text style={[styles.eventTitle, { color: eventColor(event.type) }]}>{event.title}</Text>
                       <Text style={styles.eventDesc}>{isRTL && event.descriptionArabic ? event.descriptionArabic : event.description}</Text>
                     </View>
                   </View>
@@ -344,7 +344,7 @@ export default function CalendarScreen() {
       <View style={styles.legendCard}>
         {ISLAMIC_EVENTS.filter(e => e.type !== 'white_days').map(event => (
           <View key={event.id} style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: EVENT_COLORS[event.type] || t.gold }]} />
+            <View style={[styles.legendDot, { backgroundColor: eventColor(event.type) }]} />
             <Text style={styles.legendText}>{event.title}</Text>
             <Text style={styles.legendHijri}>{event.hijriDate.day} {['Muharram','Safar','Rabi al-Awwal','Rabi al-Thani','Jumada al-Awwal','Jumada al-Thani','Rajab','Shaban','Ramadan','Shawwal','Dhu al-Qidah','Dhu al-Hijjah'][event.hijriDate.month - 1] || ''}</Text>
           </View>
@@ -361,8 +361,8 @@ function createStyles(t: Tokens) {
   scrollView: { flex: 1 },
   content: { paddingBottom: 120 },
   header: { padding: 18, backgroundColor: t.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: t.goldPale },
-  subtitle: { fontSize: 14, color: t.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: t.onHero },
+  subtitle: { fontSize: 14, color: t.onHeroMuted, fontFamily: "Jost_400Regular", marginTop: 4 },
 
   countdownCard: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
@@ -403,7 +403,7 @@ function createStyles(t: Tokens) {
     backgroundColor: t.primary, borderRadius: 12,
     paddingHorizontal: 10, paddingVertical: 6, marginRight: 4,
   },
-  todayBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: t.white },
+  todayBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: t.onPrimary },
   calNavBtn: {
     width: 32, height: 32, borderRadius: 10, backgroundColor: t.surfaceElevated,
     justifyContent: 'center', alignItems: 'center',

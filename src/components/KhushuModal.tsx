@@ -4,9 +4,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C, PrayerId, KhushuLevel, DistractionType, KhushuEntry } from '../types';
+import { PrayerId, KhushuLevel, DistractionType, KhushuEntry } from '../types';
 import { addKhushuEntry } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const LEVELS: { value: KhushuLevel; label: string }[] = [
   { value: 1, label: 'Scattered' },
@@ -33,6 +34,8 @@ interface Props {
 }
 
 export default function KhushuModal({ visible, prayerId, prayerName, onClose }: Props) {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [level, setLevel] = useState<KhushuLevel>(3);
   const [distractions, setDistractions] = useState<DistractionType[]>([]);
   const [note, setNote] = useState('');
@@ -111,7 +114,7 @@ export default function KhushuModal({ visible, prayerId, prayerName, onClose }: 
                   style={[styles.distractionChip, selected && styles.distractionChipActive]}
                   onPress={() => toggleDistraction(d.value)}
                 >
-                  <Ionicons name={iconName(d.icon)} size={14} color={selected ? C.white : C.textSecondary} />
+                  <Ionicons name={iconName(d.icon)} size={14} color={selected ? C.onPrimary : C.textSecondary} />
                   <Text style={[styles.distractionText, selected && styles.distractionTextActive]}>{d.label}</Text>
                 </TouchableOpacity>
               );
@@ -128,7 +131,7 @@ export default function KhushuModal({ visible, prayerId, prayerName, onClose }: 
           />
 
           <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-            <Ionicons name="save-outline" size={18} color={C.white} />
+            <Ionicons name="save-outline" size={18} color={C.onPrimary} />
             <Text style={styles.saveBtnText}>Save</Text>
           </TouchableOpacity>
         </View>
@@ -137,7 +140,7 @@ export default function KhushuModal({ visible, prayerId, prayerName, onClose }: 
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 24 },
   card: { backgroundColor: C.bgBase, borderRadius: 24, padding: 24, alignItems: 'center' },
   xBtn: { position: 'absolute', top: 16, right: 16, zIndex: 10 },
@@ -157,15 +160,15 @@ const styles = StyleSheet.create({
   distractionChip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, backgroundColor: C.bgSurface },
   distractionChipActive: { backgroundColor: C.primary },
   distractionText: { fontSize: 12, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  distractionTextActive: { color: C.white },
+  distractionTextActive: { color: C.onPrimary },
 
   noteInput: { backgroundColor: C.bgSurface, borderRadius: 12, padding: 12, fontSize: 14, color: C.textPrimary, width: '100%', minHeight: 50, marginBottom: 16 },
 
   saveBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: C.primary, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 24 },
-  saveBtnText: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.white },
+  saveBtnText: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.onPrimary },
 
   savedTitle: { fontSize: 18, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginTop: 12 },
   savedText: { fontSize: 13, color: C.textSecondary, textAlign: 'center', marginTop: 4, marginBottom: 20 },
   closeBtn: { backgroundColor: C.primary, borderRadius: 14, paddingVertical: 12, paddingHorizontal: 32 },
-  closeBtnText: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.white },
+  closeBtnText: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.onPrimary },
 });

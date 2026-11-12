@@ -5,12 +5,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
+
 import {
   getFridayChecklist, setFridayChecklist as persistChecklist,
   getKahfProgress, setKahfProgress as persistKahf,
   getKhutbahNotes, setKhutbahNotes as persistKhutbah,
 } from '../services/StorageService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const FRIDAY_CHECKLIST = [
   { id: 'ghusl', label: 'Perform Ghusl (ritual bath)', icon: 'water-outline' },
@@ -35,6 +36,8 @@ const KAHF_SECTIONS = [
 ];
 
 export default function FridayScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [kahfProgress, setKahfProgress] = useState(0);
   const [khutbahNotes, setKhutbahNotes] = useState('');
   const [checklist, setChecklist] = useState<Record<string, boolean>>({});
@@ -93,7 +96,7 @@ export default function FridayScreen() {
             style={[styles.tab, activeSection === tab.id && styles.tabActive]}
             onPress={() => setActiveSection(tab.id)}
           >
-            <Ionicons name={iconName(tab.icon)} size={16} color={activeSection === tab.id ? '#FFF' : C.textSecondary} />
+            <Ionicons name={iconName(tab.icon)} size={16} color={activeSection === tab.id ? C.onPrimary : C.textSecondary} />
             <Text style={[styles.tabLabel, activeSection === tab.id && styles.tabLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
@@ -123,7 +126,7 @@ export default function FridayScreen() {
             return (
               <TouchableOpacity key={item.id} style={[styles.checkItem, done && styles.checkItemDone]} onPress={() => toggleCheck(item.id)}>
                 <View style={[styles.checkBox, done && styles.checkBoxDone]}>
-                  {done && <Ionicons name="checkmark" size={14} color="#FFF" />}
+                  {done && <Ionicons name="checkmark" size={14} color={C.onPrimary} />}
                 </View>
                 <Ionicons name={iconName(item.icon)} size={18} color={done ? C.primary : C.textSecondary} style={{ marginHorizontal: 12 }} />
                 <Text style={[styles.checkLabel, done && styles.checkLabelDone]}>{item.label}</Text>
@@ -243,18 +246,18 @@ export default function FridayScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: "Jost_400Regular", marginTop: 4 },
 
   tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 18, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', gap: 6 },
   tabActive: { backgroundColor: C.primary },
   tabLabel: { fontSize: 11, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  tabLabelActive: { color: '#FFF', fontFamily: 'Jost_700Bold' },
+  tabLabelActive: { color: C.onPrimary, fontFamily: 'Jost_700Bold' },
 
   progressCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, padding: 16, marginBottom: 16},
   progressItem: { flex: 1, alignItems: 'center' },
@@ -282,7 +285,7 @@ const styles = StyleSheet.create({
   kahfNumWrap: { width: 32, height: 32, borderRadius: 10, backgroundColor: C.bgSurface, justifyContent: 'center', alignItems: 'center' },
   kahfNumWrapDone: { backgroundColor: C.primary },
   kahfNum: { fontSize: 13, fontFamily: 'Jost_700Bold', color: C.textSecondary },
-  kahfNumDone: { color: '#FFF' },
+  kahfNumDone: { color: C.onPrimary },
   kahfInfo: { flex: 1, marginLeft: 12 },
   kahfAyah: { fontSize: 14, fontFamily: 'Jost_600SemiBold', color: C.textPrimary },
   kahfTextDone: { color: C.primary, textDecorationLine: 'line-through' },

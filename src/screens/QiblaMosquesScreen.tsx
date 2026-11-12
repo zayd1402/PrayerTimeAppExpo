@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C } from '../types';
+
 import { usePrayerApp } from '../context/PrayerAppContext';
 import QiblaScreen from './QiblaScreen';
 import MosquesScreen from './MosquesScreen';
 import SettingsScreen from './SettingsScreen';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 export default function QiblaMosquesScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const { location, settings, handleUpdateSettings } = usePrayerApp();
   const [showSettings, setShowSettings] = useState(false);
 
@@ -16,7 +19,7 @@ export default function QiblaMosquesScreen() {
     return (
       <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
         <TouchableOpacity style={styles.backButton} onPress={() => setShowSettings(false)}>
-          <Ionicons name="arrow-back" size={20} color={C.white} />
+          <Ionicons name="arrow-back" size={20} color={C.onHero} />
           <Text style={styles.backButtonText}>Back</Text>
         </TouchableOpacity>
         <SettingsScreen settings={settings} updateSettings={handleUpdateSettings} />
@@ -39,7 +42,7 @@ export default function QiblaMosquesScreen() {
           <Text style={styles.emptyTitle}>Location needed</Text>
           <Text style={styles.emptyText}>Prayer times, Qibla direction, and mosque distance require a selected city.</Text>
           <TouchableOpacity style={styles.primaryButton} onPress={() => setShowSettings(true)}>
-            <Ionicons name="settings-outline" size={18} color={C.white} />
+            <Ionicons name="settings-outline" size={18} color={C.onPrimary} />
             <Text style={styles.primaryButtonText}>Choose Manual City</Text>
           </TouchableOpacity>
         </View>
@@ -58,7 +61,7 @@ export default function QiblaMosquesScreen() {
             <Text style={styles.subtitle}>{location.name}</Text>
           </View>
           <TouchableOpacity style={styles.settingsButton} onPress={() => setShowSettings(true)}>
-            <Ionicons name="settings-outline" size={20} color={C.goldPale} />
+            <Ionicons name="settings-outline" size={20} color={C.onHero} />
           </TouchableOpacity>
         </View>
 
@@ -75,7 +78,7 @@ export default function QiblaMosquesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   scrollView: { flex: 1 },
   content: { paddingBottom: 120 },
@@ -87,8 +90,8 @@ const styles = StyleSheet.create({
     padding: 18,
     backgroundColor: C.heroBg,
   },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 13, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4, maxWidth: 260 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 13, color: C.onHeroMuted, fontFamily: 'Jost_400Regular', marginTop: 4, maxWidth: 260 },
   settingsButton: { width: 42, height: 42, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.12)', justifyContent: 'center', alignItems: 'center' },
   backButton: {
     position: 'absolute',
@@ -103,7 +106,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
-  backButtonText: { color: C.white, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
+  backButtonText: { color: C.onHero, fontSize: 14, fontFamily: 'Jost_600SemiBold' },
   emptyCard: {
     backgroundColor: C.surfaceElevated,
     borderRadius: 22,
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     marginTop: 18,
   },
-  primaryButtonText: { color: C.white, fontSize: 14, fontFamily: 'Jost_700Bold' },
+  primaryButtonText: { color: C.onPrimary, fontSize: 14, fontFamily: 'Jost_700Bold' },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -4,7 +4,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
+
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 type HajjTab = 'purpose' | 'ihram' | 'tawaf' | 'sai' | 'arafah' | 'jamarat' | 'hajj';
 
@@ -19,6 +20,8 @@ const TABS: { id: HajjTab; label: string; icon: string }[] = [
 ];
 
 export default function HajjScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [activeTab, setActiveTab] = useState<HajjTab>('purpose');
   const [tawafCount, setTawafCount] = useState(0);
   const [saiCount, setSaiCount] = useState(0);
@@ -227,7 +230,7 @@ export default function HajjScreen() {
             style={[styles.tab, activeTab === tab.id && styles.tabActive]}
             onPress={() => setActiveTab(tab.id)}
           >
-            <Ionicons name={iconName(tab.icon)} size={16} color={activeTab === tab.id ? C.white : C.textSecondary} />
+            <Ionicons name={iconName(tab.icon)} size={16} color={activeTab === tab.id ? C.onPrimary : C.textSecondary} />
             <Text style={[styles.tabLabel, activeTab === tab.id && styles.tabLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
@@ -239,18 +242,18 @@ export default function HajjScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: 'Jost_400Regular', marginTop: 4 },
 
   tabStrip: { margin: 18, marginBottom: 10 },
   tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: C.bgSurface, marginRight: 8 },
   tabActive: { backgroundColor: C.primary },
   tabLabel: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
-  tabLabelActive: { color: C.white },
+  tabLabelActive: { color: C.onPrimary },
 
   card: { backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 10, padding: 18 },
   cardTitle: { fontSize: 17, fontFamily: 'Jost_700Bold', color: C.textPrimary, marginBottom: 8 },
@@ -278,7 +281,7 @@ const styles = StyleSheet.create({
 
   duaSection: { marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: C.border },
   duaSectionTitle: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.textSecondary, marginBottom: 8 },
-  duaArabic: { fontSize: 15, color: C.textPrimary, textAlign: 'right', lineHeight: 26, marginBottom: 6 },
+  duaArabic: { fontSize: 17, fontFamily: C.fontArabic, color: C.textPrimary, textAlign: 'right', writingDirection: 'rtl', lineHeight: 30, marginBottom: 6 },
   duaTrans: { fontSize: 13, color: C.textMuted, fontStyle: 'italic', marginBottom: 12 },
 
   arafahChecklist: { marginBottom: 16 },

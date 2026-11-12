@@ -4,9 +4,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C, WeeklyActivity, FastingLog } from '../types';
+import { WeeklyActivity, FastingLog } from '../types';
 import { loadFastingLog, toggleFast } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const WEEKLY_ACTIVITIES: WeeklyActivity[] = [
   { id: 'monday-fast', title: 'Monday Fast', description: 'Sunnah fasting on Monday — the day the Prophet ﷺ was born', dayOfWeek: 1, type: 'fasting', icon: 'water-outline', action: 'monday' },
@@ -28,6 +29,8 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 const DAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function WeeklyScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [fastingLog, setFastingLog] = useState<Record<string, FastingLog>>({});
   const [selectedDay, setSelectedDay] = useState(new Date().getDay());
   const today = new Date().getDay();
@@ -146,7 +149,7 @@ export default function WeeklyScreen() {
           return (
             <View key={activity.id} style={[styles.overviewItem, isTodayActivity && styles.overviewItemToday]}>
               <View style={styles.overviewDot}>
-                <Ionicons name={iconName(activity.icon ?? 'help-outline')} size={12} color={isTodayActivity ? '#FFF' : C.textMuted} />
+                <Ionicons name={iconName(activity.icon ?? 'help-outline')} size={12} color={isTodayActivity ? C.onPrimary : C.textMuted} />
               </View>
               <View style={styles.overviewInfo}>
                 <Text style={[styles.overviewTitle, isTodayActivity && styles.overviewTitleToday]}>{activity.title}</Text>
@@ -161,19 +164,19 @@ export default function WeeklyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: "Jost_400Regular", marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: "Jost_400Regular", marginTop: 4 },
 
   daySelector: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 18, marginTop: 16, marginBottom: 8 },
   dayChip: { alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 14, backgroundColor: C.bgSurface, minWidth: 44 },
   dayChipSelected: { backgroundColor: C.primary },
   dayChipToday: { backgroundColor: C.goldPale, borderWidth: 1, borderColor: C.gold },
   dayLabel: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
-  dayLabelSelected: { color: '#FFF' },
+  dayLabelSelected: { color: C.onPrimary },
   dayLabelToday: { color: C.gold },
   todayDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: C.gold, marginTop: 4 },
 
@@ -191,7 +194,7 @@ const styles = StyleSheet.create({
   fastToggle: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, backgroundColor: C.bgSurface },
   fastToggleActive: { backgroundColor: C.primary },
   fastToggleText: { fontSize: 12, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
-  fastToggleTextActive: { color: '#FFF' },
+  fastToggleTextActive: { color: C.onPrimary },
 
   sunnahRevivalCard: { backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 18, marginTop: 16, padding: 18},
   sunnahHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 },
@@ -213,4 +216,4 @@ const styles = StyleSheet.create({
   overviewTitleToday: { color: C.primary, fontFamily: 'Jost_600SemiBold' },
   overviewDay: { fontSize: 11, color: C.textMuted, marginTop: 1 },
   todayBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, backgroundColor: C.primary },
-  todayBadgeText: { fontSize: 10, color: '#FFF', fontFamily: 'Jost_700Bold' }});
+  todayBadgeText: { fontSize: 10, color: C.onPrimary, fontFamily: 'Jost_700Bold' }});

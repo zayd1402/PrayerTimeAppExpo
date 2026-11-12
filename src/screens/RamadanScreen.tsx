@@ -3,12 +3,13 @@ import {
   StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { C } from '../types';
+
 import { mmkv } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
 import {
   getRamadanState, getTodayJuz, calculateKhatmPlan, getNightVirtue
 } from '../services/RamadanService';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const RAMADAN_LOG_KEY = '@prayertime:ramadan_log';
 const RAMADAN_TARGET_KEY = '@prayertime:ramadan_targets';
@@ -43,6 +44,8 @@ function getTargets(): RamadanTargets {
 }
 
 export default function RamadanScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [state, setState] = useState(getRamadanState());
   const [todayLog, setTodayLog] = useState<RamadanDayLog>({
     suhoor: false, fajrOnTime: false, taraweehRakahs: 0,
@@ -211,8 +214,8 @@ export default function RamadanScreen() {
               <Text style={styles.virtueText}>{getNightVirtue(state.ramadanDay).label}</Text>
               <View style={styles.itiKafCheck}>
                 <TouchableOpacity style={styles.checkRow} onPress={() => {}}>
-                  <Ionicons name="square-outline" size={20} color={C.white} />
-                  <Text style={[styles.checkLabel, { color: C.white }]}>I'tikaf intention made</Text>
+                  <Ionicons name="square-outline" size={20} color={C.onHero} />
+                  <Text style={[styles.checkLabel, { color: C.onHero }]}>I'tikaf intention made</Text>
                 </TouchableOpacity>
                 <Text style={styles.itiKafHint}>Even a few minutes in the masjid counts</Text>
               </View>
@@ -284,12 +287,12 @@ export default function RamadanScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: 'Jost_400Regular', marginTop: 4 },
 
   card: {
     backgroundColor: C.surfaceElevated, borderRadius: 18, margin: 18, marginBottom: 10,
@@ -313,16 +316,16 @@ const styles = StyleSheet.create({
   khatmInputRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
   khatmInput: { backgroundColor: C.bgBase, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, fontSize: 14, color: C.textPrimary, width: 50, textAlign: 'center' },
   setBtn: { backgroundColor: C.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
-  setBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.white },
+  setBtnText: { fontSize: 12, fontFamily: 'Jost_700Bold', color: C.onPrimary },
   juzToday: { fontSize: 13, color: C.textSecondary, marginTop: 10 },
   juzHighlight: { fontFamily: 'Jost_700Bold', color: C.primary },
   juzLabel: { fontSize: 14, color: C.textSecondary },
 
   last10Card: { backgroundColor: C.heroBg, borderWidth: 1, borderColor: C.gold },
-  last10Title: { fontSize: 18, fontFamily: 'BodoniModa_700Bold', color: C.goldPale, marginTop: 8 },
+  last10Title: { fontSize: 18, fontFamily: 'BodoniModa_700Bold', color: C.onHero, marginTop: 8 },
   oddNightRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   oddNightText: { fontSize: 14, color: C.gold, fontFamily: 'Jost_700Bold' },
-  virtueText: { fontSize: 13, color: C.goldLight, marginTop: 4 },
+  virtueText: { fontSize: 13, color: C.onHeroMuted, marginTop: 4 },
   itiKafCheck: { marginTop: 12 },
   itiKafHint: { fontSize: 11, color: C.textMuted, marginLeft: 30, marginTop: -4 },
 
@@ -336,7 +339,7 @@ const styles = StyleSheet.create({
 
   postHint: { fontSize: 12, color: C.textMuted, fontStyle: 'italic', marginTop: 8, lineHeight: 18 },
 
-  duaArabic: { fontSize: 16, color: C.textPrimary, textAlign: 'right', lineHeight: 28, marginTop: 8 },
+  duaArabic: { fontSize: 18, fontFamily: C.fontArabic, color: C.textPrimary, textAlign: 'right', writingDirection: 'rtl', lineHeight: 32, marginTop: 8 },
   duaText: { fontSize: 13, color: C.textSecondary, marginTop: 4, fontStyle: 'italic' },
   duaMeaning: { fontSize: 12, color: C.textMuted, marginTop: 2 },
 });

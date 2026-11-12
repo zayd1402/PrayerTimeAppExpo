@@ -4,9 +4,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
-import { C } from '../types';
+
 import { mmkv } from '../services/StorageService';
 import { getLocalDateKey } from '../utils/date';
+import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
 
 const TAZKIYAH_KEY = '@prayertime:tazkiyah_log';
 
@@ -40,6 +41,8 @@ function getDateKey(): string {
 }
 
 export default function TazkiyahScreen() {
+  const C = useTokens();
+  const styles = useThemedStyles(makeStyles);
   const [todayEntry, setTodayEntry] = useState<TazkiyahEntry>({
     date: getDateKey(), muhasabah: '', gratitude: ['', '', ''],
     sabrMoment: '', heartCheck: 3,
@@ -132,7 +135,7 @@ export default function TazkiyahScreen() {
               style={[styles.heartBtn, todayEntry.heartCheck === h.value && styles.heartBtnActive]}
               onPress={() => setTodayEntry(prev => ({ ...prev, heartCheck: h.value }))}
             >
-              <Ionicons name={iconName(h.icon)} size={20} color={todayEntry.heartCheck === h.value ? C.white : C.textSecondary} />
+              <Ionicons name={iconName(h.icon)} size={20} color={todayEntry.heartCheck === h.value ? C.onPrimary : C.textSecondary} />
               <Text style={[styles.heartLabel, todayEntry.heartCheck === h.value && styles.heartLabelActive]}>{h.label}</Text>
             </TouchableOpacity>
           ))}
@@ -199,7 +202,7 @@ export default function TazkiyahScreen() {
 
       {/* Save Button */}
       <TouchableOpacity style={styles.saveBtn} onPress={saveEntry}>
-        <Ionicons name="save-outline" size={18} color={C.white} />
+        <Ionicons name="save-outline" size={18} color={C.onPrimary} />
         <Text style={styles.saveBtnText}>Save Today's Muhasabah</Text>
       </TouchableOpacity>
 
@@ -220,12 +223,12 @@ export default function TazkiyahScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (C: Tokens) => StyleSheet.create({
   container: { flex: 1, backgroundColor: C.bgBase },
   content: { paddingBottom: 120 },
   header: { padding: 18, backgroundColor: C.heroBg },
-  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.goldPale },
-  subtitle: { fontSize: 14, color: C.goldLight, fontFamily: 'Jost_400Regular', marginTop: 4 },
+  title: { fontSize: 24, fontFamily: 'BodoniModa_700Bold', color: C.onHero },
+  subtitle: { fontSize: 14, color: C.onHeroMuted, fontFamily: 'Jost_400Regular', marginTop: 4 },
 
   statsRow: { flexDirection: 'row', justifyContent: 'space-around', margin: 18, marginBottom: 10 },
   stat: { alignItems: 'center' },
@@ -243,7 +246,7 @@ const styles = StyleSheet.create({
   heartBtn: { alignItems: 'center', padding: 8, borderRadius: 12, backgroundColor: C.bgCard, flex: 1 },
   heartBtnActive: { backgroundColor: C.primary },
   heartLabel: { fontSize: 9, color: C.textMuted, marginTop: 4 },
-  heartLabelActive: { color: C.white, fontFamily: 'Jost_600SemiBold' },
+  heartLabelActive: { color: C.onPrimary, fontFamily: 'Jost_600SemiBold' },
 
   gratitudeInput: { backgroundColor: C.bgBase, borderRadius: 10, padding: 12, fontSize: 14, color: C.textPrimary, marginBottom: 8 },
 
@@ -252,7 +255,7 @@ const styles = StyleSheet.create({
   reminderSource: { fontSize: 12, color: C.textMuted, marginTop: 6 },
 
   saveBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: C.primary, borderRadius: 16, margin: 18, paddingVertical: 14 },
-  saveBtnText: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.white },
+  saveBtnText: { fontSize: 16, fontFamily: 'Jost_700Bold', color: C.onPrimary },
 
   entryCard: { backgroundColor: C.bgSurface, borderRadius: 14, marginHorizontal: 18, marginBottom: 8, padding: 14 },
   entryDate: { fontSize: 11, color: C.textMuted, fontFamily: 'Jost_600SemiBold' },
