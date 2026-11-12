@@ -7,7 +7,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { useTranslation } from '../i18n';
-import { C, PrayerId, PRAYER_ICONS } from '../types';
+import { C, PrayerId, PrayerLogEntry, PRAYER_ICONS } from '../types';
 import Animated, {
   useSharedValue, useAnimatedStyle, useAnimatedScrollHandler,
   withTiming, withSequence, withRepeat
@@ -93,10 +93,11 @@ function PrayerRing({ completed, total }: { completed: number; total: number }) 
 
 // ─── Prayer Row with Swipe (Reanimated + Gesture Handler) ─────
 function PrayerRow({
-  prayer, time, isTrackable, isCompleted, isNext, isActive,
+  prayer, time, isTrackable, isCompleted, status, isNext, isActive,
   onToggle, onLongPress, reduceMotion, t
 }: {
   prayer: Prayer; time: Date; isTrackable: boolean; isCompleted: boolean;
+  status: PrayerLogEntry['status'] | undefined;
   isNext: boolean; isActive: boolean; onToggle: () => void; onLongPress: () => void;
   reduceMotion: boolean; t: (key: string, params?: Record<string, string>) => string;
 }) {
@@ -140,6 +141,9 @@ function PrayerRow({
     transform: [{ translateX: translateX.value }, { scale: rowScale.value }],
   }));
 
+  const isQaza = status === 'qaza';
+  const isMissed = status === 'missed';
+  const statusLabel = isQaza ? t('status.qaza') : isMissed ? t('status.missed') : null;
   const iqama = isTrackable ? getIqamaTime(prayer.id, time) : null;
   const iqamaCountdown = iqama && isNext ? getTimeUntil(iqama) : null;
 
@@ -165,8 +169,8 @@ function PrayerRow({
           onPress={isTrackable ? onToggle : undefined}
           onLongPress={onLongPress}
           accessibilityRole="button"
-          accessibilityLabel={`${prayer.name} prayer, ${isCompleted ? 'completed' : 'not completed'}`}
-          accessibilityHint={isTrackable ? 'Double-tap to mark as prayed' : undefined}
+          accessibilityLabel={`${prayer.name} prayer, ${isQaza ? 'prayed as qaza' : isMissed ? 'missed' : isCompleted ? 'completed' : 'not completed'}`}
+          accessibilityHint={isTrackable ? (isCompleted ? 'Double-tap to clear. Long-press for options' : 'Double-tap to mark as prayed. Long-press for options') : undefined}
           style={[
             styles.prayerRow,
             isNext && styles.prayerRowNext,
@@ -197,12 +201,26 @@ function PrayerRow({
               {formatTime(time)}
             </Text>
             {isTrackable && (
-              <View style={[styles.checkCircle, isCompleted && styles.checkCircleDone]}>
-                {isCompleted ? (
-                  <Ionicons name="checkmark" size={14} color="#FFF" />
-                ) : (
-                  <View style={styles.checkEmpty} />
+              <View style={styles.statusWrap}>
+                {statusLabel && (
+                  <Text style={[styles.statusLabel, isQaza ? styles.statusLabelQaza : styles.statusLabelMissed]}>
+                    {statusLabel}
+                  </Text>
                 )}
+                <View style={[
+                  styles.checkCircle,
+                  isCompleted && styles.checkCircleDone,
+                  isQaza && styles.checkCircleQaza,
+                  isMissed && styles.checkCircleMissed,
+                ]}>
+                  {isCompleted ? (
+                    <Ionicons name="checkmark" size={14} color="#FFF" />
+                  ) : isMissed ? (
+                    <Ionicons name="close" size={14} color={C.red} />
+                  ) : (
+                    <View style={styles.checkEmpty} />
+                  )}
+                </View>
               </View>
             )}
           </View>
@@ -249,9 +267,10 @@ function RamadanQuickCard({ state }: { state: RamadanState }) {
 export default function TodayScreen() {
   const {
     prayersObj: prayerTimes, nextPrayerObj: nextPrayer, nextPrayerTime,
-    completedPrayers, location, timerDisplay, dailyHadith, hijriDateStr,
+    completedPrayers, prayerStatuses, location, timerDisplay, dailyHadith, hijriDateStr,
     settings, error,
     handleTogglePrayer: togglePrayer,
+    handleMarkPrayer: markPrayerStatus,
     handleUpdateSettings,
   } = usePrayerApp();
   const scrollY = useSharedValue(0);
@@ -317,15 +336,21 @@ export default function TodayScreen() {
 
   const handleLongPress = (prayer: Prayer) => {
     if (!TRACKABLE.includes(prayer.id)) return;
-    Alert.alert(
-      `Mark ${prayer.name}`,
-      'How did you pray?',
-      [
-        { text: 'Prayed On Time', onPress: () => togglePrayer(prayer.id) },
-        { text: 'Qaza', onPress: () => togglePrayer(prayer.id) },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    const id = prayer.id as PrayerId;
+    const markDone = (status: 'prayed' | 'qaza') => {
+      const wasDone = completedPrayers.has(id);
+      markPrayerStatus(id, status);
+      if (!wasDone) setKhushuPrayer({ id: prayer.id, name: prayer.name });
+    };
+    const buttons: Parameters<typeof Alert.alert>[2] = [
+      { text: 'Prayed On Time', onPress: () => markDone('prayed') },
+      { text: 'Qaza', onPress: () => markDone('qaza') },
+    ];
+    if (prayerStatuses[id]) {
+      buttons.push({ text: 'Clear', style: 'destructive', onPress: () => markPrayerStatus(id, null) });
+    }
+    buttons.push({ text: 'Cancel', style: 'cancel' });
+    Alert.alert(`Mark ${prayer.name}`, 'How did you pray?', buttons);
   };
 
   return (
@@ -449,6 +474,7 @@ export default function TodayScreen() {
               time={time}
               isTrackable={isTrackable}
               isCompleted={isCompleted}
+              status={prayerStatuses[prayer.id as PrayerId]}
               isNext={isNext}
               isActive={isActive}
               onToggle={() => handleToggle(prayer.id)}
@@ -634,6 +660,12 @@ const styles = StyleSheet.create({
   prayerTimeNext: { color: C.primary, fontFamily: 'Jost_700Bold' },
   checkCircle: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: C.borderStrong, justifyContent: 'center', alignItems: 'center' },
   checkCircleDone: { backgroundColor: C.primary, borderColor: C.primary },
+  checkCircleQaza: { backgroundColor: C.gold, borderColor: C.gold },
+  checkCircleMissed: { borderColor: C.red },
+  statusWrap: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  statusLabel: { fontSize: 11, fontFamily: 'Jost_600SemiBold' },
+  statusLabelQaza: { color: C.gold },
+  statusLabelMissed: { color: C.red },
   checkEmpty: { width: 10, height: 10, borderRadius: 5 },
 
   // Hadith Card

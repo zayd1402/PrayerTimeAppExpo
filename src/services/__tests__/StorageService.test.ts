@@ -35,6 +35,10 @@ import {
   getKahfProgress,
   setKahfProgress,
   clearAllData,
+  clearPrayer,
+  markMissedPrayers,
+  getOnTimeRate,
+  loadPrayerLog,
 } from '../StorageService';
 import { DEFAULT_SETTINGS } from '../../types';
 
@@ -72,6 +76,64 @@ describe('StorageService', () => {
     it('returns null for dates without logs', async () => {
       const dayLog = await getPrayerLogForDate('2024-06-01');
       expect(dayLog).toBeNull();
+    });
+  });
+
+  describe('clearPrayer', () => {
+    it('removes the entry instead of storing a status', async () => {
+      await markPrayer('2024-06-13', 'dhuhr', 'prayed');
+      await markPrayer('2024-06-13', 'asr', 'prayed');
+      await clearPrayer('2024-06-13', 'dhuhr');
+      expect(await getPrayerLogForDate('2024-06-13')).toEqual({ asr: 'prayed' });
+    });
+
+    it('drops the day once its last entry is cleared', async () => {
+      await markPrayer('2024-06-13', 'dhuhr', 'qaza');
+      await clearPrayer('2024-06-13', 'dhuhr');
+      expect(await getPrayerLogForDate('2024-06-13')).toBeNull();
+    });
+  });
+
+  describe('markMissedPrayers', () => {
+    const times = { fajr: 300, sunrise: 390, dhuhr: 750, asr: 960, maghrib: 1140, isha: 1230 };
+
+    it('fills unlogged prayers on past days since tracking started', async () => {
+      await markPrayer('2024-06-11', 'fajr', 'prayed');
+      const now = new Date(2024, 5, 13, 4, 0); // before Fajr
+      const log = await markMissedPrayers(now, times);
+      expect(log['2024-06-11']).toEqual({
+        fajr: 'prayed', dhuhr: 'missed', asr: 'missed', maghrib: 'missed', isha: 'missed',
+      });
+      // Yesterday's Isha is still in its window before today's Fajr
+      expect(log['2024-06-12']).toEqual({
+        fajr: 'missed', dhuhr: 'missed', asr: 'missed', maghrib: 'missed',
+      });
+      expect(log['2024-06-10']).toBeUndefined();
+      expect(log['2024-06-13']).toBeUndefined();
+    });
+
+    it('marks today\'s prayers missed only once their window has ended', async () => {
+      await markPrayer('2024-06-13', 'fajr', 'qaza');
+      const now = new Date(2024, 5, 13, 17, 0); // after Asr starts, before Maghrib
+      const log = await markMissedPrayers(now, times);
+      expect(log['2024-06-13']).toEqual({ fajr: 'qaza', dhuhr: 'missed' });
+      // Tracking started today, so yesterday is left alone
+      expect(log['2024-06-12']).toBeUndefined();
+    });
+
+    it('does nothing for a brand-new user', async () => {
+      await markMissedPrayers(new Date(2024, 5, 13, 3, 0), times);
+      expect(await loadPrayerLog()).toEqual({});
+    });
+  });
+
+  describe('getOnTimeRate', () => {
+    it('counts qaza and missed prayers against the rate', async () => {
+      await markPrayer('2024-06-13', 'fajr', 'prayed');
+      await markPrayer('2024-06-13', 'dhuhr', 'qaza');
+      await markPrayer('2024-06-13', 'asr', 'missed');
+      await markPrayer('2024-06-13', 'maghrib', 'missed');
+      expect(await getOnTimeRate()).toBe(25);
     });
   });
 
