@@ -1,0 +1,7 @@
+{
+  "name": "alarm-access",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Android exact-alarm and battery-optimisation checks for prayer alerts",
+  "main": "index.ts"
+}
