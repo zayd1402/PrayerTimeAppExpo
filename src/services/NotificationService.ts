@@ -25,6 +25,7 @@ export async function setupNotificationChannels(): Promise<void> {
 
 // ─── Notification Categories (Action Buttons) ────────────────
 const PRAYER_CATEGORY = 'prayer-action';
+export const SNOOZE_MINUTES = 10;
 
 export async function setupNotificationCategories(): Promise<void> {
   await Notifications.setNotificationCategoryAsync(PRAYER_CATEGORY, [
@@ -37,7 +38,7 @@ export async function setupNotificationCategories(): Promise<void> {
     },
     {
       identifier: 'SNOOZE_10',
-      buttonTitle: 'Snooze (10 min)',
+      buttonTitle: `Snooze (${SNOOZE_MINUTES} min)`,
       options: {
         opensAppToForeground: false,
       },
@@ -239,13 +240,48 @@ export async function cancelNotification(identifier: string): Promise<void> {
   await Notifications.cancelScheduledNotificationAsync(identifier);
 }
 
+// ─── Snooze ──────────────────────────────────────────────────
+/**
+ * Re-delivers a prayer notification after `minutes`. The snoozed copy keeps
+ * the prayer category, so it can be marked as prayed or snoozed again.
+ * Each prayer has a single snooze slot: snoozing again replaces the pending one.
+ */
+export async function snoozePrayerNotification(
+  content: Pick<Notifications.NotificationContent, 'title' | 'body' | 'data'>,
+  minutes: number = SNOOZE_MINUTES,
+): Promise<string> {
+  const data = (content.data ?? {}) as Record<string, unknown>;
+  const prayerId = typeof data.prayerId === 'string' ? data.prayerId : 'unknown';
+  const identifier = `snooze-${prayerId}`;
+
+  await Notifications.cancelScheduledNotificationAsync(identifier);
+  return Notifications.scheduleNotificationAsync({
+    identifier,
+    content: {
+      title: content.title ?? 'Prayer Reminder',
+      body: content.body ?? '',
+      sound: true,
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+      categoryIdentifier: PRAYER_CATEGORY,
+      data: { ...data, snoozed: true },
+      ...(Platform.OS === 'android' && { channelId: 'prayer-times' }),
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+      seconds: Math.max(1, Math.round(minutes * 60)),
+      repeats: false,
+    },
+  });
+}
+
 // ─── Notification Response Handler ───────────────────────────
 export function setupNotificationResponseHandler(
   onMarkPrayed: (prayerId: string, deliveredAt: Date) => void,
   onNotificationTap: (data: Record<string, unknown> | undefined) => void,
 ): Notifications.Subscription {
   const sub = Notifications.addNotificationResponseReceivedListener(response => {
-    const data = response.notification.request.content.data as Record<string, unknown> | undefined;
+    const { request } = response.notification;
+    const data = request.content.data as Record<string, unknown> | undefined;
     const actionId = response.actionIdentifier;
 
     if (actionId === 'MARK_PRAYED' && typeof data?.prayerId === 'string') {
@@ -254,6 +290,13 @@ export function setupNotificationResponseHandler(
       const deliveredMs = response.notification.date;
       const deliveredAt = Number.isFinite(deliveredMs) && deliveredMs > 0 ? new Date(deliveredMs) : new Date();
       onMarkPrayed(data.prayerId, deliveredAt);
+      // A pending snooze for a prayer that is now done would be noise.
+      Notifications.cancelScheduledNotificationAsync(`snooze-${data.prayerId}`).catch(() => {});
+      Notifications.dismissNotificationAsync(request.identifier).catch(() => {});
+    }
+    if (actionId === 'SNOOZE_10') {
+      snoozePrayerNotification(request.content).catch(() => {});
+      Notifications.dismissNotificationAsync(request.identifier).catch(() => {});
     }
     if (actionId === Notifications.DEFAULT_ACTION_IDENTIFIER) {
       onNotificationTap(data);

@@ -5,16 +5,22 @@ const cancelScheduledNotificationAsync = jest.fn();
 const cancelAllScheduledNotificationsAsync = jest.fn();
 const setNotificationChannelAsync = jest.fn();
 const setNotificationCategoryAsync = jest.fn();
-const addNotificationResponseReceivedListener = jest.fn((_cb: unknown) => ({ remove: jest.fn() }));
+const dismissNotificationAsync = jest.fn(() => Promise.resolve());
+let responseListener: ((response: unknown) => void) | null = null;
+const addNotificationResponseReceivedListener = jest.fn((cb: (response: unknown) => void) => {
+  responseListener = cb;
+  return { remove: jest.fn() };
+});
 
 jest.mock('expo-notifications', () => ({
   setNotificationHandler: jest.fn(),
   setNotificationChannelAsync,
   setNotificationCategoryAsync,
-  addNotificationResponseReceivedListener,
   scheduleNotificationAsync,
   cancelScheduledNotificationAsync,
   cancelAllScheduledNotificationsAsync,
+  dismissNotificationAsync,
+  addNotificationResponseReceivedListener,
   getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
   requestPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
   AndroidImportance: { HIGH: 'high', DEFAULT: 'default' },
@@ -22,6 +28,7 @@ jest.mock('expo-notifications', () => ({
   SchedulableTriggerInputTypes: {
     DAILY: 'daily',
     WEEKLY: 'weekly',
+    TIME_INTERVAL: 'timeInterval',
   },
   IosAuthorizationStatus: { AUTHORIZED: 2, PROVISIONAL: 3 },
   DEFAULT_ACTION_IDENTIFIER: 'expo.modules.notifications.actions.DEFAULT',
@@ -38,12 +45,30 @@ import {
   schedulePrayerNotification,
   cancelAllNotifications,
   scheduleFridayReminders,
+  snoozePrayerNotification,
   setupNotificationResponseHandler,
 } from '../NotificationService';
 
 beforeEach(() => {
   jest.clearAllMocks();
+  scheduleNotificationAsync.mockImplementation(() => Promise.resolve('id'));
+  cancelScheduledNotificationAsync.mockImplementation(() => Promise.resolve());
 });
+
+const flush = () => new Promise(resolve => setTimeout(resolve, 0));
+
+function respond(actionIdentifier: string, date: number = Date.now()) {
+  responseListener?.({
+    actionIdentifier,
+    notification: {
+      date,
+      request: {
+        identifier: 'prayer-dhuhr',
+        content: { title: 'Dhuhr Prayer Time', body: "It's time for Dhuhr prayer", data: { prayerId: 'dhuhr', action: 'time' } },
+      },
+    },
+  });
+}
 
 describe('NotificationService', () => {
   describe('setupNotificationChannels', () => {
@@ -133,28 +158,60 @@ describe('NotificationService', () => {
     });
   });
 
+  describe('snoozePrayerNotification', () => {
+    it('re-schedules the prayer notification 10 minutes out in the same category', async () => {
+      await snoozePrayerNotification({ title: 'Asr Prayer Time', body: 'body', data: { prayerId: 'asr' } });
+      expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('snooze-asr');
+      expect(scheduleNotificationAsync).toHaveBeenCalledWith(
+        expect.objectContaining({
+          identifier: 'snooze-asr',
+          content: expect.objectContaining({
+            title: 'Asr Prayer Time',
+            categoryIdentifier: 'prayer-action',
+            data: { prayerId: 'asr', snoozed: true },
+          }),
+          trigger: { type: 'timeInterval', seconds: 600, repeats: false },
+        })
+      );
+    });
+  });
+
   describe('setupNotificationResponseHandler', () => {
-    const respond = (date: number, actionIdentifier = 'MARK_PRAYED') => {
-      const listener = addNotificationResponseReceivedListener.mock.calls[0][0] as (r: unknown) => void;
-      listener({
-        actionIdentifier,
-        notification: { date, request: { content: { data: { prayerId: 'isha' } } } },
-      });
-    };
+    it('snoozes and dismisses on the Snooze action without marking prayed', async () => {
+      const onMarkPrayed = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, jest.fn());
+      respond('SNOOZE_10');
+      await flush();
+      expect(onMarkPrayed).not.toHaveBeenCalled();
+      expect(dismissNotificationAsync).toHaveBeenCalledWith('prayer-dhuhr');
+      expect(scheduleNotificationAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ identifier: 'snooze-dhuhr' })
+      );
+    });
+
+    it('marks prayed and clears any pending snooze on Mark as Prayed', async () => {
+      const onMarkPrayed = jest.fn();
+      setupNotificationResponseHandler(onMarkPrayed, jest.fn());
+      respond('MARK_PRAYED');
+      await flush();
+      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr', expect.any(Date));
+      expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('snooze-dhuhr');
+      expect(scheduleNotificationAsync).not.toHaveBeenCalled();
+    });
 
     it('passes the delivery time, not the time the action was tapped', () => {
       const onMarkPrayed = jest.fn();
       setupNotificationResponseHandler(onMarkPrayed, jest.fn());
       const delivered = new Date(2026, 10, 11, 19, 45).getTime();
-      respond(delivered);
-      expect(onMarkPrayed).toHaveBeenCalledWith('isha', new Date(delivered));
+      respond('MARK_PRAYED', delivered);
+      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr', new Date(delivered));
     });
 
     it('falls back to now when the delivery time is missing', () => {
       const onMarkPrayed = jest.fn();
       setupNotificationResponseHandler(onMarkPrayed, jest.fn());
       const before = Date.now();
-      respond(Number.NaN);
+      respond('MARK_PRAYED', Number.NaN);
       const deliveredAt = onMarkPrayed.mock.calls[0][1] as Date;
       expect(deliveredAt.getTime()).toBeGreaterThanOrEqual(before);
     });
@@ -163,7 +220,7 @@ describe('NotificationService', () => {
       const onMarkPrayed = jest.fn();
       const onTap = jest.fn();
       setupNotificationResponseHandler(onMarkPrayed, onTap);
-      respond(Date.now(), 'expo.modules.notifications.actions.DEFAULT');
+      respond('expo.modules.notifications.actions.DEFAULT');
       expect(onMarkPrayed).not.toHaveBeenCalled();
       expect(onTap).toHaveBeenCalled();
     });
