@@ -14,7 +14,7 @@ import { getLocalDateKey } from '../utils/date';
 import {
   loadFastingLog, toggleFast, loadQuranLog, addQuranLog,
   addDhikrSession, getTodayDhikrCount,
-  getWeeklyQuranStats
+  getWeeklyQuranStats, getSunnahPrayersForDate, setSunnahPrayersForDate,
 } from '../services/StorageService';
 
 const { width } = Dimensions.get('window');
@@ -142,7 +142,9 @@ const chartStyles = StyleSheet.create({
 export default function WorshipScreen() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<WorshipTab>('prayers');
-  const [completedSunnah, setCompletedSunnah] = useState<Set<string>>(new Set());
+  const [completedSunnah, setCompletedSunnah] = useState<Set<string>>(
+    () => new Set(getSunnahPrayersForDate(getLocalDateKey())),
+  );
   const [dhikr, setDhikr] = useState({ subhanallah: 0, alhamdulillah: 0, allahuakbar: 0 });
   const [fastingLog, setFastingLog] = useState<Record<string, FastingLog>>({});
   const [quranLog, setQuranLog] = useState<Record<string, QuranLog>>({});
@@ -175,11 +177,10 @@ export default function WorshipScreen() {
   // ─── Prayer Tab ────────────────────────────────────────────
   function PrayerTab() {
     const toggleSunnah = (id: string) => {
-      setCompletedSunnah(prev => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id); else next.add(id);
-        return next;
-      });
+      const next = new Set(completedSunnah);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      setCompletedSunnah(next);
+      setSunnahPrayersForDate(todayKey, [...next]);
     };
 
     return (

@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { C, PrayerId, PrayerJournalEntry } from '../types';
 import { loadPrayerJournal, addJournalEntry, getKhushuAverage } from '../services/StorageService';
+import { getLocalDateKey } from '../utils/date';
 
 const MOODS = [
   { value: 'peaceful', label: 'Peaceful', icon: 'leaf-outline', color: C.primary },
@@ -30,7 +31,7 @@ export default function JournalScreen() {
   const [improvement, setImprovement] = useState('');
   const [khushuAvg, setKhushuAvg] = useState(0);
   const [khushuTrend, setKhushuTrend] = useState<number[]>([]);
-  const todayKey = new Date().toISOString().split('T')[0];
+  const todayKey = getLocalDateKey();
 
   useEffect(() => {
     loadPrayerJournal().then(setEntries);

@@ -54,7 +54,7 @@ export default function MosquesScreen({ coordinate, embedded = false }: MosquesS
       <View style={[styles.header, embedded && styles.embeddedHeader]}>
         <View>
           <Text style={styles.title}>Mosques</Text>
-          <Text style={styles.subtitle}>Global seed list with distance from your selected city. Add your local mosque in Settings if it is missing.</Text>
+          <Text style={styles.subtitle}>Global seed list with distance from your selected city. Your local mosque may not be listed yet.</Text>
         </View>
         <TouchableOpacity style={styles.refreshButton} onPress={() => setQuery('')}>
           <Ionicons name="refresh-outline" size={18} color={C.primary} />

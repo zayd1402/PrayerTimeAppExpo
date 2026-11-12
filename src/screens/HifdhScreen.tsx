@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { iconName } from '../components/Icon';
 import { C } from '../types';
 import { mmkv } from '../services/StorageService';
+import { getLocalDateKey } from '../utils/date';
 
 const HIFDH_LOG_KEY = '@prayertime:hifdh_log';
 
@@ -66,7 +67,7 @@ export default function HifdhScreen() {
     if (isNaN(start)) return;
     const surahIndex = SURAH_NAMES.findIndex(s => s.toLowerCase().includes(surah.toLowerCase())) + 1;
     const session: HifdhSession = {
-      date: new Date().toISOString().split('T')[0],
+      date: getLocalDateKey(),
       type: activeTab,
       surah: SURAH_NAMES[surahIndex - 1] || surah,
       ayahStart: start,
@@ -81,7 +82,7 @@ export default function HifdhScreen() {
 
   const filteredLogs = logs.filter(l => l.type === activeTab);
   const totalAyahs = logs.reduce((s, l) => s + (l.ayahEnd - l.ayahStart + 1), 0);
-  const todaySessions = logs.filter(l => l.date === new Date().toISOString().split('T')[0]);
+  const todaySessions = logs.filter(l => l.date === getLocalDateKey());
   const filteredSurahs = SURAH_NAMES.filter(s =>
     s.toLowerCase().includes(surahSearch.toLowerCase())
   ).slice(0, 10);

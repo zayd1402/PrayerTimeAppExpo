@@ -3,6 +3,7 @@ import { jest } from '@jest/globals';
 const scheduleNotificationAsync = jest.fn();
 const cancelScheduledNotificationAsync = jest.fn();
 const cancelAllScheduledNotificationsAsync = jest.fn();
+const getAllScheduledNotificationsAsync = jest.fn(() => Promise.resolve([] as { identifier: string }[]));
 const setNotificationChannelAsync = jest.fn();
 const setNotificationCategoryAsync = jest.fn();
 const dismissNotificationAsync = jest.fn(() => Promise.resolve());
@@ -19,6 +20,7 @@ jest.mock('expo-notifications', () => ({
   scheduleNotificationAsync,
   cancelScheduledNotificationAsync,
   cancelAllScheduledNotificationsAsync,
+  getAllScheduledNotificationsAsync,
   dismissNotificationAsync,
   addNotificationResponseReceivedListener,
   getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
@@ -29,6 +31,7 @@ jest.mock('expo-notifications', () => ({
     DAILY: 'daily',
     WEEKLY: 'weekly',
     TIME_INTERVAL: 'timeInterval',
+    DATE: 'date',
   },
   IosAuthorizationStatus: { AUTHORIZED: 2, PROVISIONAL: 3 },
   DEFAULT_ACTION_IDENTIFIER: 'expo.modules.notifications.actions.DEFAULT',
@@ -45,6 +48,8 @@ import {
   schedulePrayerNotification,
   cancelAllNotifications,
   scheduleFridayReminders,
+  cancelPrayerNotifications,
+  cancelReminderNotifications,
   snoozePrayerNotification,
   setupNotificationResponseHandler,
 } from '../NotificationService';
@@ -108,34 +113,57 @@ describe('NotificationService', () => {
   });
 
   describe('schedulePrayerNotification', () => {
-    it('schedules a daily prayer notification', async () => {
-      await schedulePrayerNotification('fajr', 'Fajr', 5, 30);
-      expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('prayer-fajr');
+    it('schedules a one-off alert for a prayer on a given day', async () => {
+      const at = new Date(2026, 10, 12, 4, 11);
+      await schedulePrayerNotification('fajr', 'Fajr', at, '2026-11-12');
       expect(scheduleNotificationAsync).toHaveBeenCalledWith(
         expect.objectContaining({
-          identifier: 'prayer-fajr',
+          identifier: 'prayer-fajr-2026-11-12',
           content: expect.objectContaining({
             title: 'Fajr Prayer Time',
             body: "It's time for Fajr prayer",
+            data: { prayerId: 'fajr', dateKey: '2026-11-12', action: 'time' },
           }),
-          trigger: expect.objectContaining({
-            type: 'daily',
-            hour: 5,
-            minute: 30,
-          }),
+          trigger: { type: 'date', date: at },
         })
       );
     });
 
     it('schedules a Fajr alarm with a different identifier', async () => {
-      await schedulePrayerNotification('fajr', 'Fajr', 5, 15, true);
-      expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('fajr-alarm');
+      await schedulePrayerNotification('fajr', 'Fajr', new Date(2026, 10, 12, 3, 56), '2026-11-12', true);
       expect(scheduleNotificationAsync).toHaveBeenCalledWith(
         expect.objectContaining({
-          identifier: 'fajr-alarm',
+          identifier: 'fajr-alarm-2026-11-12',
           content: expect.objectContaining({ title: 'Fajr Alarm' }),
         })
       );
+    });
+  });
+
+  describe('cancelPrayerNotifications', () => {
+    it('cancels prayer alerts but keeps snoozes and fixed reminders', async () => {
+      getAllScheduledNotificationsAsync.mockImplementationOnce(() => Promise.resolve([
+        { identifier: 'prayer-asr-2026-11-12' },
+        { identifier: 'fajr-alarm-2026-11-13' },
+        { identifier: 'friday-dua-2026-11-13' },
+        { identifier: 'snooze-asr' },
+        { identifier: 'friday-kahf' },
+        { identifier: 'morning-adhkar-daily' },
+      ]));
+      await cancelPrayerNotifications();
+      const cancelled = cancelScheduledNotificationAsync.mock.calls.map(call => call[0]);
+      expect(cancelled.sort()).toEqual(['fajr-alarm-2026-11-13', 'friday-dua-2026-11-13', 'prayer-asr-2026-11-12']);
+      expect(cancelAllScheduledNotificationsAsync).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('cancelReminderNotifications', () => {
+    it('cancels only the fixed reminders', async () => {
+      await cancelReminderNotifications();
+      const cancelled = cancelScheduledNotificationAsync.mock.calls.map(call => call[0]);
+      expect(cancelled).toContain('friday-kahf');
+      expect(cancelled).toContain('daily-hadith');
+      expect(cancelled.some(id => String(id).startsWith('prayer-'))).toBe(false);
     });
   });
 
@@ -147,14 +175,13 @@ describe('NotificationService', () => {
   });
 
   describe('scheduleFridayReminders', () => {
-    it('schedules two weekly Friday reminders', async () => {
+    it('schedules the weekly Al-Kahf reminder (the dua hour follows Maghrib instead)', async () => {
       await scheduleFridayReminders();
-      expect(scheduleNotificationAsync).toHaveBeenCalledTimes(2);
+      expect(scheduleNotificationAsync).toHaveBeenCalledTimes(1);
       const calls = scheduleNotificationAsync.mock.calls.map(
         (call) => (call[0] as { identifier: string }).identifier
       );
-      expect(calls).toContain('friday-kahf');
-      expect(calls).toContain('friday-dua');
+      expect(calls).toEqual(['friday-kahf']);
     });
   });
 
@@ -194,7 +221,7 @@ describe('NotificationService', () => {
       setupNotificationResponseHandler(onMarkPrayed, jest.fn());
       respond('MARK_PRAYED');
       await flush();
-      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr', expect.any(Date));
+      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr', expect.any(Date), expect.objectContaining({ prayerId: 'dhuhr' }));
       expect(cancelScheduledNotificationAsync).toHaveBeenCalledWith('snooze-dhuhr');
       expect(scheduleNotificationAsync).not.toHaveBeenCalled();
     });
@@ -204,7 +231,7 @@ describe('NotificationService', () => {
       setupNotificationResponseHandler(onMarkPrayed, jest.fn());
       const delivered = new Date(2026, 10, 11, 19, 45).getTime();
       respond('MARK_PRAYED', delivered);
-      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr', new Date(delivered));
+      expect(onMarkPrayed).toHaveBeenCalledWith('dhuhr', new Date(delivered), expect.anything());
     });
 
     it('falls back to now when the delivery time is missing', () => {

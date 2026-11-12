@@ -1,32 +1,34 @@
 // ─── PrayerAppContext — Global state for the app ──────────────
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
-import { getLocalDateKey, getPrayerDateKey } from '../utils/date';
+import { getLocalDateKey } from '../utils/date';
 import { logger } from '../utils/logger';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
-import { PrayerId, PrayerLogEntry, PrayerTime, AppSettings, AppLocation, DEFAULT_SETTINGS, PRAYER_ICONS, PRAYER_IDS, PrayerNotificationId } from '../types';
+import * as Notifications from 'expo-notifications';
+import { PrayerId, PrayerLogEntry, PrayerTime, AppSettings, AppLocation, DEFAULT_SETTINGS, PRAYER_ICONS } from '../types';
 import {
   getPrayerTimesObject, getNextPrayer, getTimeUntilNext
 } from '../services/PrayerService';
 import { HijriService } from '../services/HijriService';
 import {
-  loadSettings, saveSettings, markPrayer, clearPrayer, markMissedPrayers,
+  loadSettings, saveSettings, markPrayer, clearPrayer, markMissedPrayers, loadPrayerLog,
 } from '../services/StorageService';
 import { getCurrentLocation } from '../services/LocationService';
 import {
-  schedulePrayerNotification,
   setupNotificationChannels,
   setupNotificationCategories,
-  scheduleFridayReminders,
-  scheduleWeeklyReminders,
-  scheduleSunnahReminders,
-  setupNotificationResponseHandler,
-  cancelAllNotifications,
+  cancelPrayerNotifications,
 } from '../services/NotificationService';
+import {
+  getAlertPlanKey,
+  handleNotificationResponseOnce,
+  schedulePrayerAlerts,
+  syncReminderNotifications,
+} from '../services/PrayerScheduler';
 import { getDailyHadith } from '../data/hadiths';
-import { initAudio, playAdhan } from '../services/AudioService';
+import { initAudio, playAdhan, setAdhanVolume } from '../services/AudioService';
 
 type PrayerStatus = PrayerLogEntry['status'];
 type DayStatuses = Partial<Record<PrayerId, PrayerStatus>>;
@@ -38,49 +40,6 @@ function getDateKey(date: Date): string {
 function minutesFromMidnight(): number {
   const now = new Date();
   return now.getHours() * 60 + now.getMinutes();
-}
-
-function getHourMinute(minutes: number): { hour: number; minute: number } {
-  return {
-    hour: Math.floor((minutes % 1440) / 60),
-    minute: minutes % 60,
-  };
-}
-
-function getScheduleKey(settings: AppSettings, times: PrayerTime[]): string {
-  return [
-    times.map(p => `${p.id}:${p.minutes}`).join('|'),
-    ...PRAYER_IDS.filter(id => id !== 'sunrise').map(id => `${id}:${settings.prayerNotifications[id as PrayerNotificationId] ? 1 : 0}`),
-    settings.fajrAlarmEnabled ? `fajr-alarm:${settings.fajrAlarmMinutes}` : 'fajr-alarm:0',
-  ].join(';');
-}
-
-async function scheduleEnabledNotifications(
-  settings: AppSettings,
-  times: PrayerTime[],
-  lastScheduledRef: { current: string }
-) {
-  const scheduleKey = getScheduleKey(settings, times);
-  if (scheduleKey === lastScheduledRef.current) return;
-  lastScheduledRef.current = scheduleKey;
-
-  await cancelAllNotifications();
-
-  for (const prayer of times) {
-    if (prayer.id === 'sunrise') continue;
-    if (!settings.prayerNotifications[prayer.id as PrayerNotificationId]) continue;
-    const { hour, minute } = getHourMinute(prayer.minutes);
-    await schedulePrayerNotification(prayer.id as PrayerNotificationId, prayer.name, hour, minute, false);
-  }
-
-  if (settings.fajrAlarmEnabled) {
-    const fajr = times.find(p => p.id === 'fajr');
-    if (fajr) {
-      const alarmMinutes = (fajr.minutes - settings.fajrAlarmMinutes + 1440) % 1440;
-      const { hour, minute } = getHourMinute(alarmMinutes);
-      await schedulePrayerNotification('fajr', 'Fajr', hour, minute, true);
-    }
-  }
 }
 
 export interface PrayerAppState {
@@ -115,34 +74,21 @@ const BACKGROUND_FETCH_TASK = 'prayertime-daily-refresh';
 TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
   try {
     const saved = await loadSettings();
-    const now = new Date();
-    if (!saved.location) return BackgroundFetch.BackgroundFetchResult.NoData;
-
-    const times = getPrayerTimesObject(
-      now, saved.location.latitude, saved.location.longitude,
-      saved.calculationMethod, saved.madhab,
-    );
-    const prayerTimesArray = Object.values(times);
-
-    if (saved.notificationsEnabled) {
-      await cancelAllNotifications();
-      for (const pt of prayerTimesArray) {
-        const notifId = `prayer-${pt.id}` as PrayerNotificationId;
-        await schedulePrayerNotification(notifId, pt.name, Math.floor(pt.minutes / 60), pt.minutes % 60);
-      }
-      if (saved.fajrAlarmEnabled) {
-        const fajrIdx = times.findIndex(pt => pt.id === 'fajr');
-        if (fajrIdx >= 0) {
-          const fajr = times[fajrIdx];
-          const fajrMinute = Math.max(0, fajr.minutes - saved.fajrAlarmMinutes);
-          await schedulePrayerNotification('fajr-alarm' as PrayerNotificationId, 'Fajr', Math.floor(fajrMinute / 60), fajrMinute % 60, true);
-        }
-      }
-      await scheduleFridayReminders();
-    }
+    if (!saved.location || !saved.notificationsEnabled) return BackgroundFetch.BackgroundFetchResult.NoData;
+    // Same planner as the app, so the per-prayer switches and Fajr alarm are respected.
+    await schedulePrayerAlerts(saved);
     return BackgroundFetch.BackgroundFetchResult.NewData;
   } catch {
     return BackgroundFetch.BackgroundFetchResult.Failed;
+  }
+});
+
+// ─── Notification actions while the app is closed (Android) ──
+const NOTIFICATION_RESPONSE_TASK = 'prayertime-notification-response';
+
+TaskManager.defineTask<Notifications.NotificationTaskPayload>(NOTIFICATION_RESPONSE_TASK, async ({ data }) => {
+  if (data && 'actionIdentifier' in data) {
+    await handleNotificationResponseOnce(data);
   }
 });
 
@@ -158,6 +104,13 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   const [dailyHadith, setDailyHadith] = useState<{ english: string; source: string } | null>(null);
   const lastScheduledRef = useRef<string>('');
   const notifSubRef = useRef<{ remove: () => void } | null>(null);
+
+  const refreshTodayStatuses = useCallback(async (markedDateKey?: string) => {
+    const todayKey = getDateKey(new Date());
+    if (markedDateKey && markedDateKey !== todayKey) return;
+    const log = await loadPrayerLog();
+    setPrayerStatuses({ ...(log[todayKey] || {}) });
+  }, []);
 
   // Initialize
   useEffect(() => {
@@ -184,15 +137,9 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       const hadith = getDailyHadith();
       setDailyHadith({ english: hadith.english, source: hadith.source });
 
+      await setAdhanVolume(saved.adhanVolume ?? 1).catch(() => {});
       await setupNotificationChannels();
       await setupNotificationCategories();
-      if (saved.notificationsEnabled) {
-        await scheduleFridayReminders().catch((err) => logger.warn('Notification operation failed:', err));
-        await scheduleWeeklyReminders().catch((err) => logger.warn('Notification operation failed:', err));
-        await scheduleSunnahReminders().catch((err) => logger.warn('Notification operation failed:', err));
-      } else {
-        await cancelAllNotifications().catch((err) => logger.warn('Notification operation failed:', err));
-      }
 
       // Register daily background fetch
       try {
@@ -205,19 +152,23 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
         // Background fetch may not be available on all devices
       }
 
-      // Notification response handler
-      notifSubRef.current = setupNotificationResponseHandler(
-        async (prayerId, deliveredAt) => {
-          const prayerDayKey = getPrayerDateKey(prayerId, deliveredAt);
-          const log = await markPrayer(prayerDayKey, prayerId as PrayerId, 'prayed');
-          const todayKey = getDateKey(new Date());
-          if (prayerDayKey !== todayKey) return;
-          setPrayerStatuses({ ...(log[todayKey] || {}) });
-        },
-        (data) => {
-          logger.log('Notification tapped:', data);
-        },
-      );
+      // Notification actions. Each response is applied once, whichever path sees it first.
+      notifSubRef.current = Notifications.addNotificationResponseReceivedListener(response => {
+        handleNotificationResponseOnce(response, refreshTodayStatuses)
+          .catch((err) => logger.warn('Notification action failed:', err));
+      });
+      try {
+        await Notifications.registerTaskAsync(NOTIFICATION_RESPONSE_TASK);
+      } catch {
+        // Not supported on every platform; the launch check below covers the rest.
+      }
+      // An action tapped while the app was closed is delivered on the next launch.
+      try {
+        const last = await Notifications.getLastNotificationResponseAsync();
+        if (last) await handleNotificationResponseOnce(last, refreshTodayStatuses);
+      } catch (err) {
+        logger.warn('Notification action failed:', err);
+      }
 
       setLoading(false);
     };
@@ -232,13 +183,8 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       setPrayerTimes([]);
       setNextPrayer(null);
       setTimerDisplay('');
-      if (settings.notificationsEnabled) {
-        lastScheduledRef.current = '';
-        cancelAllNotifications().catch((err) => logger.warn('Notification operation failed:', err));
-      } else {
-        lastScheduledRef.current = '';
-        cancelAllNotifications().catch((err) => logger.warn('Notification operation failed:', err));
-      }
+      lastScheduledRef.current = '';
+      cancelPrayerNotifications().catch((err) => logger.warn('Notification operation failed:', err));
       return;
     }
 
@@ -259,24 +205,38 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       setPrayerStatuses({ ...(log[getDateKey(now)] || {}) });
     }).catch((err) => logger.warn('Prayer log update failed:', err));
 
-    if (settings.notificationsEnabled) {
-      scheduleEnabledNotifications(settings, times, lastScheduledRef).catch((err) => logger.warn('Notification operation failed:', err));
-    } else {
-      lastScheduledRef.current = '';
-      cancelAllNotifications().catch((err) => logger.warn('Notification operation failed:', err));
+    // Re-plan the queued alerts when settings change or a new day starts.
+    const planSettings = { ...settings, location };
+    const planKey = getAlertPlanKey(planSettings, now);
+    if (planKey !== lastScheduledRef.current) {
+      lastScheduledRef.current = planKey;
+      const job = settings.notificationsEnabled
+        ? schedulePrayerAlerts(planSettings, now)
+        : cancelPrayerNotifications();
+      job.catch((err) => {
+        lastScheduledRef.current = '';
+        logger.warn('Notification operation failed:', err);
+      });
     }
-  }, [settings.calculationMethod, settings.madhab, location, settings.notificationsEnabled, settings.prayerNotifications, settings.fajrAlarmEnabled, settings.fajrAlarmMinutes]);
+  }, [settings, location]);
 
   useEffect(() => {
     if (loading) return;
     updatePrayerTimes();
-  }, [settings.calculationMethod, settings.madhab, location, loading]);
+  }, [updatePrayerTimes, loading]);
 
   useEffect(() => {
     if (loading) return;
     const interval = setInterval(updatePrayerTimes, 60000);
     return () => clearInterval(interval);
-  }, [settings.calculationMethod, settings.madhab, location, loading]);
+  }, [updatePrayerTimes, loading]);
+
+  // Fixed reminders follow the master notifications switch.
+  useEffect(() => {
+    if (loading) return;
+    syncReminderNotifications(settings.notificationsEnabled)
+      .catch((err) => logger.warn('Notification operation failed:', err));
+  }, [settings.notificationsEnabled, loading]);
 
   // AppState listener — refresh prayer times when returning to foreground
   useEffect(() => {
@@ -286,7 +246,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       }
     });
     return () => sub.remove();
-  }, [settings.calculationMethod, settings.madhab, location]);
+  }, [updatePrayerTimes]);
 
   // Timer countdown + adhan trigger
   useEffect(() => {

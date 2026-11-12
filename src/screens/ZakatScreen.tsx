@@ -10,6 +10,7 @@ import {
   loadZakatRecords, addZakatRecord,
   loadCharityLog, addCharityRecord, getCharityTotal
 } from '../services/StorageService';
+import { getLocalDateKey } from '../utils/date';
 
 export default function ZakatScreen() {
   const [zakatRecords, setZakatRecords] = useState<ZakatRecord[]>([]);
@@ -65,7 +66,7 @@ export default function ZakatScreen() {
 
     const record: ZakatRecord = {
       id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0],
+      date: getLocalDateKey(),
       goldValue: parseFloat(goldValue) || 0,
       silverValue: parseFloat(silverValue) || 0,
       cash: parseFloat(cash) || 0,
@@ -89,7 +90,7 @@ export default function ZakatScreen() {
 
     const record: CharityRecord = {
       id: Date.now().toString(),
-      date: new Date().toISOString().split('T')[0],
+      date: getLocalDateKey(),
       amount,
       category: charityCategory};
 

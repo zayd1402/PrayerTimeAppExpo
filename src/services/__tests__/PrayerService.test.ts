@@ -5,6 +5,7 @@ jest.mock('../TimezoneService', () => ({
   getTimezoneOffset: jest.fn(() => 0), // UTC
 }));
 
+import { getTimezoneOffset } from '../TimezoneService';
 import {
   calculatePrayerTimes,
   minutesToTimeString,
@@ -212,10 +213,6 @@ describe('calculatePrayerTimes', () => {
     expect(times.isha).toBeGreaterThan(times.maghrib);
   });
 
-  // Note: computeTime returns hours-from-noon for sunrise/maghrib without 12+ shift,
-  // while fajr/dhuhr/isha use 12±offset from midnight. With tzOff=0 and high longitude,
-  // maghrib can wrap around. The real app corrects this via the device timezone offset.
-  // These tests verify value range and fajr-sunrise ordering (which is consistent).
   test('Sydney Dec 21: all values in valid range with correct fajr before sunrise', () => {
     const times = calculatePrayerTimes(
       new Date(Date.UTC(2024, 11, 21)), // Dec 21
@@ -234,16 +231,69 @@ describe('calculatePrayerTimes', () => {
     expect(times.dhuhr).toBeLessThan(times.asr);
   });
 
+  // Reference values from the standard solar-angle formulas (praytimes.org
+  // method), cross-checked independently of the app code. Times are local.
+  const toMin = (hhmm: string) => {
+    const [h, m] = hhmm.split(':').map(Number);
+    return h * 60 + m;
+  };
+  const REFERENCE: {
+    city: string; lat: number; lon: number; tz: number; date: [number, number, number];
+    method: CalculationMethod; madhab: 'shafi' | 'hanafi'; expected: Record<PrayerId, string>;
+  }[] = [
+    {
+      city: 'Sydney', lat: -33.8688, lon: 151.2093, tz: 11, date: [2026, 10, 12],
+      method: 'muslim_world_league', madhab: 'shafi',
+      expected: { fajr: '4:11', sunrise: '5:46', dhuhr: '12:39', asr: '16:23', maghrib: '19:33', isha: '21:02' },
+    },
+    {
+      city: 'London', lat: 51.5074, lon: -0.1278, tz: 0, date: [2026, 10, 12],
+      method: 'muslim_world_league', madhab: 'shafi',
+      expected: { fajr: '5:17', sunrise: '7:14', dhuhr: '11:45', asr: '13:52', maghrib: '16:16', isha: '18:05' },
+    },
+    {
+      city: 'New York (Hanafi)', lat: 40.7128, lon: -74.006, tz: -4, date: [2026, 2, 15],
+      method: 'isna', madhab: 'hanafi',
+      expected: { fajr: '5:52', sunrise: '7:07', dhuhr: '13:05', asr: '17:16', maghrib: '19:03', isha: '20:18' },
+    },
+    {
+      city: 'Makkah', lat: 21.4225, lon: 39.8262, tz: 3, date: [2026, 10, 12],
+      method: 'umm_al_qura', madhab: 'shafi',
+      expected: { fajr: '5:11', sunrise: '6:30', dhuhr: '12:05', asr: '15:17', maghrib: '17:40', isha: '19:10' },
+    },
+  ];
+
+  test.each(REFERENCE)('$city matches reference timetable within 3 minutes', ({ lat, lon, tz, date, method, madhab, expected }) => {
+    (getTimezoneOffset as jest.Mock).mockReturnValue(tz);
+    try {
+      const times = calculatePrayerTimes(new Date(date[0], date[1], date[2]), lat, lon, method, madhab);
+      for (const id of Object.keys(expected) as PrayerId[]) {
+        assertMinutesClose(times[id], toMin(expected[id]), 3);
+      }
+    } finally {
+      (getTimezoneOffset as jest.Mock).mockReturnValue(0);
+    }
+  });
+
+  test('high latitude summer still gives Fajr before sunrise and Isha after Maghrib', () => {
+    (getTimezoneOffset as jest.Mock).mockReturnValue(1);
+    try {
+      const times = calculatePrayerTimes(new Date(2026, 5, 21), 51.5074, -0.1278, 'muslim_world_league', 'shafi');
+      expect(times.fajr).toBeLessThan(times.sunrise);
+      expect(times.isha).toBeGreaterThan(times.maghrib);
+      expect(times.fajr).toBeGreaterThan(0);
+    } finally {
+      (getTimezoneOffset as jest.Mock).mockReturnValue(0);
+    }
+  });
+
   test('different calculation methods produce different fajr times', () => {
     const date = new Date(Date.UTC(2024, 5, 1));
-    const mwl = calculatePrayerTimes(date, 48.8566, 2.3522, 'muslim_world_league', 'shafi');
-    const isna = calculatePrayerTimes(date, 48.8566, 2.3522, 'isna', 'shafi');
-    // ISNA uses 15° fajr angle vs MWL 18° — smaller angle gives earlier fajr (smaller minutes)
-    // Since fajr is before noon: larger angle (18°) = larger HA, which gives smaller (earlier) fajr
-    // Actually: fajrHour = 12 - HA/15 - eqt/60. Larger HA → smaller fajrHour → smaller minutes.
-    // MWL (18°) → HA=70° → fajr ≈ 12-4.67 = 7.33h = 440min
-    // ISNA (15°) → HA=66° → fajr ≈ 12-4.40 = 7.60h = 456min
-    expect(isna.fajr).not.toEqual(mwl.fajr);
+    // Cairo: below 48°, so no high-latitude rule evens the methods out.
+    const mwl = calculatePrayerTimes(date, 30.0444, 31.2357, 'muslim_world_league', 'shafi');
+    const isna = calculatePrayerTimes(date, 30.0444, 31.2357, 'isna', 'shafi');
+    // ISNA's 15° Fajr angle is shallower than MWL's 18°, so ISNA's Fajr is later.
+    expect(isna.fajr).toBeGreaterThan(mwl.fajr);
   });
 
   test('Shafi vs Hanafi produce different Asr times', () => {
@@ -375,11 +425,8 @@ describe('haversineDistance', () => {
 
 // ─── Bug Fix Regression Tests ─────────────────────────────────
 
-describe('Bug fix regression: getSunDeclination uses M not L0', () => {
-  test('Equation of center computed from M (mean anomaly), not L0 (mean longitude)', () => {
-    // Bug 1: equation of center should use M (~357° on Jan 1 2024) not L0 (~280°).
-    // If it used L0, equation of time would be wrong by ~5 minutes, shifting dhuhr
-    // detectably. A correct M-based calculation gives dhuhr ≈ 12:00 UTC at equator.
+describe('Bug fix regression: times are measured from midnight, not from noon', () => {
+  test('equator on Jan 1: Dhuhr near noon, Maghrib near 6 PM', () => {
     const times = calculatePrayerTimes(
       new Date(Date.UTC(2024, 0, 1)),
       0, 0, // equator, prime meridian
@@ -388,10 +435,10 @@ describe('Bug fix regression: getSunDeclination uses M not L0', () => {
     );
     // Dhuhr near noon — depends on EOT which depends on correct declination via M
     assertMinutesClose(times.dhuhr, 720, 10);
-    // Maghrib after noon at equator on Jan 1 (day ≈ 12h, sunset ≈ 6h after noon)
-    // Note: computeTime uses noon-reference so maghrib ≈ 360-400 min
-    expect(times.maghrib).toBeGreaterThan(300);
-    expect(times.maghrib).toBeLessThan(420);
+    // Day is ~12h at the equator, so sunset is ~6h after noon (~18:00 = 1080 min).
+    // The old code returned ~6 AM here because it measured from midnight.
+    assertMinutesClose(times.maghrib, 1087, 10);
+    assertMinutesClose(times.sunrise, 1080 - 727, 15);
   });
 });
 
