@@ -1,4 +1,4 @@
-import { dayLevel, hasQaza, monthCells, monthInsight, prayerRates, rangeStats, settledDays, yearGridKeys } from '../design/habits';
+import { firstLoggedKey, dayLevel, hasQaza, monthCells, monthInsight, prayerRates, rangeStats, settledDays, yearGridKeys } from '../design/habits';
 
 const NOW = new Date(2026, 10, 12, 14, 0); // Thursday 12 November 2026
 
@@ -34,6 +34,14 @@ describe('habits', () => {
     expect(rates.find(r => r.id === 'dhuhr')?.onTime).toBe(3);
     const insight = monthInsight(rates, { fajr: 'Fajr', dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' });
     expect(insight?.lead).toBe('Fajr is the one to work on.');
+  });
+
+  it('ignores days before the first log, so a new user is not told they missed them', () => {
+    const fresh = { '2026-11-10': { fajr: 'prayed' } } as const;
+    const keys = settledDays(2026, 10, NOW, firstLoggedKey(fresh));
+    expect(keys).toEqual(['2026-11-10', '2026-11-11']);
+    const rates = prayerRates(keys, fresh);
+    expect(monthInsight(rates, { fajr: 'Fajr', dhuhr: 'Dhuhr', asr: 'Asr', maghrib: 'Maghrib', isha: 'Isha' })).toBeNull();
   });
 
   it('builds a whole-week grid that ends on Saturday', () => {

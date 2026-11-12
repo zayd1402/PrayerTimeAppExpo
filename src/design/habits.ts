@@ -53,19 +53,21 @@ export function prayerRates(keys: string[], log: PrayerLog): PrayerRate[] {
 }
 
 /** Past days of the month up to yesterday; today only counts once it is the sole day. */
-export function settledDays(year: number, month: number, now: Date = new Date()): string[] {
+export function settledDays(year: number, month: number, now: Date = new Date(), since?: string): string[] {
   const todayKey = getLocalDateKey(now);
   const days = new Date(year, month + 1, 0).getDate();
   const keys: string[] = [];
   for (let d = 1; d <= days; d++) {
     const k = getLocalDateKey(new Date(year, month, d));
-    if (k < todayKey) keys.push(k);
+    // Days before the first log are not misses, so they don't count against any prayer.
+    if (k < todayKey && (!since || k >= since)) keys.push(k);
   }
   return keys.length ? keys : (getLocalDateKey(new Date(year, month, 1)) <= todayKey ? [todayKey] : []);
 }
 
 export function monthInsight(rates: PrayerRate[], names: Record<string, string>): { lead: string; text: string } | null {
-  if (!rates.length || rates[0].days === 0) return null;
+  // Three days is the least that says anything about a pattern.
+  if (!rates.length || rates[0].days < 3) return null;
   const low = [...rates].sort((a, b) => a.pct - b.pct)[0];
   if (low.pct === 100) return { lead: 'Every prayer on time.', text: 'A full month so far. MashaAllah, keep it going.' };
   return {
@@ -96,4 +98,9 @@ export function rangeStats(keys: string[], log: PrayerLog, now: Date = new Date(
     fullDays: past.filter(k => dayLevel(log[k]) === 5).length,
     loggedDays: logged.length,
   };
+}
+
+/** The earliest day with anything logged, or undefined for a new user. */
+export function firstLoggedKey(log: PrayerLog): string | undefined {
+  return Object.keys(log).filter(k => log[k] && Object.keys(log[k]).length > 0).sort()[0];
 }

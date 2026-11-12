@@ -124,7 +124,7 @@ export default function SunnahRoutineScreen() {
               style={[styles.tab, isActive && styles.tabActive]}
               onPress={() => setActiveTab(cat.id)}
             >
-              <Ionicons name={iconName(cat.icon)} size={16} color={isActive ? C.onPrimary : C.textSecondary} />
+              <Ionicons name={iconName(cat.icon)} size={16} color={isActive ? C.primaryDark : C.textSecondary} />
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{cat.label}</Text>
             </TouchableOpacity>
           );
@@ -210,9 +210,9 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
 
   tabRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 12, gap: 8 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 12, backgroundColor: C.bgSurface },
-  tabActive: { backgroundColor: C.primary },
+  tabActive: { backgroundColor: C.primaryLight },
   tabLabel: { fontSize: 13, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
-  tabLabelActive: { color: C.onPrimary },
+  tabLabelActive: { color: C.primaryDark, fontFamily: 'Jost_600SemiBold' },
 
   itemCard: { backgroundColor: C.bgSurface, borderRadius: 16, marginHorizontal: 16, marginBottom: 10, padding: 14 },
   itemCardComplete: { backgroundColor: C.goldPale },

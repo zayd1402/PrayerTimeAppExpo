@@ -1,6 +1,7 @@
 import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import TodayScreen from '../screens/TodayScreen';
 import HabitsScreen from '../screens/HabitsScreen';
@@ -24,11 +25,14 @@ export default function TabNavigator() {
   const C = useTokens();
   const styles = useThemedStyles(makeStyles);
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        // Room for icon and label, plus the home-indicator / gesture-bar inset.
+        // A fixed height without the inset clipped the labels on phones that have one.
+        tabBarStyle: [styles.tabBar, { height: 64 + insets.bottom }],
         tabBarActiveTintColor: C.primaryDark,
         tabBarInactiveTintColor: C.textMuted,
         tabBarLabelStyle: styles.tabLabel,
@@ -55,12 +59,13 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
     borderTopColor: C.border,
     borderTopWidth: StyleSheet.hairlineWidth * 2,
     paddingTop: 6,
-    height: Platform.OS === 'ios' ? 84 : 64,
     elevation: 0,
   },
   tabLabel: {
     fontSize: 11,
+    // Jost's deep descenders (the y in Today) clip at a tight line height.
+    lineHeight: 16,
+    paddingBottom: 2,
     fontFamily: F.medium,
-    marginTop: 1,
   },
 });

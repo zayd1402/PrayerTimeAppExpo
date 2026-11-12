@@ -117,11 +117,11 @@ export default function ZakatScreen() {
       {/* Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity style={[styles.tab, activeTab === 'zakat' && styles.tabActive]} onPress={() => setActiveTab('zakat')}>
-          <Ionicons name="calculator-outline" size={16} color={activeTab === 'zakat' ? C.onPrimary : C.textSecondary} />
+          <Ionicons name="calculator-outline" size={16} color={activeTab === 'zakat' ? C.primaryDark : C.textSecondary} />
           <Text style={[styles.tabLabel, activeTab === 'zakat' && styles.tabLabelActive]}>Zakat</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[styles.tab, activeTab === 'charity' && styles.tabActive]} onPress={() => setActiveTab('charity')}>
-          <Ionicons name="heart-outline" size={16} color={activeTab === 'charity' ? C.onPrimary : C.textSecondary} />
+          <Ionicons name="heart-outline" size={16} color={activeTab === 'charity' ? C.primaryDark : C.textSecondary} />
           <Text style={[styles.tabLabel, activeTab === 'charity' && styles.tabLabelActive]}>Charity</Text>
         </TouchableOpacity>
       </View>
@@ -282,9 +282,9 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
 
   tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 16, marginBottom: 12, padding: 4},
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 12 },
-  tabActive: { backgroundColor: C.primary },
+  tabActive: { backgroundColor: C.bgBase, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   tabLabel: { fontSize: 13, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  tabLabelActive: { color: C.onPrimary, fontFamily: 'Jost_600SemiBold' },
+  tabLabelActive: { color: C.textPrimary, fontFamily: 'Jost_600SemiBold' },
 
   nisabCard: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginTop: 8, padding: 16, borderRadius: 16 },
   nisabMet: { backgroundColor: C.primaryLight },

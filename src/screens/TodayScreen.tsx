@@ -293,6 +293,7 @@ export default function TodayScreen() {
                       <Text style={[styles.pnameText, past && { color: C.textSecondary }, isNow && { fontFamily: F.semibold }]}>{NAMES[id].en}</Text>
                       <Text style={styles.pnameAr}>{NAMES[id].ar}</Text>
                       {tick === 'qaza' && <Text style={styles.qazaTag}>Qaza</Text>}
+                      {tick === 'open' && !isNow && <Text style={styles.qazaTag}>Not marked</Text>}
                     </View>
                     <TickButton
                       state={tick}

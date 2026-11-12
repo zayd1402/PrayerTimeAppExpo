@@ -96,7 +96,7 @@ export default function FridayScreen() {
             style={[styles.tab, activeSection === tab.id && styles.tabActive]}
             onPress={() => setActiveSection(tab.id)}
           >
-            <Ionicons name={iconName(tab.icon)} size={16} color={activeSection === tab.id ? C.onPrimary : C.textSecondary} />
+            <Ionicons name={iconName(tab.icon)} size={16} color={activeSection === tab.id ? C.primaryDark : C.textSecondary} />
             <Text style={[styles.tabLabel, activeSection === tab.id && styles.tabLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
@@ -255,9 +255,9 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
 
   tabBar: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 16, margin: 16, marginBottom: 12, padding: 4},
   tab: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  tabActive: { backgroundColor: C.primary },
+  tabActive: { backgroundColor: C.bgBase, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 2, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
   tabLabel: { fontSize: 11, color: C.textSecondary, fontFamily: 'Jost_500Medium' },
-  tabLabelActive: { color: C.onPrimary, fontFamily: 'Jost_600SemiBold' },
+  tabLabelActive: { color: C.textPrimary, fontFamily: 'Jost_600SemiBold' },
 
   progressCard: { flexDirection: 'row', backgroundColor: C.bgSurface, borderRadius: 18, marginHorizontal: 16, padding: 16, marginBottom: 16},
   progressItem: { flex: 1, alignItems: 'center' },

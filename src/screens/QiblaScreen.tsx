@@ -165,10 +165,12 @@ export default function QiblaScreen({ coordinate, compact = false, showHeader = 
           <Text style={styles.statNum}>{distance.toLocaleString()} km</Text>
           <Text style={styles.statLbl}>to Makkah</Text>
         </View>
-        <View style={styles.stat}>
-          <Text style={styles.statNum}>{state === 'live' && heading !== null ? `${Math.round(heading)}°` : '–'}</Text>
-          <Text style={styles.statLbl}>you are facing</Text>
-        </View>
+        {state === 'live' && heading !== null && (
+          <View style={styles.stat}>
+            <Text style={styles.statNum}>{Math.round(heading)}°</Text>
+            <Text style={styles.statLbl}>you are facing</Text>
+          </View>
+        )}
       </View>
 
       {!compact && (

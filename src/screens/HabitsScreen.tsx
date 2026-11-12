@@ -14,7 +14,7 @@ import { Glyph, GlyphName } from '../design/Glyph';
 import { F, useHeatRamp } from '../design/palette';
 import { FIVE } from '../design/dayState';
 import {
-  DayLog, PrayerLog, dayLevel, monthCells, monthInsight, prayerRates, rangeStats, settledDays, yearGridKeys,
+  DayLog, PrayerLog, dayLevel, firstLoggedKey, monthCells, monthInsight, prayerRates, rangeStats, settledDays, yearGridKeys,
 } from '../design/habits';
 import { MiniRing, PageTitle, SectionLabel, Segmented, tapHaptic } from '../design/ui';
 import {
@@ -171,7 +171,8 @@ export default function HabitsScreen() {
   const cellGap = 5;
   const cell = Math.min(46, Math.floor((inner - cellGap * 6) / 7));
   const cells = monthCells(cursor.y, cursor.m, fullLog, now);
-  const rates = prayerRates(settledDays(cursor.y, cursor.m, now), fullLog);
+  const sinceKey = firstLoggedKey(log) ?? todayKey;
+  const rates = prayerRates(settledDays(cursor.y, cursor.m, now, sinceKey), fullLog);
   const insight = monthInsight(rates, NAMES);
   const isCurrentMonth = cursor.y === now.getFullYear() && cursor.m === now.getMonth();
   const hFirst = HijriService.gregorianToHijri(new Date(cursor.y, cursor.m, 1));
@@ -300,6 +301,9 @@ export default function HabitsScreen() {
             )}
 
             <SectionLabel style={{ marginTop: 4 }}>Each prayer on time this month</SectionLabel>
+            {rates[0]?.days < 3 ? (
+              <Text style={styles.emptyNote}>Tick your prayers on Today for a few days and each prayer's on-time rate shows up here.</Text>
+            ) : (
             <View style={{ gap: 9 }}>
               {rates.map(r => (
                 <View key={r.id} style={styles.barRow} accessible accessibilityLabel={`${NAMES[r.id]} ${r.pct} percent on time`}>
@@ -309,6 +313,7 @@ export default function HabitsScreen() {
                 </View>
               ))}
             </View>
+            )}
             {insight && (
               <View style={styles.insight}>
                 <Text style={styles.insightText}><Text style={styles.insightLead}>{insight.lead} </Text>{insight.text}</Text>
@@ -322,7 +327,7 @@ export default function HabitsScreen() {
             <View style={styles.mhead}>
               <View>
                 <Text style={styles.mTitle}>Last 7 days</Text>
-                <Text style={styles.mSub}>Tap a day on Month for more detail</Text>
+                <Text style={styles.mSub}>Filled is on time, outlined is qaza</Text>
               </View>
             </View>
             {weekKeys.map(k => {
@@ -334,18 +339,15 @@ export default function HabitsScreen() {
                     <Text style={styles.weekDay}>{WEEKDAYS[d.getDay()].slice(0, 3)}</Text>
                     <Text style={styles.weekDate}>{d.getDate()} {MONTHS[d.getMonth()].slice(0, 3)}</Text>
                   </View>
-                  <View style={styles.weekDots}>
+                  <View style={styles.weekSegs}>
                     {FIVE.map(id => {
-                      const s = day?.[id];
+                      const st = day?.[id];
                       return (
                         <View key={id} style={[
-                          styles.weekDot,
-                          s === 'prayed' && { backgroundColor: C.primary, borderColor: C.primary },
-                          s === 'qaza' && { borderColor: C.qaza, borderWidth: 2 },
-                        ]}>
-                          {s === 'prayed' && <Glyph name="check" size={12} color={C.onPrimary} strokeWidth={2.6} />}
-                          {s === 'qaza' && <Glyph name="redo" size={11} color={C.qaza} strokeWidth={2.4} />}
-                        </View>
+                          styles.weekSeg,
+                          st === 'prayed' && { backgroundColor: C.primary },
+                          st === 'qaza' && { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: C.qaza },
+                        ]} />
                       );
                     })}
                   </View>
@@ -468,8 +470,9 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
   weekRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.bgSurface, borderRadius: 14, paddingVertical: 10, paddingHorizontal: 14, gap: 8 },
   weekDay: { fontFamily: F.semibold, fontSize: 14, color: C.textPrimary },
   weekDate: { fontFamily: F.body, fontSize: 12, color: C.textMuted },
-  weekDots: { flex: 1, flexDirection: 'row', justifyContent: 'space-around' },
-  weekDot: { width: 26, height: 26, borderRadius: 13, borderWidth: 1.6, borderColor: C.bgCard, backgroundColor: C.bgCard, alignItems: 'center', justifyContent: 'center' },
+  weekSegs: { flex: 1, flexDirection: 'row', gap: 4 },
+  weekSeg: { flex: 1, height: 10, borderRadius: 5, backgroundColor: C.bgCard },
+  emptyNote: { fontFamily: F.body, fontSize: 13.5, lineHeight: 19, color: C.textMuted },
   weekCount: { width: 32, textAlign: 'right', fontFamily: F.medium, fontSize: 13, color: C.textSecondary, fontVariant: ['tabular-nums'] },
   yLabel: { position: 'absolute', fontFamily: F.body, fontSize: 11, color: C.textMuted },
   ystats: { flexDirection: 'row', gap: 8 },

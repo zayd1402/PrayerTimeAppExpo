@@ -141,7 +141,7 @@ export default function HifdhScreen() {
             style={[styles.tab, activeTab === tab.id && styles.tabActive]}
             onPress={() => setActiveTab(tab.id)}
           >
-            <Ionicons name={iconName(tab.icon)} size={14} color={activeTab === tab.id ? C.onPrimary : C.textSecondary} />
+            <Ionicons name={iconName(tab.icon)} size={14} color={activeTab === tab.id ? C.primaryDark : C.textSecondary} />
             <Text style={[styles.tabLabel, activeTab === tab.id && styles.tabLabelActive]}>{tab.label}</Text>
           </TouchableOpacity>
         ))}
@@ -242,9 +242,9 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
 
   tabRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, gap: 6 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 10, borderRadius: 12, backgroundColor: C.bgSurface },
-  tabActive: { backgroundColor: C.primary },
+  tabActive: { backgroundColor: C.primaryLight },
   tabLabel: { fontSize: 11, fontFamily: 'Jost_600SemiBold', color: C.textSecondary },
-  tabLabelActive: { color: C.onPrimary },
+  tabLabelActive: { color: C.primaryDark, fontFamily: 'Jost_600SemiBold' },
 
   inputCard: { backgroundColor: C.bgSurface, borderRadius: 18, margin: 16, marginBottom: 10, padding: 16 },
   surahInput: { backgroundColor: C.bgBase, borderRadius: 10, padding: 12, fontSize: 14, color: C.textPrimary, marginBottom: 8 },
