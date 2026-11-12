@@ -34,6 +34,8 @@ export const C = {
   onHeroMuted: '#D4A843',
   /** Prayers made up later. Muted on purpose: recorded, not celebrated over on-time. */
   qaza: '#7A6A55',
+  /** Quran reading progress. Its own green, so it never reads as qaza. */
+  quran: '#4E7A58',
   /** Arabic display text. */
   fontArabic: 'Amiri_400Regular',
   fontArabicBold: 'Amiri_700Bold',
@@ -81,6 +83,7 @@ export const darkC: typeof C = {
   onHero: '#F3E6D0',
   onHeroMuted: '#C9A867',
   qaza: '#A8977E',
+  quran: '#8DBF96',
   fontArabic: 'Amiri_400Regular',
   fontArabicBold: 'Amiri_700Bold',
   border: 'rgba(239,227,209,0.10)',

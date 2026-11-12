@@ -36,6 +36,8 @@ export interface DayState {
 }
 
 const DAY = 24 * 60;
+/** How long a newly started prayer stays in the hero as "Now" before it hands over to "Next". */
+export const NOW_HOLD_MINUTES = 30;
 
 export function computeDayState(times: DayTimes, now: number, statuses: Partial<Record<PrayerId, Status>>): DayState {
   let sky: SkyState;
@@ -65,8 +67,12 @@ export function computeDayState(times: DayTimes, now: number, statuses: Partial<
 
   const openDone = open ? isDone(statuses[open]) : true;
   const left = openEnds !== null ? openEnds - now : Infinity;
-  // A short window that's still unlogged takes the hero, so "Now Fajr, 40m left" beats "Next Dhuhr".
-  const hero: DayState['hero'] = open && !openDone && left <= 90
+  const sinceStart = open ? now - times[open] : Infinity;
+  // A prayer that has just come in keeps the hero for its first half hour ("Now Dhuhr"), so the
+  // screen doesn't jump to "Next Asr" the moment Dhuhr starts. Fajr keeps it until sunrise because
+  // its window is short. Once it is marked, or the half hour is up, the hero moves on to the next one.
+  const holdNow = open !== null && !openDone && (sinceStart < NOW_HOLD_MINUTES || open === 'fajr');
+  const hero: DayState['hero'] = holdNow && open
     ? { mode: 'now', prayer: open, minutes: left }
     : { mode: 'next', prayer: next, minutes: untilNext };
 

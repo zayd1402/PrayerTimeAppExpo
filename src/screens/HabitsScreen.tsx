@@ -38,7 +38,7 @@ function Rings({ prayers, dhikr, quran }: { prayers: number; dhikr: number; qura
   const rings = [
     { r: 42, p: prayers / 5, color: C.primary, label: 'Prayers', value: `${prayers} of 5` },
     { r: 30, p: dhikr / DHIKR_GOAL, color: C.gold, label: 'Dhikr', value: `${dhikr} of ${DHIKR_GOAL}` },
-    { r: 18, p: quran / QURAN_GOAL, color: C.qaza, label: 'Quran', value: `${quran} of ${QURAN_GOAL} pages` },
+    { r: 18, p: quran / QURAN_GOAL, color: C.quran, label: 'Quran', value: `${quran} of ${QURAN_GOAL} pages` },
   ];
   return (
     <View style={styles.rings} accessible accessibilityLabel={`Today: ${rings.map(r => `${r.label} ${r.value}`).join(', ')}`}>
@@ -226,7 +226,7 @@ export default function HabitsScreen() {
 
   const trackers: { title: string; sub: string; p: number; color: string; action: string; icon: GlyphName; onAdd: () => void; onOpen: () => void }[] = [
     { title: 'Tasbih', sub: `${dhikr} of ${DHIKR_GOAL} today`, p: dhikr / DHIKR_GOAL, color: C.gold, action: 'Open counter', icon: 'beads', onAdd: () => navigation.navigate('worship', { tab: 'dhikr' }), onOpen: () => navigation.navigate('worship', { tab: 'dhikr' }) },
-    { title: 'Quran', sub: `${quran} of ${QURAN_GOAL} pages`, p: quran / QURAN_GOAL, color: C.qaza, action: 'Add a page', icon: 'plus', onAdd: addPage, onOpen: () => navigation.navigate('worship', { tab: 'quran' }) },
+    { title: 'Quran', sub: `${quran} of ${QURAN_GOAL} pages`, p: quran / QURAN_GOAL, color: C.quran, action: 'Add a page', icon: 'plus', onAdd: addPage, onOpen: () => navigation.navigate('worship', { tab: 'quran' }) },
     { title: fastType === 'custom' ? 'Fast' : `${WEEKDAYS[now.getDay()]} fast`, sub: fasted ? 'Logged for today' : fastType === 'custom' ? 'Voluntary' : 'Sunnah today', p: fasted ? 1 : 0, color: C.primary, action: fasted ? 'Undo fast' : 'Log fast', icon: fasted ? 'check' : 'plus', onAdd: logFast, onOpen: () => navigation.navigate('worship', { tab: 'fasting' }) },
     { title: 'Sunnah prayers', sub: `${sunnahCount} today`, p: Math.min(1, sunnahCount / 5), color: C.primary, action: 'Open sunnah prayers', icon: 'right', onAdd: () => navigation.navigate('worship', { tab: 'prayers' }), onOpen: () => navigation.navigate('worship', { tab: 'prayers' }) },
   ];

@@ -23,6 +23,22 @@ describe('computeDayState', () => {
     expect(s.next).toBe('dhuhr');
   });
 
+  it('keeps a prayer that just started in the hero for its first half hour', () => {
+    const s = computeDayState(T, 761 + 10, { fajr: 'prayed' });
+    expect(s.hero).toEqual({ mode: 'now', prayer: 'dhuhr', minutes: 983 - 771 });
+  });
+
+  it('hands over to the next prayer early once the current one is marked', () => {
+    const s = computeDayState(T, 761 + 10, { fajr: 'prayed', dhuhr: 'prayed' });
+    expect(s.hero).toEqual({ mode: 'next', prayer: 'asr', minutes: 983 - 771 });
+  });
+
+  it('switches to the next prayer after the first half hour, even if unmarked', () => {
+    const s = computeDayState(T, 761 + 30, { fajr: 'prayed' });
+    expect(s.hero.mode).toBe('next');
+    expect(s.hero.prayer).toBe('asr');
+  });
+
   it('shows the next prayer while a long window is open', () => {
     const s = computeDayState(T, 863, { fajr: 'prayed' });
     expect(s.open).toBe('dhuhr');
