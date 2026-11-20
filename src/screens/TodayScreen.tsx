@@ -260,6 +260,16 @@ export default function TodayScreen() {
             </View>
           )}
 
+          {welcomeBack && times && (
+            <ReturnCard
+              title={`Start again with ${restartWith ? NAMES[restartWith].en : 'one prayer'}`}
+              body={returnBody}
+              action={restartWith && restartWith === open && !isDone(prayerStatuses[restartWith]) ? `Mark ${NAMES[restartWith].en} prayed` : undefined}
+              onAction={restartWith ? () => mark(restartWith) : undefined}
+              onDismiss={dismissReturn}
+            />
+          )}
+
           {times && (
             <View>
               {(['fajr', 'sunrise', 'dhuhr', 'asr', 'maghrib', 'isha'] as PrayerId[]).map((id, i, all) => {
@@ -328,15 +338,7 @@ export default function TodayScreen() {
             </View>
           )}
 
-          {welcomeBack ? (
-            <ReturnCard
-              title={`Start again with ${restartWith ? NAMES[restartWith].en : 'one prayer'}`}
-              body={returnBody}
-              action={restartWith && restartWith === open && !isDone(prayerStatuses[restartWith]) ? `Mark ${NAMES[restartWith].en} prayed` : undefined}
-              onAction={restartWith ? () => mark(restartWith) : undefined}
-              onDismiss={dismissReturn}
-            />
-          ) : offer ? (
+          {!welcomeBack && offer && times ? (
             <NextStepCard
               title={offer.title}
               detail={offer.detail}

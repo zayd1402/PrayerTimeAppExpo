@@ -147,7 +147,12 @@ export function ConsistencyMeter({ label, rate, window = 'Last 30 days', trend =
   const pct = Math.round(r * 100);
   const w = 120;
   const h = 28;
-  const pts = trend.map((v, i) => `${(i * (w / Math.max(1, trend.length - 1))).toFixed(1)},${(h - v * (h - 4) - 2).toFixed(1)}`).join(' ');
+  // Scale the sparkline to its own range (at least 20 points), so a steady month still shows its shape.
+  const lo = Math.min(...trend, 1);
+  const hi = Math.max(...trend, 0);
+  const span = Math.max(0.2, hi - lo);
+  const base = Math.max(0, Math.min(lo, 1 - span));
+  const pts = trend.map((v, i) => `${(i * (w / Math.max(1, trend.length - 1))).toFixed(1)},${(h - ((v - base) / span) * (h - 4) - 2).toFixed(1)}`).join(' ');
   return (
     <View style={styles.meter} accessible accessibilityLabel={`${label}, ${pct} percent, ${window}${note ? `. ${note}` : ''}`}>
       <View style={styles.meterHead}>

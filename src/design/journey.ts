@@ -157,8 +157,8 @@ export const LADDER: LadderDef[] = [
   {
     title: 'Sunnah of Fajr and Dhuhr',
     habits: [
-      { title: 'Two sunnah rakʿahs before', anchor: 'fajr', category: 'salah', step: 1 },
-      { title: 'Two sunnah rakʿahs after', anchor: 'dhuhr', category: 'salah', step: 1 },
+      { title: 'Two sunnah rak’ahs before', anchor: 'fajr', category: 'salah', step: 1 },
+      { title: 'Two sunnah rak’ahs after', anchor: 'dhuhr', category: 'salah', step: 1 },
     ],
   },
   {

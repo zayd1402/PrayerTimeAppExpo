@@ -194,7 +194,7 @@ export default function JourneyScreen() {
             <View style={styles.reflectIcon}><Glyph name="pen" size={18} color={C.gold} /></View>
             <View style={{ flex: 1 }}>
               <Text style={styles.trkTitle}>{reflected ? 'This week, written' : 'Look back on this week'}</Text>
-              <Text style={styles.trkSub}>{reflected ? 'Private. Tap to read or change it' : 'Three short questions after Jumuʿah. Private'}</Text>
+              <Text style={styles.trkSub}>{reflected ? 'Private. Tap to read or change it' : 'Three short questions after Jumu’ah. Private'}</Text>
             </View>
             <Glyph name="right" size={16} color={C.textMuted} />
           </Pressable>
@@ -224,7 +224,7 @@ export default function JourneyScreen() {
                 <View style={[styles.disc, { backgroundColor: cat.pale }]}><Glyph name={CATEGORY_GLYPH[h.category]} size={16} color={cat.ink} /></View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.trkTitle}>{h.title}</Text>
-                  <Text style={styles.trkSub}>After {ANCHOR_NAMES[h.anchor]} · kept {k.kept} of {Math.max(1, k.days)} {k.days === 1 ? 'day' : 'days'}</Text>
+                  <Text style={styles.trkSub}>After {ANCHOR_NAMES[h.anchor]} · kept {k.kept} of {Math.max(1, k.days)} {Math.max(1, k.days) === 1 ? 'day' : 'days'}</Text>
                 </View>
                 <MiniRing progress={k.days ? k.kept / k.days : 0} color={cat.fill} size={30} stroke={4} />
               </Pressable>
