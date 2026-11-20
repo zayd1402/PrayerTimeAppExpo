@@ -4,6 +4,7 @@ import {
   FastingLog, QuranLog, DhikrSession, 
   ZakatRecord, CharityRecord, PrayerJournalEntry, KhushuEntry
 } from '../types';
+import type { Habit, HabitLog } from '../design/journey';
 import { getLocalDateKey, getLocalDateFromKey, getLocalDateKeyDaysAgo } from '../utils/date';
 
 export const storage = kv;
@@ -45,7 +46,62 @@ const KEYS = {
   KHUSHU_LOG:     '@prayertime:khushu_log',
   TRACKING_START: '@prayertime:tracking_start',
   SUNNAH_PRAYERS: '@prayertime:sunnah_prayers',
+  HABITS:         '@prayertime:habits',
+  HABIT_LOG:      '@prayertime:habit_log',
+  LADDER_LEVEL:   '@prayertime:ladder_level',
+  REFLECTIONS:    '@prayertime:reflections',
+  RETURN_DISMISSED:'@prayertime:return_dismissed',
 };
+
+// ─── Habits anchored to prayers (Today and Journey) ─────────
+const HABIT_LOG_DAYS_KEPT = 120;
+
+export function loadHabits(): Habit[] {
+  return load<Habit[]>(KEYS.HABITS, []);
+}
+
+export function saveHabits(habits: Habit[]): void {
+  save(KEYS.HABITS, habits);
+}
+
+export function loadHabitLog(): HabitLog {
+  return load<HabitLog>(KEYS.HABIT_LOG, {});
+}
+
+export function saveHabitLog(log: HabitLog): void {
+  const oldest = getLocalDateKeyDaysAgo(HABIT_LOG_DAYS_KEPT);
+  for (const key of Object.keys(log)) {
+    if (key < oldest) delete log[key];
+  }
+  save(KEYS.HABIT_LOG, log);
+}
+
+export function loadLadderLevel(): number {
+  return load<number>(KEYS.LADDER_LEVEL, 0);
+}
+
+export function saveLadderLevel(level: number): void {
+  save(KEYS.LADDER_LEVEL, level);
+}
+
+/** Weekly reflections, keyed by the Friday they were written. Stay on the device. */
+export function loadReflections(): Record<string, string[]> {
+  return load<Record<string, string[]>>(KEYS.REFLECTIONS, {});
+}
+
+export function saveReflection(dateKey: string, answers: string[]): void {
+  const all = loadReflections();
+  all[dateKey] = answers;
+  save(KEYS.REFLECTIONS, all);
+}
+
+export function getReturnDismissed(): string | undefined {
+  return storage.getString(KEYS.RETURN_DISMISSED);
+}
+
+export function setReturnDismissed(dateKey: string): void {
+  storage.set(KEYS.RETURN_DISMISSED, dateKey);
+}
 
 // ─── Sunnah & Witr prayers (Worship > Prayers) ──────────────
 const SUNNAH_PRAYER_DAYS_KEPT = 90;

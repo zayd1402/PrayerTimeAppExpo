@@ -1,5 +1,5 @@
-// Today: a sky that takes the colour of the current prayer time, one button for the prayer that's
-// due, the five times with visible ticks, quick actions and one timely suggestion.
+// Today: a sky that takes the colour of the current prayer time, then the five prayers with the
+// small habits stacked after each, then one next step (or a welcome back after a gap). Nothing else.
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Pressable, ScrollView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,15 +13,18 @@ import { usePrayerApp } from '../context/PrayerAppContext';
 import { Tokens, useTheme, useThemedStyles, useTokens } from '../context/ThemeContext';
 import { PrayerId } from '../types';
 import MarkSheet from '../components/MarkSheet';
-import { Glyph, GlyphName } from '../design/Glyph';
+import { useHabits } from '../context/HabitsContext';
+import HabitSheet, { HabitSheetState } from '../components/HabitSheet';
+import { Glyph } from '../design/Glyph';
 import { F, Sky, useSky } from '../design/palette';
 import { computeDayState, formatClock, formatDuration, isDone, minutesOf, FIVE } from '../design/dayState';
-import { getSpecialMoment } from '../design/moment';
 import { PrimaryButton, ProfileButton, TickButton, TickState, tapHaptic } from '../design/ui';
+import { HabitItem, NextStepCard, ReturnCard } from '../design/habitsUi';
+import { AnchorPrayer, habitDone, habitsFor, ladder, needsWelcomeBack, nextStep, prayerConsistency } from '../design/journey';
+import type { DayLog, PrayerLog } from '../design/habits';
 import { HijriService } from '../services/HijriService';
-import { calculateQiblaDirection } from '../services/PrayerService';
-import { getNearbyMosques } from '../services/LocalMosqueService';
-import { getTodayDhikrCount } from '../services/StorageService';
+import { getReturnDismissed, loadPrayerLog, setReturnDismissed } from '../services/StorageService';
+import { getLocalDateKey } from '../utils/date';
 import type { RootStackParamList } from '../navigation/routes';
 
 const NAMES: Record<PrayerId, { en: string; ar: string; short: string }> = {
@@ -106,7 +109,15 @@ export default function TodayScreen() {
   const { prayerTimes, prayerStatuses, location, handleMarkPrayer } = usePrayerApp();
   const now = useNowMinutes();
   const [sheetFor, setSheetFor] = useState<PrayerId | null>(null);
-  const [dhikrToday, setDhikrToday] = useState(0);
+  const [habitSheet, setHabitSheet] = useState<HabitSheetState>(null);
+  const { habits, log: habitLog, ladderLevel, toggleHabit, setLadderLevel } = useHabits();
+  const [pastLog, setPastLog] = useState<PrayerLog>({});
+  const todayKey = getLocalDateKey();
+  const [returnDismissed, setDismissed] = useState(() => getReturnDismissed());
+  // A prayer whose habits are all done folds to one line, so the day gets shorter as it is kept.
+  const [unfolded, setUnfolded] = useState<Record<string, boolean>>({});
+  const folded = (id: PrayerId, tick: TickState, stacked: { id: string }[]) =>
+    !unfolded[id] && (tick === 'done' || tick === 'qaza') && stacked.every(h => habitDone(habitLog, todayKey, h.id));
 
   const times = useMemo(() => {
     if (prayerTimes.length < 6) return null;
@@ -126,16 +137,21 @@ export default function TodayScreen() {
   }, [lightText, isDark]));
 
   useFocusEffect(useCallback(() => {
-    getTodayDhikrCount().then(d => setDhikrToday(d.subhanallah + d.alhamdulillah + d.allahuakbar)).catch(() => {});
+    loadPrayerLog().then(l => setPastLog(l as PrayerLog)).catch(() => {});
   }, []));
+
+  // Today's entry comes from live state, so a tick shows in the numbers straight away.
+  const prayerLog: PrayerLog = useMemo(() => ({ ...pastLog, [todayKey]: prayerStatuses as DayLog }), [pastLog, prayerStatuses, todayKey]);
+  const steps = useMemo(() => ladder(ladderLevel, habits, prayerLog, habitLog), [ladderLevel, habits, prayerLog, habitLog]);
+  useEffect(() => { if (steps.level > ladderLevel) setLadderLevel(steps.level); }, [steps.level, ladderLevel, setLadderLevel]);
+  const offer = useMemo(() => nextStep(habits, steps.rungs, prayerLog), [habits, steps.rungs, prayerLog]);
+  // The log only holds yesterday and before once loaded, so wait for it before welcoming anyone back.
+  const welcomeBack = returnDismissed !== todayKey && needsWelcomeBack(pastLog, habitLog);
+  const consistency = useMemo(() => (welcomeBack ? prayerConsistency(pastLog) : null), [welcomeBack, pastLog]);
 
   const today = new Date();
   const hijri = HijriService.gregorianToHijri(today);
   const dateLine = `${WEEKDAYS[today.getDay()]}, ${hijri.day} ${hijri.monthName} ${hijri.year}`;
-  const qibla = location ? Math.round(calculateQiblaDirection(location.latitude, location.longitude)) : null;
-  const nearest = useMemo(() => location ? getNearbyMosques(location, 50)[0] : undefined, [location]);
-  const moment = useMemo(() => getSpecialMoment(today), [today.toDateString()]);
-  const { dailyHadith } = usePrayerApp();
 
   const mark = (id: PrayerId) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -181,23 +197,11 @@ export default function TodayScreen() {
   }
 
   const open = state?.open ?? null;
-  const showNudge = !!(state && open && !isDone(prayerStatuses[open]));
-  let nudgeTitle = '';
-  let nudgeSub = '';
-  if (showNudge && times && open && state?.openEnds != null) {
-    const sinceStart = (now - times[open] + 1440) % 1440;
-    nudgeTitle = sinceStart < 60 ? `${NAMES[open].en} has started` : `${NAMES[open].en} is still open`;
-    nudgeSub = open === 'isha' ? 'Prayed it yet? Open until Fajr' : `Prayed it yet? ${formatDuration(state.openEnds - now)} left`;
-  }
 
-  const duaHint = state ? { dawn: 'Morning', day: `After ${state.open ? NAMES[state.open].en : 'Fajr'}`, golden: 'Evening', maghrib: 'Evening', night: 'Before sleep' }[state.sky] : 'Daily';
-
-  const quick: { icon: GlyphName; label: string; hint: string; onPress: () => void }[] = [
-    { icon: 'qibla', label: 'Qibla', hint: qibla !== null ? `${qibla}°` : 'Compass', onPress: () => navigation.navigate('tabs', { screen: 'qibla' } as never) },
-    { icon: 'beads', label: 'Tasbih', hint: dhikrToday > 0 ? `${dhikrToday} today` : 'Start', onPress: () => navigation.navigate('worship', { tab: 'dhikr' }) },
-    { icon: 'hands', label: 'Duas', hint: duaHint, onPress: () => navigation.navigate('duas') },
-    { icon: 'mosque', label: 'Mosques', hint: nearest ? (nearest.distanceKm < 1 ? `${Math.round(nearest.distanceKm * 1000)} m` : `${nearest.distanceKm.toFixed(1)} km`) : 'Nearby', onPress: () => navigation.navigate('mosques') },
-  ];
+  // Welcome back: one prayer to restart with, the open one if there is one, else the next.
+  const restartWith = state ? (open && !isDone(prayerStatuses[open]) ? open : state.next) : null;
+  const returnBody = `It has been a few days.${consistency ? ` Your 30-day rate is still ${Math.round(consistency.rate * 100)}%.` : ''} Pray ${restartWith ? NAMES[restartWith].en : 'the next prayer'} on time today; that is enough.`;
+  const dismissReturn = () => { tapHaptic(); setReturnDismissed(todayKey); setDismissed(todayKey); };
 
   const sheetPrayer = sheetFor ? { id: sheetFor, name: NAMES[sheetFor].en } : null;
   const sheetCurrent = sheetFor ? (prayerStatuses[sheetFor] ?? (times && times[sheetFor] <= now && sheetFor !== open ? 'missed' : undefined)) : undefined;
@@ -256,14 +260,14 @@ export default function TodayScreen() {
             </View>
           )}
 
-          {showNudge && open && (
-            <View style={styles.nudge}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.nudgeTitle}>{nudgeTitle}</Text>
-                <Text style={styles.nudgeSub}>{nudgeSub}</Text>
-              </View>
-              <PrimaryButton label="Mark prayed" onPress={() => mark(open)} />
-            </View>
+          {welcomeBack && times && (
+            <ReturnCard
+              title={`Start again with ${restartWith ? NAMES[restartWith].en : 'one prayer'}`}
+              body={returnBody}
+              action={restartWith && restartWith === open && !isDone(prayerStatuses[restartWith]) ? `Mark ${NAMES[restartWith].en} prayed` : undefined}
+              onAction={restartWith ? () => mark(restartWith) : undefined}
+              onDismiss={dismissReturn}
+            />
           )}
 
           {times && (
@@ -282,59 +286,68 @@ export default function TodayScreen() {
                 const tick = tickStateFor(id);
                 const isNow = id === open && tick === 'open';
                 const past = tick === 'done' || tick === 'qaza' || (times[id] <= now && !isNow);
+                const stacked = habitsFor(habits, id as AnchorPrayer);
                 return (
-                  <Pressable
-                    key={id}
-                    onLongPress={tick === 'future' ? undefined : () => { tapHaptic(); setSheetFor(id); }}
-                    style={[styles.prow, !last && !isNow && styles.rowLine, isNow && styles.prowNow]}
-                  >
-                    <Text style={[styles.ptime, isNow && styles.ptimeNow]}>{formatClock(times[id], false)}</Text>
-                    <View style={styles.pname}>
-                      <Text style={[styles.pnameText, past && { color: C.textSecondary }, isNow && { fontFamily: F.semibold }]}>{NAMES[id].en}</Text>
-                      <Text style={styles.pnameAr}>{NAMES[id].ar}</Text>
-                      {tick === 'qaza' && <Text style={styles.qazaTag}>Qaza</Text>}
-                      {tick === 'open' && !isNow && <Text style={styles.qazaTag}>Not marked</Text>}
-                    </View>
-                    <TickButton
-                      state={tick}
-                      highlight={isNow}
-                      onPress={() => onTick(id)}
-                      onLongPress={() => { tapHaptic(); setSheetFor(id); }}
-                      label={`${NAMES[id].en}, ${formatClock(times[id])}, ${tick === 'done' ? 'prayed on time' : tick === 'qaza' ? 'prayed as qaza' : tick === 'future' ? 'not started yet' : 'not marked'}`}
-                    />
-                  </Pressable>
+                  <View key={id} style={[!last && styles.rowLine, stacked.length > 0 && { paddingBottom: 4 }]}>
+                    <Pressable
+                      onLongPress={tick === 'future' ? undefined : () => { tapHaptic(); setSheetFor(id); }}
+                      style={[styles.prow, isNow && styles.prowNow]}
+                    >
+                      <Text style={[styles.ptime, isNow && styles.ptimeNow]}>{formatClock(times[id], false)}</Text>
+                      <View style={styles.pname}>
+                        <Text style={[styles.pnameText, past && { color: C.textSecondary }, isNow && { fontFamily: F.semibold }]}>{NAMES[id].en}</Text>
+                        <Text style={styles.pnameAr}>{NAMES[id].ar}</Text>
+                        {tick === 'qaza' && <Text style={styles.qazaTag}>Qaza</Text>}
+                        {tick === 'open' && !isNow && <Text style={styles.qazaTag}>Not marked</Text>}
+                      </View>
+                      <TickButton
+                        state={tick}
+                        highlight={isNow}
+                        onPress={() => onTick(id)}
+                        onLongPress={() => { tapHaptic(); setSheetFor(id); }}
+                        label={`${NAMES[id].en}, ${formatClock(times[id])}, ${tick === 'done' ? 'prayed on time' : tick === 'qaza' ? 'prayed as qaza' : tick === 'future' ? 'not started yet' : 'not marked'}`}
+                      />
+                    </Pressable>
+                    {stacked.length > 0 && folded(id, tick, stacked) ? (
+                      <Pressable
+                        onPress={() => { tapHaptic(); setUnfolded(u => ({ ...u, [id]: true })); }}
+                        style={styles.foldRow}
+                        accessibilityRole="button"
+                        accessibilityLabel={`After ${NAMES[id].en}, all ${stacked.length} habits done. Show them`}
+                      >
+                        <Glyph name="check" size={13} color={C.textMuted} strokeWidth={2.2} />
+                        <Text style={styles.anchor}>After {NAMES[id].en}: {stacked.length === 1 ? stacked[0].title : `all ${stacked.length} habits`} done</Text>
+                      </Pressable>
+                    ) : stacked.length > 0 && (
+                      <View style={styles.stack}>
+                        <Text style={styles.anchor}>After {NAMES[id].en}</Text>
+                        {stacked.map(h => (
+                          <HabitItem
+                            key={h.id}
+                            habit={h}
+                            done={habitDone(habitLog, todayKey, h.id)}
+                            onToggle={() => toggleHabit(h.id)}
+                            onOpen={() => setHabitSheet({ mode: 'view', habitId: h.id })}
+                          />
+                        ))}
+                      </View>
+                    )}
+                  </View>
                 );
               })}
             </View>
           )}
 
-          <View style={styles.quick}>
-            {quick.map(q => (
-              <Pressable key={q.label} onPress={q.onPress} style={styles.quickItem} accessibilityRole="button" accessibilityLabel={`${q.label}, ${q.hint}`}>
-                {({ pressed }) => (
-                  <>
-                    <View style={[styles.quickIcon, pressed && { backgroundColor: C.surfacePressed }]}>
-                      <Glyph name={q.icon} size={22} color={C.primaryDark} />
-                    </View>
-                    <Text style={styles.quickLabel}>{q.label}</Text>
-                    <Text style={styles.quickHint} numberOfLines={1}>{q.hint}</Text>
-                  </>
-                )}
-              </Pressable>
-            ))}
-          </View>
-
-          {moment ? (
-            <Pressable onPress={() => moment.route && navigation.navigate(moment.route)} style={styles.moment} accessibilityRole="button">
-              <Text style={styles.momentK}>{moment.kicker}</Text>
-              <Text style={styles.momentTitle}>{moment.title}</Text>
-              {moment.body ? <Text style={styles.momentBody}>{moment.body}</Text> : null}
-            </Pressable>
-          ) : dailyHadith ? (
-            <Pressable onPress={() => navigation.navigate('hadith')} style={styles.moment} accessibilityRole="button">
-              <Text style={styles.momentK}>Hadith of the day</Text>
-              <Text style={styles.momentHadith} numberOfLines={4}>{dailyHadith.english}</Text>
-              <Text style={styles.momentBody}>{dailyHadith.source}</Text>
+          {!welcomeBack && offer && times ? (
+            <NextStepCard
+              title={offer.title}
+              detail={offer.detail}
+              onPress={() => { tapHaptic(); setHabitSheet({ mode: 'add', drafts: offer.habits, title: offer.habits.length > 1 ? offer.title : undefined }); }}
+            />
+          ) : times ? (
+            <Pressable onPress={() => { tapHaptic(); setHabitSheet({ mode: 'add', drafts: [] }); }} style={styles.addLink} accessibilityRole="button">
+              <Glyph name="plus" size={16} color={C.primaryDark} />
+              <Text style={styles.addLinkText}>Add a habit after a prayer</Text>
             </Pressable>
           ) : null}
         </View>
@@ -348,6 +361,7 @@ export default function TodayScreen() {
         onClear={id => handleMarkPrayer(id, null)}
         onClose={() => setSheetFor(null)}
       />
+      <HabitSheet state={habitSheet} onClose={() => setHabitSheet(null)} />
     </View>
   );
 }
@@ -380,14 +394,9 @@ const makeStyles = (C: Tokens) => StyleSheet.create({
   sunRow: { flexDirection: 'row', alignItems: 'center', minHeight: 36, paddingLeft: 12, gap: 6 },
   sunTime: { width: 48, fontFamily: F.body, fontSize: 13, color: C.textMuted, fontVariant: ['tabular-nums'] },
   sunText: { fontFamily: F.body, fontSize: 13, color: C.textMuted },
-  quick: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 4 },
-  quickItem: { flex: 1, alignItems: 'center', gap: 4 },
-  quickIcon: { width: 54, height: 54, borderRadius: 18, backgroundColor: C.bgSurface, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
-  quickLabel: { fontFamily: F.medium, fontSize: 13, color: C.textSecondary },
-  quickHint: { fontFamily: F.body, fontSize: 11.5, color: C.textMuted },
-  moment: { backgroundColor: C.goldPale, borderRadius: 18, paddingVertical: 14, paddingHorizontal: 16, gap: 3 },
-  momentK: { fontFamily: F.semibold, fontSize: 12.5, color: C.gold },
-  momentTitle: { fontFamily: F.semibold, fontSize: 16, color: C.textPrimary },
-  momentHadith: { fontFamily: F.body, fontSize: 15, lineHeight: 22, color: C.textPrimary },
-  momentBody: { fontFamily: F.body, fontSize: 13, color: C.textSecondary },
+  stack: { marginLeft: 66, marginBottom: 8, gap: 4 },
+  foldRow: { marginLeft: 66, marginBottom: 6, minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  anchor: { fontFamily: F.body, fontSize: 12, lineHeight: 16, color: C.textMuted, paddingLeft: 2 },
+  addLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minHeight: 44 },
+  addLinkText: { fontFamily: F.medium, fontSize: 14, color: C.primaryDark },
 });

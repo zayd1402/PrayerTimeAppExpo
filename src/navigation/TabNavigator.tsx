@@ -4,7 +4,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import TodayScreen from '../screens/TodayScreen';
-import HabitsScreen from '../screens/HabitsScreen';
+import JourneyScreen from '../screens/JourneyScreen';
 import QiblaMosquesScreen from '../screens/QiblaMosquesScreen';
 import LibraryScreen from '../screens/LibraryScreen';
 import { Tokens, useThemedStyles, useTokens } from '../context/ThemeContext';
@@ -16,7 +16,7 @@ const Tab = createBottomTabNavigator();
 
 const TABS: { name: string; labelKey: string; icon: GlyphName; component: React.ComponentType }[] = [
   { name: 'today', labelKey: 'tabs.today', icon: 'today', component: TodayScreen },
-  { name: 'habits', labelKey: 'tabs.habits', icon: 'habits', component: HabitsScreen },
+  { name: 'journey', labelKey: 'tabs.journey', icon: 'journey', component: JourneyScreen },
   { name: 'qibla', labelKey: 'tabs.qibla', icon: 'qibla', component: QiblaMosquesScreen },
   { name: 'library', labelKey: 'tabs.library', icon: 'library', component: LibraryScreen },
 ];

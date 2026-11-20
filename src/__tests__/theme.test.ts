@@ -33,12 +33,31 @@ describe('theme tokens', () => {
     ['onPrimary', 'primary'],
     ['onHero', 'heroBg'],
     ['onHeroMuted', 'heroBg'],
+    ['gold', 'goldPale'],
+    ['primaryDark', 'primaryLight'],
+    ['red', 'bgBase'],
+    ['return', 'returnPale'],
   ];
 
   for (const [name, t] of themes) {
     for (const [fg, bg] of textPairs) {
       it(`${name}: ${String(fg)} on ${String(bg)} meets 4.5:1`, () => {
         expect(contrast(t[fg] as string, t[bg] as string)).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+  }
+});
+
+describe('habit graphics', () => {
+  // Ticks, discs and bars need 3:1 against what they sit on (WCAG 1.4.11).
+  const graphicPairs: [keyof Tokens, keyof Tokens][] = [
+    ['habitSalah', 'bgSurface'], ['habitQuran', 'bgSurface'], ['habitDhikr', 'bgSurface'],
+    ['onHabit', 'habitSalah'], ['onHabit', 'habitQuran'], ['onHabit', 'habitDhikr'],
+  ];
+  for (const [name, t] of themes) {
+    for (const [fg, bg] of graphicPairs) {
+      it(`${name}: ${String(fg)} on ${String(bg)} meets 3:1`, () => {
+        expect(contrast(t[fg] as string, t[bg] as string)).toBeGreaterThanOrEqual(3);
       });
     }
   }

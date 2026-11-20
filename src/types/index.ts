@@ -6,8 +6,8 @@ export const C = {
   primary: '#A8641F',
   primaryDark: '#8F5418',
   primaryLight: '#F5E3C6',
-  // Deepened from #B8860B so gold labels pass 4.5:1 on the page (now 4.6:1).
-  gold: '#946A06',
+  // Deepened from #946A06 so gold kickers also pass 4.5:1 on goldPale (now 4.98:1; 5.38:1 on the page).
+  gold: '#866004',
   goldLight: '#D4A843',
   goldPale: '#FAEFD4',
   surfaceElevated: '#F5ECD8',
@@ -24,7 +24,8 @@ export const C = {
   textSecondary: '#5E4630',
   // Was #8C7855, which measured 4.0:1 on bgBase. Now 5.4:1.
   textMuted: '#7A6247',
-  red: '#C4553B',
+  // Deepened from #C4553B (4.22:1) so error text passes 4.5:1 on the page (now 4.91:1).
+  red: '#B54C33',
   white: '#FFFFFF',
   /** Text and icons placed on a primary-coloured fill (buttons, active chips, ticks). */
   onPrimary: '#FFFFFF',
@@ -36,6 +37,17 @@ export const C = {
   qaza: '#7A6A55',
   /** Quran reading progress. Its own green, so it never reads as qaza. */
   quran: '#4E7A58',
+  /** Habit categories. They differ in lightness as well as hue, and always appear with their glyph. */
+  habitSalah: '#A8641F',
+  habitQuran: '#1F4429',
+  habitQuranPale: '#E3EDE2',
+  /** Graphics only, never text. Deepened from #B38420 so the tick passes 3:1 on bgSurface (now 3.19:1). */
+  habitDhikr: '#AA7E1D',
+  /** The check on a filled habit tick, any category. */
+  onHabit: '#FFFFFF',
+  /** Coming back after a gap: dawn-rose, never red. */
+  return: '#8A4E52',
+  returnPale: '#F7E7E1',
   /** Arabic display text. */
   fontArabic: 'Amiri_400Regular',
   fontArabicBold: 'Amiri_700Bold',
@@ -64,7 +76,8 @@ export const darkC: typeof C = {
   bgSurface: '#1F1A15',
   bgCard: '#2A221B',
   primary: '#D99A4E',
-  primaryDark: '#B87C34',
+  // Lifted from #B87C34 so the open prayer's time passes 4.5:1 on primaryLight (now 4.7:1).
+  primaryDark: '#C88A40',
   primaryLight: '#3A2A19',
   gold: '#E2B653',
   goldLight: '#C49A3C',
@@ -84,6 +97,13 @@ export const darkC: typeof C = {
   onHeroMuted: '#C9A867',
   qaza: '#A8977E',
   quran: '#8DBF96',
+  habitSalah: '#D99A4E',
+  habitQuran: '#C2E6C6',
+  habitQuranPale: '#1C2A1F',
+  habitDhikr: '#A8822E',
+  onHabit: '#1A120A',
+  return: '#E0A7A0',
+  returnPale: '#2E1D1C',
   fontArabic: 'Amiri_400Regular',
   fontArabicBold: 'Amiri_700Bold',
   border: 'rgba(239,227,209,0.10)',
