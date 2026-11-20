@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Lets expo-notifications set exact alarms on Android 12+. Android 14+ denies it
+       by default for new installs, so the app asks the user to allow it in Settings. -->
+  <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+</manifest>

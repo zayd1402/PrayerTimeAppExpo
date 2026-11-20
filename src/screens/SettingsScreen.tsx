@@ -11,6 +11,8 @@ import { getCurrentLocation } from '../services/LocationService';
 import { initAudio, playAdhan, stopAdhan, getAdhanAttribution, setAdhanVolume } from '../services/AudioService';
 import { requestNotificationPermission } from '../services/NotificationService';
 import { MANUAL_CITIES } from '../data/manualCities';
+import { usePrayerApp } from '../context/PrayerAppContext';
+import { openBatterySettings, openExactAlarmSettings } from '../../modules/alarm-access';
 
 interface SettingsScreenProps {
   settings: AppSettings;
@@ -42,6 +44,7 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
   const t = useTokens();
   const styles = useMemo(() => createStyles(t), [t]);
   const [manualSearch, setManualSearch] = useState('');
+  const { alarmAccess } = usePrayerApp();
 
   const filteredCities = useMemo(() => {
     const normalized = manualSearch.trim().toLowerCase();
@@ -212,6 +215,43 @@ export default function SettingsScreen({ settings, updateSettings }: SettingsScr
               trackColor={{ true: t.primary }}
             />
           </View>
+
+          {alarmAccess.supported && settings.notificationsEnabled && (
+            <>
+              <View style={styles.row}>
+                <View style={styles.rowIconWrap}>
+                  <Ionicons name="alarm-outline" size={18} color={alarmAccess.exactAlarms ? t.primary : t.gold} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowLabel}>{translate('settings.exactAlarms')}</Text>
+                  <Text style={styles.rowSubtitle}>
+                    {translate(alarmAccess.exactAlarms ? 'settings.exactAlarmsOn' : 'settings.exactAlarmsOff')}
+                  </Text>
+                </View>
+                {!alarmAccess.exactAlarms && (
+                  <TouchableOpacity onPress={openExactAlarmSettings} accessibilityRole="button" style={styles.fixButton}>
+                    <Text style={styles.fixButtonText}>{translate('settings.allow')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              <View style={styles.row}>
+                <View style={styles.rowIconWrap}>
+                  <Ionicons name="battery-half-outline" size={18} color={alarmAccess.batteryUnrestricted ? t.primary : t.gold} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.rowLabel}>{translate('settings.battery')}</Text>
+                  <Text style={styles.rowSubtitle}>
+                    {translate(alarmAccess.batteryUnrestricted ? 'settings.batteryOn' : 'settings.batteryOff')}
+                  </Text>
+                </View>
+                {!alarmAccess.batteryUnrestricted && (
+                  <TouchableOpacity onPress={openBatterySettings} accessibilityRole="button" style={styles.fixButton}>
+                    <Text style={styles.fixButtonText}>{translate('settings.fix')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </>
+          )}
 
           {NOTIFICATION_PRAYERS.map(prayerId => (
             <View key={prayerId} style={styles.row}>
@@ -446,6 +486,18 @@ function createStyles(t: Tokens) {
   rowValue: {
     fontSize: 14,
     color: t.textMuted,
+  },
+  fixButton: {
+    backgroundColor: t.primary,
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    marginLeft: 8,
+  },
+  fixButtonText: {
+    color: t.onPrimary,
+    fontFamily: 'Jost_600SemiBold',
+    fontSize: 13,
   },
   optionRow: {
     flexDirection: 'row',

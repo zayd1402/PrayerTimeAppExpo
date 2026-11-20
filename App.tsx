@@ -17,7 +17,9 @@ import { ThemeProvider, useTheme, useTokens } from './src/context/ThemeContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import RootNavigator from './src/navigation/RootNavigator';
 import { hydrateStorage } from './src/services/StorageService';
+import { initCrashReporting } from './src/services/CrashReporting';
 
+initCrashReporting();
 SplashScreen.preventAutoHideAsync();
 
 function ThemedStatusBar() {

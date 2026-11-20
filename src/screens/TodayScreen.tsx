@@ -23,6 +23,7 @@ import { calculateQiblaDirection } from '../services/PrayerService';
 import { getNearbyMosques } from '../services/LocalMosqueService';
 import { getTodayDhikrCount } from '../services/StorageService';
 import type { RootStackParamList } from '../navigation/routes';
+import { openExactAlarmSettings } from '../../modules/alarm-access';
 
 const NAMES: Record<PrayerId, { en: string; ar: string; short: string }> = {
   fajr: { en: 'Fajr', ar: 'الفجر', short: 'Fajr' },
@@ -103,7 +104,7 @@ export default function TodayScreen() {
   const styles = useThemedStyles(makeStyles);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { prayerTimes, prayerStatuses, location, handleMarkPrayer } = usePrayerApp();
+  const { prayerTimes, prayerStatuses, location, handleMarkPrayer, settings, alarmAccess } = usePrayerApp();
   const now = useNowMinutes();
   const [sheetFor, setSheetFor] = useState<PrayerId | null>(null);
   const [dhikrToday, setDhikrToday] = useState(0);
@@ -253,6 +254,16 @@ export default function TodayScreen() {
                 <Text style={styles.nudgeSub}>Pick your city so prayer times, Qibla and mosques are accurate.</Text>
               </View>
               <PrimaryButton label="Choose city" onPress={() => navigation.navigate('settings')} />
+            </View>
+          )}
+
+          {settings.notificationsEnabled && alarmAccess.supported && !alarmAccess.exactAlarms && (
+            <View style={styles.nudge}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.nudgeTitle}>Prayer alerts may be late</Text>
+                <Text style={styles.nudgeSub}>Allow alarms so your phone sounds each alert on the minute.</Text>
+              </View>
+              <PrimaryButton label="Allow" onPress={openExactAlarmSettings} />
             </View>
           )}
 

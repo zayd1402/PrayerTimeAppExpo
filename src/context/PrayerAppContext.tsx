@@ -29,6 +29,7 @@ import {
 } from '../services/PrayerScheduler';
 import { getDailyHadith } from '../data/hadiths';
 import { initAudio, playAdhan, setAdhanVolume } from '../services/AudioService';
+import { AlarmAccessStatus, getAlarmAccess } from '../../modules/alarm-access';
 
 type PrayerStatus = PrayerLogEntry['status'];
 type DayStatuses = Partial<Record<PrayerId, PrayerStatus>>;
@@ -64,6 +65,8 @@ export interface PrayerAppState {
   /** Sets today's status for a prayer, or clears it with null. */
   handleMarkPrayer: (id: PrayerId, status: PrayerStatus | null) => void;
   handleUpdateSettings: (partial: Partial<AppSettings>) => void;
+  /** Android only: whether alerts can fire on the exact minute and survive battery saving. */
+  alarmAccess: AlarmAccessStatus;
 }
 
 const PrayerAppContext = createContext<PrayerAppState | null>(null);
@@ -185,6 +188,9 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const [alarmAccess, setAlarmAccess] = useState<AlarmAccessStatus>(getAlarmAccess);
+  const alarmAccessRef = useRef(alarmAccess);
+
   const updatePrayerTimes = useCallback(() => {
     if (!location) {
       setPrayerTimes([]);
@@ -249,6 +255,15 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
       if (state === 'active') {
+        // The user may be back from the system "Alarms & reminders" page. Alerts queued
+        // while exact alarms were off stay inexact, so a newly granted permission re-plans them.
+        const prev = alarmAccessRef.current;
+        const access = getAlarmAccess();
+        if (access.exactAlarms !== prev.exactAlarms || access.batteryUnrestricted !== prev.batteryUnrestricted) {
+          if (access.exactAlarms && !prev.exactAlarms) lastScheduledRef.current = '';
+          alarmAccessRef.current = access;
+          setAlarmAccess(access);
+        }
         updatePrayerTimes();
       }
     });
@@ -351,7 +366,7 @@ export function PrayerAppProvider({ children }: { children: React.ReactNode }) {
       settings, prayerTimes, nextPrayer, location, loading, error,
       completedPrayers, prayerStatuses, timerDisplay, dailyHadith,
       prayersObj, nextPrayerObj, nextPrayerTime, hijriDateStr,
-      handleTogglePrayer, handleMarkPrayer, handleUpdateSettings,
+      handleTogglePrayer, handleMarkPrayer, handleUpdateSettings, alarmAccess,
     }}>
       {children}
     </PrayerAppContext.Provider>

@@ -2,6 +2,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Tokens, useThemedStyles } from '../context/ThemeContext';
 import { logger } from '../utils/logger';
+import { reportError } from '../services/CrashReporting';
 
 interface Props {
   children: ReactNode;
@@ -24,6 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     logger.warn('ErrorBoundary caught:', error.message, errorInfo);
+    reportError(error, { componentStack: errorInfo.componentStack });
   }
 
   render() {
