@@ -1,5 +1,5 @@
 {
-  "app.name": "PrayerTime",
+  "app.name": "Istiqamah",
   "app.tagline": "Your spiritual companion",
   "common.back": "Back",
 
@@ -98,7 +98,7 @@
   "settings.couldNotDetect": "Could not detect location. Please choose a manual city below.",
   "settings.notificationsOff": "Notifications Off",
   "settings.notificationsOffMessage": "Notification permission was not granted. You can enable it later in device settings.",
-  "settings.footer": "PrayerTimeApp © 2024",
+  "settings.footer": "Istiqamah © 2026",
   "settings.theme": "Theme",
   "settings.themeLight": "Light",
   "settings.themeDark": "Dark",

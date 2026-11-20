@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "PrayerTimeApp",
-    "slug": "PrayerTimeApp",
+    "name": "Istiqamah",
+    "slug": "istiqamah",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.zaydmansuri.prayertimes",
+      "bundleIdentifier": "com.zaydmansuri.istiqamah",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to calculate prayer times for your current location, point to the Qibla and find nearby mosques.",
         "ITSAppUsesNonExemptEncryption": false
@@ -42,7 +42,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FDF8F3"
       },
-      "package": "com.zaydmansuri.prayertimes",
+      "package": "com.zaydmansuri.istiqamah",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",

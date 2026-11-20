@@ -1,5 +1,5 @@
 {
-  "app.name": "وقت الصلاة",
+  "app.name": "استقامة",
   "app.tagline": "رفيقك الروحي",
   "common.back": "رجوع",
 
@@ -98,7 +98,7 @@
   "settings.couldNotDetect": "تعذر اكتشاف الموقع. يرجى اختيار مدينة يدوية أدناه.",
   "settings.notificationsOff": "الإشعارات متوقفة",
   "settings.notificationsOffMessage": "لم يتم منح إذن الإشعارات. يمكنك تمكينها لاحقًا من إعدادات الجهاز.",
-  "settings.footer": "PrayerTimeApp © 2024",
+  "settings.footer": "Istiqamah © 2026",
   "settings.theme": "المظهر",
   "settings.themeLight": "فاتح",
   "settings.themeDark": "داكن",
