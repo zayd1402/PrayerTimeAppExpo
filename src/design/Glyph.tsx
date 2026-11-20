@@ -6,7 +6,8 @@ export type GlyphName =
   | 'today' | 'habits' | 'qibla' | 'library' | 'pin' | 'user' | 'check' | 'redo' | 'dash'
   | 'clock' | 'beads' | 'hands' | 'mosque' | 'search' | 'arrow' | 'moon' | 'book' | 'star'
   | 'wallet' | 'pen' | 'leaf' | 'kaaba' | 'brain' | 'calendar' | 'sunrise' | 'left' | 'right'
-  | 'plus' | 'close' | 'bell' | 'settings' | 'sun' | 'quran' | 'scroll' | 'compass' | 'heart';
+  | 'plus' | 'close' | 'bell' | 'settings' | 'sun' | 'quran' | 'scroll' | 'compass' | 'heart'
+  | 'steps' | 'journey';
 
 function shapes(name: GlyphName): React.ReactNode {
   switch (name) {
@@ -25,6 +26,9 @@ function shapes(name: GlyphName): React.ReactNode {
       return <><Path d="M12 21s-7-6.3-7-12a7 7 0 0114 0c0 5.7-7 12-7 12z" /><Circle cx="12" cy="9" r="2.5" /></>;
     case 'user':
       return <><Circle cx="12" cy="8" r="4" /><Path d="M4 21a8 8 0 0116 0" /></>;
+    case 'steps':
+    case 'journey':
+      return <Path d="M4 20h5v-5h5v-5h5V5" />;
     case 'check':
       return <Path d="M5 12.5l4.5 4.5L19 7.5" />;
     case 'redo':

@@ -13,6 +13,7 @@ import { Jost_300Light, Jost_400Regular, Jost_500Medium, Jost_600SemiBold, Jost_
 import { Amiri_400Regular, Amiri_700Bold } from '@expo-google-fonts/amiri';
 
 import { PrayerAppProvider } from './src/context/PrayerAppContext';
+import { HabitsProvider } from './src/context/HabitsContext';
 import { ThemeProvider, useTheme, useTokens } from './src/context/ThemeContext';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import RootNavigator from './src/navigation/RootNavigator';
@@ -73,7 +74,9 @@ export default function App() {
           <ThemedNavigation>
             <ErrorBoundary>
               <PrayerAppProvider>
-                <RootNavigator />
+                <HabitsProvider>
+                  <RootNavigator />
+                </HabitsProvider>
               </PrayerAppProvider>
             </ErrorBoundary>
           </ThemedNavigation>
